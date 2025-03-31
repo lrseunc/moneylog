@@ -1,40 +1,39 @@
 <template>
-    <v-app>
+    <header :class="{ 'scrolled-nav': scrolledNav}">
     <nav>
-      <div>
-        <p class="title">MoneyLog</p>
+      <div class="branding">
+        <p class="title">Money Log</p>
       </div>
-
-      <ul>
-        <li><router-link to="/home">HOME</router-link></li>
-        <li><router-link to="/personal">PERSONAL</router-link></li>
-        <li><router-link to="/group">GROUP</router-link></li>
-        <li><router-link to="/view">VIEW</router-link></li>
-        <li><router-link to="/about">ABOUT US</router-link></li>
-        <li><router-link to="/profile"><img src="profile.jpg" alt=""></router-link></li>
-      <!-- Corrected Vue.js event binding -->
-      <li class="menu-button" @click="showSidebar">
-        <i class="fa-solid fa-bars fa-lg"></i>
-      </li>
-      <div class="profile-trigger" aria-label="Profile" @click="toggleProfile">
+    <ul v-show="!mobile" class="navigation">
+      <li><router-link class="link" to="/home">HOME</router-link></li>
+      <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
+      <li><router-link class="link" to="/group">GROUP</router-link></li>
+      <li><router-link class="link" to="/view">VIEW</router-link></li>
+      <li><router-link class="link" to="/about">ABOUT US</router-link></li>     
+      <router-link to="/profile" class="profile-trigger" aria-label="Profile">
         <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
-      </div>
-    </ul>
+    </router-link>
 
-    <ul class="sidebar" :class="{ show: sidebarVisible }">
-      <li @click="hideSidebar">
-        <i class="fa-solid fa-arrow-left fa-lg"></i>
-      </li>
-        <li><router-link to="/">Home</router-link></li>
-        <li><router-link to="/group">Expense</router-link></li>
-        <li><router-link to="/view">View</router-link></li>
-        <li><router-link to="/about">About us</router-link></li>
-      </ul>
-    </nav>
-    <div class="profile-overlay" v-show="profileVisible" @click.self="toggleProfile">
-      <div class="profile-modal" v-html="profileContent"></div>
+    </ul>
+    <div class="icon">
+        <i @click="toggleMobileNav" v-show="mobile" class="far fa-bars" :class="{'icon-active': mobileNav }"></i>
     </div>
-    <div class="home-bg">
+    <transition name="mobile-nav">
+      <ul v-show="mobileNav" class="dropdown-nav">
+      <li><router-link class="link" to="/home">HOME</router-link></li>
+      <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
+      <li><router-link class="link" to="/group">GROUP</router-link></li>
+      <li><router-link class="link" to="/view">VIEW</router-link></li>
+      <li><router-link class="link" to="/about">ABOUT US</router-link></li>   
+      <router-link to="/profile" class="profile-trigger" aria-label="Profile">
+        <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
+    </router-link>
+
+    </ul>
+    </transition>
+    </nav>
+    </header>
+  
     <div class="container">
       <div>
         <img src="/LOGO.png" alt="Logo Image" class="logo" />
@@ -48,204 +47,269 @@
         </p>
       </div>
     </div>
-    </div>
-</v-app>
-</template>
+  </template>
   
-
-
-<script>
-import { ref, onMounted } from 'vue';
-
-export default {
-  setup() {
-    const profileVisible = ref(false);
-    const profileContent = ref('');
-    const sidebarVisible = ref(false);
-    const backToTopBtn = ref(null);
-
-    const toggleProfile = () => {
-      profileVisible.value = !profileVisible.value;
-      if (profileVisible.value) {
-        fetch('profile.php')
-          .then(response => response.text())
-          .then(data => {
-            profileContent.value = data;
-          })
-          .catch(error => console.error('Error loading profile:', error));
+  
+  
+  <script>
+  export default {
+    name: "navigation",
+    data() {
+      return {
+        scrolledNav: null,
+        mobile: null,
+        mobileNav: null,
+        windowwidth: null,
+      };
+    },
+    created() {
+      window.addEventListener('resize', this.checkScreen);
+      this.checkScreen();
+    },
+    mounted() {
+      window.addEventListener("scroll", this.updateScroll);
+    },
+    methods: {
+      toggleMobileNav() {
+      this.mobileNav = !this.mobileNav;
+    },
+  
+    updateScroll() {
+      const scrollPosition = window.scrollY;
+      if (scrollPosition > 50) {
+        return;
       }
-    };
-
-    const showSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value; // Toggle
-};
-
-
-
-    const hideSidebar = () => {
-      console.log("Hiding sidebar");
-      sidebarVisible.value = false;
-    };
-
-    onMounted(() => {
-      window.addEventListener('scroll', () => {
-        if (backToTopBtn.value) {
-          backToTopBtn.value.style.display = window.scrollY > 200 ? 'block' : 'none';
-        }
-      });
-    });
-
-    return {
-      profileVisible,  
-      profileContent,  
-      toggleProfile,
-      sidebarVisible,  
-      showSidebar,
-      hideSidebar,
-      backToTopBtn,
-    };
+      this.scrolledNav = false;
+    },
+  
+    checkScreen(){
+      this.windowWidth = window.innerWidth;
+      if (this.windowWidth <=750){
+        this.mobile = true;
+        return;
+      }
+      this.mobile = false;
+      this.mobileNav = false;
+      return;
+    },
   },
-};
-</script>
-
+  };
+  
+  </script>
   
 
-<style>
-
-body {
+  
+  <style>
+  header {
+    background-color:#2a4935;
+    z-index: 99;
+    width: 100%;
+    position: fixed;
+    transition: .5s ease all;
+    color:#f6f8d5;
+  }
+  
+  nav {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    padding: 6px 0;
+    transition: .5s ease all;
+    width: 90%;
+    margin: 0 auto;
+    @media(min-width: 1140px) {
+    nav {
+        margin-left: 20px; /* Moves nav slightly to the right only on large screens */
+    }
+    }
+  
+  ul, 
+  .link {
+    font-weight: 500;
+    color: #f6f8d5;
+    list-style: none;
+    text-decoration: none;
+  }
+  
+  li {
+    text-transform: uppercase;
+    padding: 16px;
+    margin-left: 30px;
+  }
+  
+  .link {
+    font-size: 20px;
+    transition: .5s ease all;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+  
+    &:hover {
+      color: black;
+      border-color: black;
+    }
+  }
+  
+  .branding {
+    display: flex;
+  }
+  
+    p.title {
+    color: #f6f8d5;
+    margin-left: -10px;
+    font-size: 40px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  }
+  
+  
+  .navigation {
+    display: flex;
+    align-items: end;
+    flex: 1;
+    justify-content: flex-end;
+  }
+  
+  .icon {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    right: 24px;
+    height: 100%;
+  
+    i {
+      cursor: pointer;
+      font-size: 24px;
+      transition: .8s ease all;
+    }
+  }
+  
+  .icon-active {
+    transform: rotate(180deg);
+  }
+  
+  .dropdown-nav {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    width: 100%;
+    max-width: 200px;
+    height: 100vh;
+    background-color: #f6f8d5;
+    top: 0;
+    left: 0;
+  
+    li {
+      margin-left: 0;
+    }
+      .link {
+        color: #000;
+    }
+  }
+  
+    .mobile-nav-enter-active,
+    .mobile-nav-leave-active {
+      transition:  1s ease all;
+    }
+  
+    .mobile-nav-enter-from,
+    .mobile-nav-leave-to {
+      transform: translateX(-250px);
+    }
+  
+    .mobile-nav-enter-to{
+      transform: translateX(0);
+    }
+  }
+  
+  .scrolled-nav {
+    background-color: #000;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
+  
+    nav {
+      padding: 8px 0;
+  
+      .branding {
+        p.title {
+          width: 40px;
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
+        
+        }
+      }
+    }
+  }
+  
+  body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
     height: 100vh;
-}
-
-.home-bg {
-    background-image: url('/public/circle.png') !important;
-    background-size: cover; /* Makes sure it covers the whole screen */
-    background-position: center; /* Centers the image */
-    background-repeat: no-repeat; /* Prevents tiling */
-    height: 100vh; /* Ensure it takes the full viewport height */
-    width: 100vw; /* Ensure it takes the full viewport width */
-}
-
-nav {
-    backdrop-filter: blur(10px); 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1px 50px;
-    box-sizing: border-box;
-    max-height: 120px; 
-    background-color: #304939;
-}
-
-p.title {
-    color: #f6f8d5;
-    font-size: 50px;
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-}
-
-nav ul {
-    list-style-type: none; 
-    padding: 0;
-    margin: 0; 
-    display: flex; 
-    align-items: center; 
-    flex-grow: 1; 
-    justify-content: flex-end;
-    padding-top: 50px;
-    gap: 15px;
-}
-nav ul li a {
-    color: white; 
-    color: inherit;
-    font-size: 20px;
-    text-decoration: none;
-    font-weight: 540;
-    padding: 10px 15px;
-    border-radius: 5px;
-    transition: color 0.3s ease, color 0.3s ease;
-    display: inline-block;
-}
-
-nav ul li img {
-    width: 40px; /* Adjust size as needed */
-    height: 40px; /* Maintain aspect ratio */
-    border-radius: 50%; /* Makes it circular */
-    object-fit: cover; /* Ensures the image fills the space properly */
-}
-
-nav ul li a:hover {
-    background-color: rgba(255, 255, 255, 0.4); 
-    
-}
-
-.container {
+    background-color: #f6f8d5;
+    overflow: hidden; 
+  }
+  
+  .container {
     display: flex;
     align-items: center;
     justify-content: space-between;
     height: 60vh;
     padding: 0 50px; /* Adds space on both sides */
     gap: 50px; 
-    flex-direction: row-reverse; /* Image on the right */
-}
-
-.logo {
-    width: 500px;
+  }
+  
+  .logo {
+    width: 500px; /* Adjust size */
     height: 500px;
-    margin: 250px 20px 50px; /* Push image further right */
-}
-
-.content {
-    flex: 1;
-    text-align: left;
-    padding-left: 50px;
-    margin-top: 150px;
-    max-width: 50%; 
-}
-
-.content h2 {
-    font-size: 4em; 
+    margin-top: 490px;
+    margin-left: 100px;
+  }
+  
+  .content {
+    display: flex;
+    flex: 1; 
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end; 
+    text-align: right;
+    color: black; 
+    padding-right: 100px;
+    margin-top: 430px;
+  
+  }
+  
+  .content h2 {
+    font-size: 3em; 
+    margin-bottom: 20px;
+    margin-right: 90px;
     font-weight: bold;
     text-align: center;
-    color: #f6f8d5;
-    background-clip: text;
-    color: rgb(9, 159, 31);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    animation: fadeIn 2s ease-out;
-}
-
-@keyframes fadeIn {
-    0% {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.content p {
+  
+  }
+  
+  .content p {
     font-size: 1.5em; 
     font-style: italic;
     text-align: justify;
-}
-
-.profile-trigger {
+  }
+  
+  .profile-trigger {
     font-size: 30px;
     color: #f6f8d5; 
     transition: color 0.3s ease, transform 0.3s ease;
     margin-left: 10px;
     cursor: pointer;
-    
-}
-.profile-trigger:hover {
+    display: flex;
+    align-items: center;
+    position: relative;
+    right: -20px; /* Move right */
+    bottom: 10px;
+    text-decoration: none; /* Removes underline */
+  }
+
+  .profile-trigger:hover {
     transform: scale(1.1); 
     
-}
-.profile-overlay {
+  }
+  .profile-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -255,71 +319,6 @@ nav ul li a:hover {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-}
-.sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    height: 300px;
-    width: 250px;
-    background-color: white;
-    box-shadow: -10px 0 10px rgba(0, 0, 0, 0.1);
-    border-radius: 5%;
-    list-style: none;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-}
-
-.sidebar.show {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transform: translateX(0);
-}
-
-
-
-.sidebar li{
-    width: 100%;
-}
-.sidebar a{
-    width: 100%;
-    color: black;
-    
-}
-.sidebar li :hover{
-    background-color: #f1f1f1;
-    
-}
-.menu-button{
-    display: none;
-    margin-left: 250px; 
-}
- @media(max-width: 1200px){
-    .content h2 {
-        font-size: 4em;
-    }
-
-    .content p {
-        font-size: 1em;
-    }
-}
-  @media(max-width: 768px){
-    .hideOnMobile{
-        display: none;
-      }
-    .menu-button{
-        display: block;
-      }
-    
-    .content h2 {
-        font-size: 3em;
-    }
-    .content p {
-        font-size: 0.9em;
-    }
-}
-</style>
+  }
+  
+  </style>
