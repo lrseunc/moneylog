@@ -1,5 +1,4 @@
 <template>
-<v-app>
     <div class="login-bg">
         <div class="container">
             <div class="login-container">
@@ -14,7 +13,7 @@
                             <input type="password" name="password" class="text-style" required>
                         </div>
                         <router-link to="/home" class="login-btn">LOG IN</router-link>
-                        <router-link to="/" class="login-btn">SIGN UP</router-link>
+                        <router-link to="/register" class="login-btn">SIGN UP</router-link>
                     </div>
                 </form>    
                 </div>
@@ -28,8 +27,7 @@
         </div>
         </div>
     </div>
-</v-app>
-</template>
+    </template>
     
     <script setup>
     </script>
@@ -49,7 +47,7 @@
     }
     
     .login-bg {
-        background-image: url('/public/circle.png') !important;
+        background-image: url("/circle.png");
         background-size: cover; /* Makes sure it covers the whole screen */
         background-position: center; /* Centers the image */
         background-repeat: no-repeat; /* Prevents tiling */
@@ -216,9 +214,10 @@
     }
     
     .deco-image {
-        width: 250px;
-        height: 250px;
-        margin: 150px 20px 20px 20px;
+        width: 380px;
+        height: auto;
+        margin-top: 110px; 
+        margin-left: 30px; 
         display: block;
     }
     
