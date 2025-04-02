@@ -93,14 +93,27 @@
           <p>Total: {{ formatCurrency(totalAmount) }}</p>
         </div>
 
+        <div>
+          <pie-chart :data="chartData" 
+          :options="chartOptions" 
+          style="height: 400px; width: auto; justify-self: center;"/>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { Pie } from 'vue-chartjs';
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
+
+ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
+
 export default {
   name: "Navigation",
+  components: {
+    PieChart: Pie
+  }, 
   data() {
     return {
       scrolledNav: null,
@@ -123,6 +136,33 @@ export default {
         { id: 9, member: 'Anne', category: 'Bill', name: 'Electricity Bill', amount: 50.00, date: '2025-03-29' },
         { id: 10, member: 'Sam', category: 'Other', name: 'Coffee', amount: 3.50, date: '2025-03-28' },
       ],
+      filterCategory: 'all', // Default filter is 'all'
+      filterDate: '', // Default date filter is empty
+      chartData: {
+        labels: ['Food', 'Bill', 'Transportation', 'Other'], // Categories for the pie chart
+        datasets: [{
+          label: 'Expense Categories',
+          data: [0, 0, 0, 0], // Initial data for the chart
+          backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'], // Segment colors
+          borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'],
+          borderWidth: 1
+        }]
+      },
+      chartOptions: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            callbacks: {
+              label: function(tooltipItem) {
+                return tooltipItem.label + ': ' + tooltipItem.raw;
+              }
+            }
+          }
+        }
+      },
     };
   },
   computed: {
@@ -141,6 +181,7 @@ export default {
   created() {
     window.addEventListener('resize', this.checkScreen);
     this.checkScreen();
+    this.updateChartData(); // Update chart data on creation
   },
   mounted() {
     window.addEventListener("scroll", this.updateScroll);
@@ -170,8 +211,26 @@ export default {
     },
     formatCurrency(value) {
       return value ? `₱${parseFloat(value).toFixed(2)}` : '₱0.00';
+    },
+    updateChartData() {
+      // Update the data for the pie chart based on filtered expenses
+      const categoryCounts = {
+        Food: 0,
+        Bill: 0,
+        Transportation: 0,
+        Other: 0,
+      };
+      this.filteredExpenses.forEach(expense => {
+        categoryCounts[expense.category] = categoryCounts[expense.category] + expense.amount || expense.amount;
+      });
+      this.chartData.datasets[0].data = [
+        categoryCounts.Food,
+        categoryCounts.Bill,
+        categoryCounts.Transportation,
+        categoryCounts.Other,
+      ];
     }
-  }
+  },
 };
 </script>
 
@@ -185,6 +244,16 @@ header {
   position: sticky;
   transition: .5s ease all;
   color: #f6f8d5;
+}
+.branding {
+  display: flex;
+}
+
+  p.title {
+  color: #f6f8d5;
+  margin-left: -10px;
+  font-size: 40px;
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 }
 
 nav {
@@ -254,7 +323,7 @@ nav {
 }
 
 .scrolled-nav {
-  background-color: #000;
+  background-color: #2a4935;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -335,10 +404,11 @@ button:hover {
 /* Expense Table Styling */
 .expense-table table {
   position: relative;
-  width: 100%;
+  width: 92%;
   margin-top: 20px;
   border-collapse: collapse;
   table-layout: fixed;
+  justify-self: center;
 }
 
 .expense-table th, .expense-table td {
