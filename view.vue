@@ -98,146 +98,225 @@
             :options="chartOptions" 
             style="height: 400px; width: auto; justify-self: center;"/>
           </div>
+        
+          <!-- Year and Month Picker for PDF generation -->
+          <select v-model="selectedYear">
+            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+          </select>
+
+          <select v-model="selectedMonth">
+            <option v-for="month in availableMonths" :key="month.value" :value="month.value">{{ month.label }}</option>
+          </select>
+
+          <button class="download-button" @click="generatePDF">Download Report</button>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-  <script>
-  import { Pie } from 'vue-chartjs';
-  import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
 
-  ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
 
-  export default {
-    name: 'Navigation',
-    components: {
-      PieChart: Pie
-    },
-    data() {
-      return {
-        scrolledNav: null,
-        mobile: null,
-        mobileNav: null,
-        windowWidth: null,
-        currentView: 'view', // Default view is personal budget
-        expenses: [
-          { id: 1, category: 'Food', name: 'Lunch', amount: 12.99, date: '2024-03-30' },
-          { id: 2, category: 'Bill', name: 'Water', amount: 120, date: '2024-03-30' },
-          { id: 3, category: 'Transportation', name: 'Jeep', amount: 13, date: '2024-03-30' },
-          { id: 4, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-          { id: 5, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-          { id: 6, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-          { id: 7, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-          { id: 8, category: 'Transportation', name: 'Bus Ticket', amount: 2.50, date: '2025-03-31' },
-          { id: 9, category: 'Bill', name: 'Electricity Bill', amount: 50.00, date: '2025-03-29' },
-          { id: 10, category: 'Other', name: 'Coffee', amount: 3.50, date: '2025-03-28' },
-        ],
-        filterCategory: 'all', // Default filter is 'all'
-        filterDate: '', // Default date filter is empty
-        chartData: {
-          labels: ['Food', 'Bill', 'Transportation', 'Other'], // Categories for the pie chart
-          datasets: [{
-            label: 'Expense Categories',
-            data: [0, 0, 0, 0], // Initial data for the chart
-            backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'], // Segment colors
-            borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'],
-            borderWidth: 1
-          }]
-        },
-        chartOptions: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'top',
+<script>
+import { Pie } from 'vue-chartjs';
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
+import jsPDF from 'jspdf'; // Import jsPDF
+
+ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
+
+export default {
+  name: 'Navigation',
+  components: {
+    PieChart: Pie,
+  },
+  data() {
+    return {
+      scrolledNav: null,
+      mobile: null,
+      mobileNav: null,
+      windowWidth: null,
+      currentView: 'view', // Default view is personal budget
+      expenses: [
+        { id: 1, category: 'Food', name: 'Lunch', amount: 12.99, date: '2024-03-30' },
+        { id: 2, category: 'Bill', name: 'Water', amount: 120, date: '2024-03-30' },
+        { id: 3, category: 'Transportation', name: 'Jeep', amount: 13, date: '2024-03-30' },
+        { id: 4, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
+        { id: 5, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
+        { id: 6, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
+        { id: 7, category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
+        { id: 8, category: 'Transportation', name: 'Bus Ticket', amount: 2.50, date: '2025-03-31' },
+        { id: 9, category: 'Bill', name: 'Electricity Bill', amount: 50.00, date: '2025-03-29' },
+        { id: 10, category: 'Other', name: 'Coffee', amount: 3.50, date: '2025-03-28' },
+      ],
+      filterCategory: 'all', // Default filter is 'all'
+      filterDate: '', // Default date filter is empty
+      selectedYear: '2025', // Default year selected for PDF
+      selectedMonth: '03', // Default month selected for PDF
+      chartData: {
+        labels: ['Food', 'Bill', 'Transportation', 'Other'], // Categories for the pie chart
+        datasets: [{
+          label: 'Expense Categories',
+          data: [0, 0, 0, 0], // Initial data for the chart
+          backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'], // Segment colors
+          borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'],
+          borderWidth: 1,
+        }],
+      },
+      chartOptions: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          tooltip: {
+            callbacks: {
+              label: function (tooltipItem) {
+                return tooltipItem.label + ': ' + tooltipItem.raw;
+              },
             },
-            tooltip: {
-              callbacks: {
-                label: function(tooltipItem) {
-                  return tooltipItem.label + ': ' + tooltipItem.raw;
-                }
-              }
-            }
-          }
+          },
         },
+      },
+    };
+  },
+  computed: {
+    availableYears() {
+      const years = new Set(); // To get unique years
+      this.expenses.forEach(expense => {
+        const year = expense.date.split('-')[0];
+        years.add(year);
+      });
+      return Array.from(years).sort(); // Convert to array and sort
+    },
+    availableMonths() {
+      return [
+        { value: '01', label: 'January' },
+        { value: '02', label: 'February' },
+        { value: '03', label: 'March' },
+        { value: '04', label: 'April' },
+        { value: '05', label: 'May' },
+        { value: '06', label: 'June' },
+        { value: '07', label: 'July' },
+        { value: '08', label: 'August' },
+        { value: '09', label: 'September' },
+        { value: '10', label: 'October' },
+        { value: '11', label: 'November' },
+        { value: '12', label: 'December' },
+      ];
+    },
+    filteredExpenses() {
+      return this.expenses.filter(expense => {
+        let categoryMatch = this.filterCategory === 'all' || expense.category === this.filterCategory;
+        let dateMatch = !this.filterDate || expense.date.startsWith(this.filterDate); // Fix comparison
+        return categoryMatch && dateMatch;
+      });
+    },
+    totalAmount() {
+      return this.filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    },
+  },
+  created() {
+    window.addEventListener('resize', this.checkScreen);
+    this.checkScreen();
+    this.updateChartData(); // Update chart data on creation
+  },
+  mounted() {
+    window.addEventListener("scroll", this.updateScroll);
+  },
+  methods: {
+    toggleMobileNav() {
+      this.mobileNav = !this.mobileNav;
+    },
+    updateScroll() {
+      const scrollPosition = window.scrollY;
+      this.scrolledNav = scrollPosition > 50;
+    },
+    checkScreen() {
+      this.windowWidth = window.innerWidth;
+      this.mobile = this.windowWidth <= 750;
+      if (!this.mobile) {
+        this.mobileNav = false;
+      }
+    },
+    filterExpenses(category) {
+      this.filterCategory = category;
+      this.updateChartData(); // Update chart data when the filter is changed
+    },
+    filterExpensesByDate() {
+      if (this.filterDate) {
+        this.filterCategory = 'all'; // Reset category filter when searching by date
+        const yearMonth = this.filterDate.slice(0, 7); // Extract the year and month (e.g., "2025-03")
+        this.filteredExpenses = this.expenses.filter(expense => expense.date.slice(0, 7) === yearMonth); // Filter by year-month
+      }
+    },
+    formatCurrency(value) {
+      if (value == null || isNaN(value)) return '₱0.00'; // Ensure valid numbers
+      return '₱' + parseFloat(value).toFixed(2); // Format to 2 decimal places with currency symbol
+    },
+    updateChartData() {
+      // Update the data for the pie chart based on filtered expenses
+      const categoryCounts = {
+        Food: 0,
+        Bill: 0,
+        Transportation: 0,
+        Other: 0,
       };
+
+      this.filteredExpenses.forEach(expense => {
+        categoryCounts[expense.category] = categoryCounts[expense.category] + expense.amount || expense.amount;
+      });
+
+      this.chartData.datasets[0].data = [
+        categoryCounts.Food,
+        categoryCounts.Bill,
+        categoryCounts.Transportation,
+        categoryCounts.Other,
+      ];
     },
-    computed: {
-      filteredExpenses() {
-        return this.expenses.filter(expense => {
-          let categoryMatch = this.filterCategory === 'all' || expense.category === this.filterCategory;
-          let dateMatch = !this.filterDate || expense.date === this.filterDate;
-          return categoryMatch && dateMatch;
-        });
-      },
-      totalAmount() {
-        return this.filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-      }
-    },
-    created() {
-      window.addEventListener('resize', this.checkScreen);
-      this.checkScreen();
-      this.updateChartData(); // Update chart data on creation
-    },
-    mounted() {
-      window.addEventListener("scroll", this.updateScroll);
-    },
-    methods: {
-      toggleMobileNav() {
-        this.mobileNav = !this.mobileNav;
-      },
-      updateScroll() {
-        const scrollPosition = window.scrollY;
-        this.scrolledNav = scrollPosition > 50;
-      },
-      checkScreen() {
-        this.windowWidth = window.innerWidth;
-        this.mobile = this.windowWidth <= 750;
-        if (!this.mobile) {
-          this.mobileNav = false;
+    generatePDF() {
+      const doc = new jsPDF();
+
+      // Add title
+      doc.setFontSize(18);
+      doc.text('Expense Report', 20, 20);
+
+      // Add the total amount
+      doc.setFontSize(12);
+      doc.text(`Total Expenses: ${this.formatCurrency(this.totalAmount)}`, 20, 30);
+
+      // Add a table with filtered expense details
+      let yOffset = 40;
+
+      // Filter expenses based on selected month and year for the PDF
+      const filteredForPDF = this.expenses.filter(expense => {
+        return expense.date.startsWith(`${this.selectedYear}-${this.selectedMonth}`);
+      });
+
+      filteredForPDF.forEach((expense) => {
+        doc.text(`${expense.date} - ${expense.category} - ${expense.name}: ${this.formatCurrency(expense.amount)}`, 20, yOffset);
+        yOffset += 10;
+      });
+
+      // Wait for the chart to render before capturing it
+      this.$nextTick(() => {
+        const chartCanvas = document.querySelector('canvas'); // Assuming the pie chart is rendered on a <canvas> element
+        if (chartCanvas) {
+          const chartImage = chartCanvas.toDataURL('image/png'); // Convert canvas to image
+          doc.addImage(chartImage, 'PNG', 20, yOffset, 160, 100); // Add chart image below the table
+          doc.save('expense-report.pdf'); // Save the PDF
+        } else {
+          console.error("Chart not found");
         }
-      },
-      filterExpenses(category) {
-        this.filterCategory = category;
-        this.updateChartData(); // Update chart data when the filter is changed
-      },
-      filterExpensesByDate() {
-        if (this.filterDate) {
-          this.filterCategory = 'all'; // Reset category filter when searching by date
-        }
-      },
-      formatCurrency(value) {
-        if (!value) return '₱0.00'; 
-        return '₱' + parseFloat(value).toFixed(2); 
-      },
-      updateChartData() {
-        // Update the data for the pie chart based on filtered expenses
-        const categoryCounts = {
-          Food: 0,
-          Bill: 0,
-          Transportation: 0,
-          Other: 0,
-        };
-
-        this.filteredExpenses.forEach(expense => {
-          categoryCounts[expense.category] = categoryCounts[expense.category] + expense.amount || expense.amount;
-        });
-
-        this.chartData.datasets[0].data = [
-          categoryCounts.Food,
-          categoryCounts.Bill,
-          categoryCounts.Transportation,
-          categoryCounts.Other,
-        ];
-      }
+      });
     },
-  };
-  </script>
+  },
+};
+</script>
 
 
 
-  <style scoped>
+
+<style scoped>
   header {
     background-color: #2a4935;
     z-index: 99;
@@ -448,4 +527,18 @@
     font-weight: bold;
   }
 
-  </style>
+  .download-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #2a4935;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.download-button:hover {
+  background-color: #1e3731;
+}
+
+  </style> 
