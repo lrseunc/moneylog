@@ -2,7 +2,7 @@
     <header :class="{ 'scrolled-nav': scrolledNav }">
       <nav>
         <div class="branding">
-          <p class="title">Money Log</p>
+          <p class="money-log-title">Money Log</p>
         </div>
         <ul v-show="!mobile" class="navigation">
           <li><router-link class="link" to="/home">HOME</router-link></li>
@@ -33,6 +33,7 @@
     </header>
 
     <div class="con">
+      <div class="con-container">
       <!-- Navigation Buttons (centered) -->
       <div class="nav-con">
           <button 
@@ -100,7 +101,8 @@
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>
 
   <script>
   import { Pie } from 'vue-chartjs';
@@ -245,6 +247,17 @@
     color: #f6f8d5;
   }
 
+  .branding {
+    display: flex;
+}
+
+.money-log-title {
+    white-space: nowrap;
+    margin-left: -10px;
+    font-size: 40px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
   nav {
     display: flex;
     flex-direction: row;
@@ -321,18 +334,26 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 100vh;
     padding: 20px;
+    min-height: 654px;
   }
 
-  .nav-con {
-    display: flex;
-    margin-top: 200px;
-    position: relative;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
-  }
+  .con-container {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 90%; /* Keep it responsive */
+  margin: 20px auto; /* Centers the container */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-con {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
 
   button {
     padding: 15px 30px;
