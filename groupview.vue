@@ -53,9 +53,13 @@
               <button @click="filterExpenses('Food')" :class="{ active: filterCategory === 'Food' }">Food</button>
               <button @click="filterExpenses('Bill')" :class="{ active: filterCategory === 'Bill' }">Bill</button>
               <button @click="filterExpenses('Transportation')" :class="{ active: filterCategory === 'Transportation' }">Transportation</button>
+              <button @click="filterExpenses('Entertainment')" :class="{ active: filterCategory === 'Entertainment' }">Entertainment</button>
+              <button @click="filterExpenses('Healthcare')" :class="{ active: filterCategory === 'Healthcare' }">Healthcare</button>
+              <button @click="filterExpenses('Personal Care')" :class="{ active: filterCategory === 'Personal Care' }">Personal Care</button>
+              <button @click="filterExpenses('Shopping')" :class="{ active: filterCategory === 'Shopping' }">Shopping</button>
               <button @click="filterExpenses('Other')" :class="{ active: filterCategory === 'Other' }">Other</button>
               <button @click="filterExpenses('all')" :class="{ active: filterCategory === 'all' }">View All</button>
-              
+
               <!-- Member Search -->
               <input type="text" v-model="searchMember" placeholder="Search Member" />
               <input type="date" v-model="filterDate" />
@@ -140,29 +144,30 @@ export default {
       filterCategory: 'all',
       filterDate: '',
       expenses: [
-        { id: 1, member: 'John', category: 'Food', name: 'Lunch', amount: 12.99, date: '2024-03-30' },
-        { id: 2, member: 'Anne', category: 'Bill', name: 'Water', amount: 120, date: '2024-03-30' },
-        { id: 3, member: 'Sam', category: 'Transportation', name: 'Jeep', amount: 13, date: '2024-03-30' },
-        { id: 4, member: 'Luke', category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-        { id: 5, member: 'Anne', category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-        { id: 6, member: 'Sam', category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-        { id: 7, member: 'Luke', category: 'Food', name: 'Lunch', amount: 12.99, date: '2025-03-30' },
-        { id: 8, member: 'John', category: 'Transportation', name: 'Bus Ticket', amount: 2.50, date: '2025-03-31' },
-        { id: 9, member: 'Anne', category: 'Bill', name: 'Electricity Bill', amount: 50.00, date: '2025-03-29' },
-        { id: 10, member: 'Sam', category: 'Other', name: 'Coffee', amount: 3.50, date: '2025-03-28' },
-      ],
+      { id: 1, member: 'Anne', category: 'Food', name: 'Lunch', amount: 50, date: '2024-03-30' },
+      { id: 2, member: 'John', category: 'Bill', name: 'Water', amount: 120, date: '2024-03-30' },
+      { id: 3, member: 'Sam', category: 'Bill', name: 'Water', amount: 120, date: '2024-03-30' },
+      { id: 4, member: 'Mae', category: 'Transportation', name: 'Jeep', amount: 13, date: '2024-03-30' },
+      { id: 5, member: 'Anne', category: 'Entertainment', name: 'Movie', amount: 200, date: '2025-03-30' },
+      { id: 6, member: 'John', category: 'Healthcare', name: 'Doctor Appointment', amount: 500, date: '2025-03-30' },
+      { id: 7, member: 'Sam', category: 'Personal Care', name: 'Haircut', amount: 150, date: '2025-03-30' },
+      { id: 8, member: 'Mae', category: 'Shopping', name: 'Clothes', amount: 300, date: '2025-03-30' },
+      { id: 9, member: 'Anne', category: 'Transportation', name: 'Bus Ticket', amount: 200, date: '2025-03-31' },
+      { id: 10, member: 'John', category: 'Bill', name: 'Electricity Bill', amount: 50.00, date: '2025-03-29' },
+      { id: 11, member: 'Sam', category: 'Other', name: 'Gas', amount: 1000, date: '2025-03-28' },
+    ],
       filterCategory: 'all', // Default filter is 'all'
       filterDate: '', // Default date filter is empty
       selectedYear: '2025', // Default year selected for PDF
       selectedMonth: '03', // Default month selected for PDF
       chartData: {
-        labels: ['Food', 'Bill', 'Transportation', 'Other'], // Categories for the pie chart
-        datasets: [{
-          label: 'Expense Categories',
-          data: [0, 0, 0, 0], // Initial data for the chart
-          backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'], // Segment colors
-          borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3'],
-          borderWidth: 1
+      labels: ['Food', 'Bill', 'Transportation', 'Entertainment', 'Healthcare','Personal Care', 'Shopping', 'Other'], // Categories for the pie chart
+      datasets: [{
+        label: 'Expense Categories',
+        data: [0, 0, 0, 0], // Initial data for the chart
+        backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3', '#ecbefe', '#fefdad', '#feadad', '#adb5fe'  ], // Segment colors
+        borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3', '#ecbefe', '#fefdad', '#feadad', '#adb5fe'],
+        borderWidth: 1,
         }]
       },
       chartOptions: {
@@ -258,21 +263,29 @@ export default {
       return '₱' + parseFloat(value).toFixed(2); // Format to 2 decimal places with currency symbol
     },
     updateChartData() {
-      let categoryCounts = {
-        'Food': 0,
-        'Bill': 0,
-        'Transportation': 0,
-        'Other': 0
+      const categoryCounts = {
+        Food: 0,
+        Bill: 0,
+        Transportation: 0,
+        Entertainment: 0,
+        Healthcare: 0,
+        'Personal Care': 0,
+        Shopping: 0,
+        Other: 0,
       };
       this.filteredExpenses.forEach(expense => {
         categoryCounts[expense.category] += expense.amount;
       });
 
       this.chartData.datasets[0].data = [
-        categoryCounts['Food'],
-        categoryCounts['Bill'],
-        categoryCounts['Transportation'],
-        categoryCounts['Other']
+      categoryCounts.Food,
+      categoryCounts.Bill,
+      categoryCounts.Transportation,
+      categoryCounts.Entertainment,
+      categoryCounts.Healthcare,
+      categoryCounts['Personal Care'],
+      categoryCounts.Shopping,
+      categoryCounts.Other,
       ];
     },
     generatePDF() {
