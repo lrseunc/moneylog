@@ -74,6 +74,7 @@
         justify-content: space-between; 
         flex-direction: row;
         padding: 30px;
+        margin-right: 90px;
     }
     
     .login-form {
@@ -85,11 +86,11 @@
         text-align: center;
         align-items: center;
         margin-top: 25px;
-        margin-left: 30px;
+        margin-left: 20px;
     }
     
     .login-deco-container {
-        width: 45%;
+        width: 55%;
         height: 500px;
         background: rgba(0, 0, 0, 0.4);
         backdrop-filter: blur(10px);
@@ -214,44 +215,43 @@
     }
     
     .deco-image {
-        width: 380px;
+        width: 100%; /* Make it fill the container */
+        max-width: 600px; /* Increase max size */
         height: auto;
-        margin-top: 110px; 
-        margin-left: 30px; 
+        margin-top: 130px; 
         display: block;
     }
-    
+
+    /*RESPONSIVE DESIGN*/
+
     @media (max-width: 1024px) {
         .login-container {
-            flex-direction: column;
-            width: 80%;
-            max-width: 500px;
-            padding: 20px;
+            width: 90%;
+            padding: 15px;
+            margin-right: 100px;
         }
     
-        .login-deco-container {
-            display: none;
+        .login-form-items {
+            width: 90%;
+            margin-left: -15px;
         }
     
+        .text-input-container input,
+        .login-btn {
+            width: 100%;
+        }
+    
+        .login-label {
+            font-size: 1.5em;
+        }
+
         .deco-image {
-            width: 200px;
+            max-width: 600px;
+            margin-top: 110px;
         }
     
         .penny {
-            font-size: 18px;
-        }
-    
-        .login-form {
-            margin-left: 130px;
-            align-items: center;
-        }
-    
-        .login-btn {
-            margin-left: 10px;
-        }
-    
-        .login-btn1 {
-            margin-left: 10px;
+            font-size: 3em;
         }
     }
     
@@ -259,6 +259,7 @@
         .login-container {
             width: 90%;
             padding: 15px;
+            margin-right: 100px;
         }
     
         .login-form-items {
@@ -273,15 +274,20 @@
         .login-label {
             font-size: 1.5em;
         }
-    
+
+        .deco-image {
+            max-width: 600px;
+            margin-top: 110px;
+        }
+
         .penny {
-            font-size: 16px;
+            font-size: 3em;
         }
     }
     
     @media (max-width: 480px) {
         .login-container {
-            width: 95%;
+            width: 90%;
             padding: 10px;
         }
     
@@ -290,12 +296,13 @@
         }
     
         .deco-image {
-            width: 150px;
+            max-width: 600px;
+            margin-top: 70px;
         }
     
         .penny {
-            font-size: 14px;
+            font-size: 3em;
         }
-    
     }
+
     </style>
