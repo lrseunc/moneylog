@@ -2,7 +2,7 @@
   <header :class="{ 'scrolled-nav': scrolledNav }">
     <nav>
       <div class="branding">
-        <p class="money-log-title">Money Log</p>
+        <img src="/LOGO.png" alt="Money Log Logo"/>
       </div>
       <ul v-show="!mobile" class="navigation">
         <li><router-link class="link" to="/home">HOME</router-link></li>
@@ -332,28 +332,20 @@ header {
     display: flex;
 }
 
-.money-log-title {
-    white-space: nowrap;
+img {
+    width: 128px;
+    transition: .5s ease all;
     margin-left: -10px;
-    font-size: 40px;
-    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 }
 
 .branding {
   display: flex;
 }
 
-  p.title {
-  color: #f6f8d5;
-  margin-left: -10px;
-  font-size: 40px;
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-}
-
 nav {
   display: flex;
   flex-direction: row;
-  padding: 6px 0;
+  padding: 8px 0;
   width: 90%;
   margin: 0 auto;
 }
@@ -368,8 +360,9 @@ nav {
   font-size: 16px;
   color: #f6f8d5;
   text-decoration: none;
-  padding: 14px;
+  padding-bottom: 1px;
   transition: .5s ease all;
+  border-bottom: 2px solid transparent;
 }
 
 .link:hover {
@@ -422,21 +415,25 @@ nav {
 }
 
 .con {
-    display: flex; 
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    min-height: 654px;
+  height: 82vh; /* Full screen height */
+  overflow-y: auto;
+  display: flex; 
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: -12px;
 }
 
 .con-container {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 90%; /* Keep it responsive */
-  margin: 20px auto; /* Centers the container */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+height:   80vh; /* Adjust based on your header height */
+overflow-y: auto;
+padding-right: 10px; /* Optional: prevent hidden scrollbar */
+background: white;
+padding: 20px;
+border-radius: 10px;
+max-width: 90%; /* Keep it responsive */
+margin: 20px auto; /* Centers the container */
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .nav-con {
