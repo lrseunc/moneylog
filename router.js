@@ -6,6 +6,7 @@ import Personal from './components/personal.vue';
 import Groupview from './components/groupview.vue';
 import View from './components/view.vue';
 import Group from './components/group.vue';
+import Profile from './components/profile.vue'; 
 
 const routes = [
   { path: '/', redirect: '/login' }, 
@@ -16,6 +17,7 @@ const routes = [
   { path: '/groupview', component: Groupview },
   { path: '/view', component: View },
   { path: '/group', component: Group },
+  { path: '/profile', component: Profile },
 ];
 
 const router = createRouter({
