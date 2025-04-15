@@ -26,12 +26,11 @@
   </script>
   
   <style scoped>
-  /* Global box sizing fix */
   * {
     box-sizing: border-box;
   }
   
-  /* Prevent overflow */
+  /* Prevent horizontal scroll */
   html,
   body {
     max-width: 100vw;
@@ -40,23 +39,20 @@
     padding: 0;
   }
   
-  /* Content wrapper */
   .content-wrapper {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 180px;
-    min-height: 100vh;
+    padding-top: 190px; 
+    min-height: 90vh;
     width: 100%;
     overflow-x: hidden;
   }
   
-  /* Profile card */
   .profile-container {
     background-color: #ffffff;
     border-radius: 15px;
-
-    padding: 30px 25px;
+    padding: 20px 15px;
     max-width: 500px;
     width: 90%;
     text-align: center;
@@ -65,26 +61,25 @@
   
   .profile-container h2 {
     font-style: italic;
-    font-size: 30px;
+    font-size: 28px;
     margin-bottom: 20px;
   }
   
   .profile-container p {
     margin: 10px 0;
     font-style: italic;
-    font-size: 18px;
-    margin-bottom: 20px;
+    font-size: 16px;
+    margin-bottom: 16px;
   }
   
-  /* Logout button */
   .logout {
     display: inline-block;
     padding: 10px 30px;
     background-color: #2a4935;
     font-weight: bold;
     font-size: 16px;
-    margin-top: 15px;
-    margin-bottom: 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     cursor: pointer;
     text-align: center;
     text-decoration: none;
@@ -96,7 +91,7 @@
     background-color: #bde0bd;
   }
   
-  /* Responsive */
+  /* Responsive Design */
   @media screen and (max-width: 1048px) {
     .content-wrapper {
       padding-top: 180px;
@@ -109,7 +104,7 @@
     }
   
     .profile-container p {
-      font-size: 16px;
+      font-size: 15px;
     }
   
     .logout {
@@ -120,13 +115,13 @@
   
   @media screen and (max-width: 768px) {
     .content-wrapper {
-      padding-top: 180px;
+      padding-top: 170px;
       padding-left: 10px;
       padding-right: 10px;
     }
   
     .profile-container {
-      padding: 18px 15px;
+      padding: 16px 12px;
     }
   
     .profile-container h2 {
@@ -145,13 +140,13 @@
   
   @media screen and (max-width: 480px) {
     .content-wrapper {
-      padding-top: 180px;
+      padding-top: 160px;
       padding-left: 5px;
       padding-right: 5px;
     }
   
     .profile-container {
-      padding: 15px 10px;
+      padding: 12px 10px;
     }
   
     .profile-container h2 {
