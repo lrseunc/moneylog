@@ -241,7 +241,7 @@ import Navigation from "./navigation.vue";
 
 /* RESPONSIVE DESIGN */
 
-@media screen and (max-width: 900px) {
+@media screen and (max-width: 1000px) {
     .container {
         margin: 20px 0px 0px 30px;
         padding: 15px;
