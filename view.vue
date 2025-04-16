@@ -63,8 +63,8 @@
           <button @click="filterExpenses('Shopping')" :class="{ active: filterCategory === 'Shopping' }">Shopping</button>
           <button @click="filterExpenses('Other')" :class="{ active: filterCategory === 'Other' }">Other</button>
           <button @click="filterExpenses('all')" :class="{ active: filterCategory === 'all' }">View All</button>
-            <input type="date" v-model="filterDate" />
-            <button @click="filterExpensesByDate" title="Search">
+            <input type="month" v-model="filterMonth" />
+            <button @click="filterExpensesByMonth" title="Search">
                 <i class="fa fa-search"></i>
             </button>
           </form>
@@ -154,7 +154,7 @@ data() {
       { id: 11, category: 'Other', name: 'Gas', amount: 1000, date: '2025-03-28' },
     ],
     filterCategory: 'all', // Default filter is 'all'
-    filterDate: '', // Default date filter is empty
+    filterMonth: '', 
     selectedYear: '2025', // Default year selected for PDF
     selectedMonth: '03', // Default month selected for PDF
     chartData: {
@@ -212,7 +212,7 @@ computed: {
   filteredExpenses() {
     return this.expenses.filter(expense => {
       let categoryMatch = this.filterCategory === 'all' || expense.category === this.filterCategory;
-      let dateMatch = !this.filterDate || expense.date.startsWith(this.filterDate); // Fix comparison
+      let dateMatch = !this.filterMonth || expense.date.startsWith(this.filterMonth);
       return categoryMatch && dateMatch;
     });
   },
@@ -248,42 +248,46 @@ methods: {
     this.updateChartData(); // Update chart data when the filter is changed
   },
   filterExpensesByDate() {
-    if (this.filterDate) {
-      this.filterCategory = 'all'; // Reset category filter when searching by date
-      const yearMonth = this.filterDate.slice(0, 7); // Extract the year and month (e.g., "2025-03")
-      this.filteredExpenses = this.expenses.filter(expense => expense.date.slice(0, 7) === yearMonth); // Filter by year-month
-    }
+    this.filterCategory = 'all'; // Reset category filter
+    this.updateChartData(); // Refresh chart with filtered data
   },
   formatCurrency(value) {
     if (value == null || isNaN(value)) return '₱0.00'; // Ensure valid numbers
     return '₱' + parseFloat(value).toFixed(2); // Format to 2 decimal places with currency symbol
   },
   updateChartData() {
-    // Update the data for the pie chart based on filtered expenses
-    const categoryCounts = {
+  // Prepare a map to hold category totals
+  const categoryCounts = {
     Food: 0,
     Bill: 0,
     Transportation: 0,
     Entertainment: 0,
     Healthcare: 0,
-   'Personal Care': 0,
+    'Personal Care': 0,
     Shopping: 0,
     Other: 0,
-    };
+  };
 
-    this.filteredExpenses.forEach(expense => {
-      categoryCounts[expense.category] = categoryCounts[expense.category] + expense.amount || expense.amount;
-    });
+  // Apply month and category filters here
+  this.expenses.forEach(expense => {
+    const matchesMonth = !this.filterMonth || expense.date.startsWith(this.filterMonth);
+    const matchesCategory = this.filterCategory === 'all' || expense.category === this.filterCategory;
 
+    if (matchesMonth && matchesCategory) {
+      categoryCounts[expense.category] += expense.amount;
+    }
+  });
+
+  // Update the chart data
   this.chartData.datasets[0].data = [
-    categoryCounts.Food,
-    categoryCounts.Bill,
-    categoryCounts.Transportation,
-    categoryCounts.Entertainment,
-    categoryCounts.Healthcare,
-    categoryCounts['Personal Care'],
-    categoryCounts.Shopping,
-    categoryCounts.Other,
+      categoryCounts.Food,
+      categoryCounts.Bill,
+      categoryCounts.Transportation,
+      categoryCounts.Entertainment,
+      categoryCounts.Healthcare,
+      categoryCounts['Personal Care'],
+      categoryCounts.Shopping,
+      categoryCounts.Other,
     ];
   },
   generatePDF() {
@@ -409,6 +413,9 @@ nav {
   transform: rotate(180deg);
 }
 
+.dropdown-nav {
+  margin-top: 0px;
+}
 .dropdown-nav .link,
 .dropdown-nav .profile-trigger {
   color: #2a4935; /* Sidebar text color */
@@ -428,18 +435,19 @@ nav {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: -12px;
+  margin-top: -11px;
 }
 
 .con-container {
 height:   80vh; /* Adjust based on your header height */
 overflow-y: auto;
 padding-right: 10px; /* Optional: prevent hidden scrollbar */
-background: white;
+background: rgb(255, 255, 255);
 padding: 20px;
 border-radius: 10px;
 max-width: 90%; /* Keep it responsive */
-margin: 20px auto; /* Centers the container */
+width: 1100px;
+margin: 30px auto; /* Centers the container */
 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
