@@ -62,8 +62,8 @@
 
               <!-- Member Search -->
               <input type="text" v-model="searchMember" placeholder="Search Member" />
-              <input type="date" v-model="filterDate" />
-              <button @click="filterExpensesByDate" title="Search">
+              <input type="month" v-model="filterMonth" />
+              <button @click="filterExpensesByMonth" title="Search">
                 <i class="fa fa-search"></i>
               </button>
             </form>
@@ -415,6 +415,9 @@ nav {
   transform: rotate(180deg);
 }
 
+.dropdown-nav {
+  margin-top: 0px;
+}
 .dropdown-nav .link,
 .dropdown-nav .profile-trigger {
   color: #2a4935; /* Sidebar text color */
@@ -445,7 +448,8 @@ background: white;
 padding: 20px;
 border-radius: 10px;
 max-width: 90%; /* Keep it responsive */
-margin: 20px auto; /* Centers the container */
+width: 1100px;
+margin: 30px auto; /* Centers the container */
 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
