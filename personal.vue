@@ -172,7 +172,7 @@ import Navigation from "./navigation.vue";
      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
      text-align: center;
      width: 1100px;
-     position: sticky; /* Keeps it visible at the bottom */
+     position: relative; /* Keeps it visible at the bottom */
      bottom: 0; /* Stick to the bottom */
 
  
@@ -285,8 +285,7 @@ import Navigation from "./navigation.vue";
 
     .total {
         font-size: 17px;
-        padding: 15px;
-
+        position: relative;
     }
 }
 
