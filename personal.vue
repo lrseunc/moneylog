@@ -160,7 +160,7 @@ import Navigation from "./navigation.vue";
   font-size: 24px;
   font-weight: bold;
   margin-top: 30px;
-  color: white;
+  color: black;
  }
  
  .total {
