@@ -327,8 +327,9 @@ button.login-btn:hover,
 
     .login-btn,
     .login-btn1 {
-        font-size: 13px;
-        padding: 8px 0;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 2px;
     }
 }
 
@@ -358,8 +359,9 @@ button.login-btn:hover,
 
     .login-btn,
     .login-btn1 {
-        font-size: 12px;
-        padding: 6px 0;
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 2px;
     }
 }
 </style>
