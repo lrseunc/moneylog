@@ -3,34 +3,27 @@
         <div class="container">
             <div class="login-container">
                 <div class="login-form">
-                    <form @submit.prevent="registerUser">
-                        <div class="login-form-items">
-                             <span class="login-label">REGISTER</span>
-    
+                <form @submit.prevent="registerUser">
+                    <div class="login-form-items">
+                        <span class="login-label">REGISTER</span>
                         <div class="text-input-container">
-                            <label class="form-label">USERNAME</label>
-                            <input type="text" name="username" v-model="username" class="text-style" required />
-
-                            <label class="form-label">EMAIL</label>
-                            <input type="email" name="email" v-model="email" class="text-style" required />
-
-                            <label class="form-label">PASSWORD</label>
-                            <input type="password" name="password" v-model="password" class="text-style" required />
-
-                            <label class="form-label">PASSWORD CONFIRMATION</label>
-                            <input type="password" name="password" v-model="password_confirmation" class="text-style" required />
-
-                            <label class="form-label">AGE</label>
-                            <input type="number" name="age" v-model.number="age" class="text-style" required />
+                        <label class="form-label">USERNAME</label>
+                                <input type="text" name="username" class="text-style" required>
+                        <label class="form-label">EMAIL</label>
+                                <input type="email" name="email" class="text-style" required>
+                        <label class="form-label">PASSWORD</label>
+                                <input type="password" name="password" class="text-style" required>
+                        <label class="form-label">AGE</label>
+                                <input type="number" name="age" class="text-style" required>
+                            
+                                <div v-if="successMessage" class="success">{{ successMessage }}</div>
                         </div>
-
-                        <p v-if="serverMessage" class="error-message">{{ serverMessage }}</p>
-
-                        <button type="submit" class="login-btn">SIGN UP</button>
-                        <router-link to="/login" class="login-btn1">SIGN IN</router-link>
+                        <button class="login-btn">SIGN UP</button>
+                        <router-link to="/login" class="login-btn1">LOG IN</router-link>
                     </div>
                 </form>    
             </div>
+            
         <div class="login-deco-container">
         <div class="login-deco">
         <span class="penny">MONEY <br> LOG</span>
@@ -41,54 +34,8 @@
         </div>
     </div>
     </template>
-    
-<script>
-export default {
-  name: "Register", // or any name
-  data() {
-    return {
-      username: '',
-      password: '',
-      password_confirmation: '',
-      email: '',
-      age: '',
-      serverMessage: ''
-    }
-  },
-  methods: {
-  async registerUser() {
-    try {
-      const response = await fetch("http://localhost:8000/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: JSON.stringify({
-          username: this.username,
-          email: this.email,
-          password: this.password,
-          password_confirmation: this.password_confirmation,
-          age: this.age,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Registration failed");
-      }
-
-      const data = await response.json();
-      console.log("Registration success:", data);
-      this.$router.push("/login"); // Redirect after success
-
-    } catch (err) {
-      console.error("Registration error:", err);
-      this.serverMessage = err.message || "Registration failed. Please try again.";
-    }
-  },
-},
-};
+  
+  <script>
 
 </script>
     
