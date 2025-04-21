@@ -321,7 +321,6 @@ body {
   flex: 1; 
   flex-direction: column;
   justify-content: flex-end;
-  align-items: flex-end; 
   text-align: right;
   color: black; 
   padding-right: 100px;
