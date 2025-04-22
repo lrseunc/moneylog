@@ -2,7 +2,7 @@
   <header :class="{ 'scrolled-nav': scrolledNav}">
   <nav>
     <div class="branding">
-      <p class="title">Money Log</p>
+      <img src="/LOGO.png" alt="Money Log Logo"/>
     </div>
   <ul v-show="!mobile" class="navigation">
     <li><router-link class="link" to="/home">HOME</router-link></li>
@@ -39,6 +39,7 @@
     <div>
       <img src="/LOGO.png" alt="Logo Image" class="logo" />
     </div>
+
     <div class="content">
       <h2>Track with ease,<br /> spend with peace!</h2>
       <p>
@@ -52,7 +53,7 @@
 
 
 
-<script>
+<script scoped>
 export default {
   name: "navigation",
   data() {
@@ -61,6 +62,10 @@ export default {
       mobile: null,
       mobileNav: null,
       windowwidth: null,
+
+      // 👇 Add for protected data
+      userInfo: null,
+      error: null
     };
   },
   created() {
@@ -69,33 +74,48 @@ export default {
   },
   mounted() {
     window.addEventListener("scroll", this.updateScroll);
-  },
+
+    // 🔐 Call protected API
+    fetch('http://localhost:3000/api/users/', { // Changed port from 8000 to 3000
+    headers: {
+      'Authorization': 'Bearer ' + localStorage.getItem('jsontoken'), // Changed from authToken
+      'Accept': 'application/json'
+    }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error(res.statusText);
+      return res.json();
+    })
+    .then(data => {
+      this.userInfo = data;
+    })
+    .catch(err => {
+      console.error("API Error:", err);
+      this.error = "Failed to load user data";
+    });
+},
   methods: {
     toggleMobileNav() {
-    this.mobileNav = !this.mobileNav;
+      this.mobileNav = !this.mobileNav;
+    },
+    updateScroll() {
+      const scrollPosition = window.scrollY;
+      if (scrollPosition > 50) {
+        return;
+      }
+      this.scrolledNav = false;
+    },
+    checkScreen() {
+      this.windowWidth = window.innerWidth;
+      if (this.windowWidth <= 750) {
+        this.mobile = true;
+        return;
+      }
+      this.mobile = false;
+      this.mobileNav = false;
+    },
   },
-
-  updateScroll() {
-    const scrollPosition = window.scrollY;
-    if (scrollPosition > 50) {
-      return;
-    }
-    this.scrolledNav = false;
-  },
-
-  checkScreen(){
-    this.windowWidth = window.innerWidth;
-    if (this.windowWidth <=750){
-      this.mobile = true;
-      return;
-    }
-    this.mobile = false;
-    this.mobileNav = false;
-    return;
-  },
-},
 };
-
 </script>
 
 
@@ -118,11 +138,6 @@ nav {
   transition: .5s ease all;
   width: 90%;
   margin: 0 auto;
-  @media(min-width: 1140px) {
-  nav {
-      margin-left: 20px; /* Moves nav slightly to the right only on large screens */
-  }
-  }
 
 ul, 
 .link {
@@ -302,17 +317,19 @@ body {
 
 .container {
   display: flex;
+  flex-direction: row; /* horizontal layout */
   align-items: center;
   justify-content: space-between;
-  height: 60vh;
-  padding: 0 50px; /* Adds space on both sides */
-  gap: 80px; 
+  height: 100vh;
+  padding: 0 80px;
+  gap: 80px;
 }
+
 
 .logo {
   width: 550px; /* Adjust size */
   height: 550px;
-  margin-top: 460px;
+  margin-top: 170px;
   margin-left: 80px;
 }
 
@@ -323,16 +340,15 @@ body {
   justify-content: flex-end;
   text-align: right;
   color: black; 
-  padding-right: 100px;
-  margin-right: 60px;
-  margin-top: 430px;
-
+  margin-right: 40px;
+  margin-top: 170px;
 }
 
 .content h2 {
   font-size: 3em; 
   font-weight: bold;
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .content p {
@@ -344,105 +360,101 @@ body {
 /* RESPONSIVE DESIGN */
 
 @media only screen and (max-width: 1440px) {
-  .container {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
   .logo {
-    margin-top: 150px;
+    margin-top: 100px;
     margin-left: -10px;
     margin-bottom: -30px;
-    width: 500px;
-    height: 500px;
+    width: 480px;
+    height: 480px;
   }
   .content {
     align-items: center;
     text-align: center;
-    margin: 0;
+    margin-top: 170px;
     padding: 0;
   }
   .content h2 {
-    font-size: 3em;
+    font-size: 46px;
     margin: 0;
     margin-bottom: 30px;
   }
   .content p {
-    font-size: 1.5em;
+    font-size: 23px;
     margin: 0;
     margin-bottom: 60px;
   }
 }
 
 @media only screen and (max-width: 1280px) {
+  .logo {
+    margin-top: 120px;
+    margin-left: -10px;
+    margin-bottom: -30px;
+    width: 420px;
+    height: 420px;
+  }
+  .content {
+    align-items: center;
+    text-align: center;
+    margin-top: 170px;
+    margin-right: 10px;
+    padding: 0;
+  }
+  .content h2 {
+    font-size: 2.5em;
+    margin: 0;
+    margin-bottom: 20px;
+  }
+  .content p {
+    font-size: 1.4em;
+    margin: 0;
+    margin-bottom: 30px;
+  }
+}
+
+@media only screen and (max-width: 1120px) {
+  .logo {
+    margin-top: 150px;
+    margin-left: -10px;
+    margin-bottom: -30px;
+    width: 400px;
+    height: 400px;
+  }
+  .content {
+    align-items: center;
+    text-align: center;
+    margin-top: 170px;
+    margin-right: 10px;
+    padding: 0;
+  }
+  .content h2 {
+    font-size: 2.5em;
+    margin: 0;
+    margin-bottom: 20px;
+  }
+  .content p {
+    font-size: 1.3em;
+    margin: 0;
+    margin-bottom: 10px;
+  }
+}
+
+@media only screen and (max-width: 1000px) {
   .container {
     flex-direction: column;
     align-items: center;
     gap: 20px;
   }
-  .logo {
-    margin-top: 150px;
-    margin-left: -10px;
-    margin-bottom: -30px;
-    width: 500px;
-    height: 500px;
-  }
-  .content {
-    align-items: center;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-  }
-  .content h2 {
-    font-size: 3em;
-    margin: 0;
-    margin-bottom: 30px;
-  }
-  .content p {
-    font-size: 1.5em;
-    margin: 0;
-    margin-bottom: 60px;
-  }
-}
-
-@media only screen and (max-width: 1024px) {
-  .container {
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-  .logo {
-    margin-top: 150px;
-    margin-left: -10px;
-    margin-bottom: -30px;
-    width: 500px;
-    height: 500px;
-  }
-  .content {
-    align-items: center;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-  }
-  .content h2 {
-    font-size: 3em;
-    margin: 0;
-    margin-bottom: 30px;
-  }
-  .content p {
-    font-size: 1.5em;
-    margin: 0;
-    margin-bottom: 60px;
-  }
-}
-
-@media only screen and (max-width: 768px) {
   .logo {
     margin-top: 150px;
     width: 450px;
     height: 450px;
   }
+  .content{
+    margin: 0;
+  }
   .content h2 {
+    margin-top: 10px;
     font-size: 2.5em;
   }
   .content p {
@@ -451,10 +463,18 @@ body {
 }
 
 @media only screen and (max-width: 480px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
 
   .logo {
     width: 200px;
     height: 200px;
+  }
+  .content{
+    margin: 0;
   }
   .content h2 {
     font-size: 1.5em;
