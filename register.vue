@@ -1,8 +1,9 @@
-   <style scoped>
-    @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+<style scoped>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
     
     
-        .register-bg {
+    .register-bg {
     background-image: url("/circle.png");
     background-size: cover;
     background-position: center;
@@ -178,7 +179,6 @@
         letter-spacing: 2px;
         padding-top: 10px;
         text-align: center;
-        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     }
     
     /* RESPONSIVE — Keep side-by-side, scale content */
