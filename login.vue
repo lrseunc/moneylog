@@ -1,28 +1,20 @@
 <style scoped>
     @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
     
-    body {
-        margin: 0;
-        padding: 0;
-        width: 100vw;
-        height: 100vh;
+    .login-bg {
+        background-image: url("/circle.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        width: 100%;
+        padding: 20px;
+        box-sizing: border-box;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-family: 'Lato', sans-serif;
+        overflow-x: hidden;
     }
-    
-    .login-bg {
-    background-image: url("/circle.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    width: 100vw;
-    height: 100vh; /* Ensure full screen height */
-    display: flex;
-    justify-content: center;
-    align-items: center; /* Center vertically */
-}
     
     .container {
         width: 100%;
@@ -33,8 +25,9 @@
     }
     
     .login-container {
-        width: 90%;
+        width: 100%;
         max-width: 650px;
+        min-width: 390px;
         height: auto;
         background: rgba(255, 255, 255, 0.5);
         backdrop-filter: blur(10px);
@@ -45,6 +38,7 @@
         padding: 30px;
         gap: 20px;
         box-sizing: border-box;
+        margin-top: 100px;
     }
     
     .login-form {
@@ -60,7 +54,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        width: 100%;
+        width: 99%;
     }
     
     span.login-label {
@@ -189,7 +183,6 @@
         .login-container {
             padding: 20px;
             gap: 10px;
-            margin: 80px;
         }
     
         .login-form,
@@ -215,8 +208,11 @@
         .login-container {
             padding: 20px;
             gap: 10px;
-            margin: 80px;
         }
+
+        .text-input-container {
+                width: 100%;
+            }
     
         .login-form,
         .login-deco-container {
@@ -245,7 +241,6 @@
         .login-container {
             padding: 20px;
             gap: 10px;
-            margin: 80px;
         }
     
         .login-form,
