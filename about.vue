@@ -392,6 +392,7 @@ body {
 }
 
 .content p {
+  font-size: 1.4em;
   font-style: italic;
   text-align: justify;
 }
@@ -418,7 +419,7 @@ body {
     margin-bottom: 30px;
   }
   .content p {
-    font-size: 1em;
+    font-size: 1.3em;
     margin: 0;
   }
 }
@@ -445,7 +446,7 @@ body {
     margin-bottom: 20px;
   }
   .content p {
-    font-size: 1em;
+    font-size: 1.2em;
     margin: 0;
   }
 }
@@ -471,7 +472,7 @@ body {
     margin-bottom: 20px;
   }
   .content p {
-    font-size: 0.9em;
+    font-size: 1.1em;
     margin: 0;
   }
 }
