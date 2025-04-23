@@ -191,7 +191,7 @@ display: flex;
 align-items: end;
 flex: 1;
 justify-content: flex-end;
-margin-top: 35px;
+margin-top: 50px;
 font-family: Arial, Helvetica, sans-serif;
 }
 
