@@ -88,9 +88,9 @@ position: absolute;
 background-color: #2a4935;
 z-index: 99;
 width: 102%;
-position: sticky;
+position: fixed;
 transition: .5s ease all;
-height: 100px;
+height: 120px;
 margin-left: -10px;
 margin-top: -10px;
 }
@@ -144,11 +144,11 @@ display: flex;
 align-items: center;
 
 img {
-  width: 100px;
+  width: 110px;
   height: auto;
   transition: .5s ease all;
   margin-left: -10px;
-  margin-top: -5px;
+  margin-top: 2px;
 }
 }
 
@@ -157,7 +157,7 @@ display: flex;
 align-items: end;
 flex: 1;
 justify-content: flex-end;
-margin-top: 35px;
+margin-top: 50px;
 font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -188,7 +188,7 @@ position: fixed;
 width: 100%;
 max-width: 200px;
 height: 100vh;
-background-color: rgb(10, 140, 10);
+background-color: #7ec492; 
 margin-top: 0;
 left: 0;
 
