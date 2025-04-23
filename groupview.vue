@@ -288,14 +288,6 @@ export default {
 
 
 <style scoped>
-header {
-  background-color: #2a4935;
-  z-index: 99;
-  width: 100%;
-  position: sticky;
-  transition: .5s ease all;
-  color: #f6f8d5;
-}
 
 .con {
   height: 85vh; /* Full screen height */
