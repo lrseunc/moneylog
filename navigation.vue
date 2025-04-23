@@ -5,7 +5,6 @@
       <img src="/LOGO.png" alt="Money Log Logo"/>
     </div>
   <ul v-show="!mobile" class="navigation">
-    <li><router-link class="link" to="/home">HOME</router-link></li>
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
     <li><router-link class="link" to="/view">VIEW</router-link></li>
@@ -20,7 +19,6 @@
   </div>
   <transition name="mobile-nav">
     <ul v-show="mobileNav" class="dropdown-nav">
-    <li><router-link class="link" to="/home">HOME</router-link></li>
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
     <li><router-link class="link" to="/view">VIEW</router-link></li>
@@ -84,15 +82,17 @@ checkScreen(){
 </script>
 
 
-<style>
+<style scoped>
 header {
 position: absolute;
-background-color:#2a4935;
+background-color: green;
 z-index: 99;
-width: 100%;
-position: fixed;
+width: 102%;
+position: sticky;
 transition: .5s ease all;
-color:#f6f8d5;
+height: 100px;
+margin-left: -10px;
+margin-top: -10px;
 }
 
 nav {
@@ -103,23 +103,18 @@ padding: 8px 0;
 transition: .5s ease all;
 width: 90%;
 margin: 0 auto;
-@media(min-width: 1140px) {
-nav {
-    margin-left: 20px; /* Moves nav slightly to the right only on large screens */
-}
-}
 
 ul, 
 .link {
 font-weight: 500;
-color: #f6f8d5;
+color: #ffffff;
 list-style: none;
 text-decoration: none;
 }
 
 .user {
 font-weight: 500;
-color: #f6f8d5;
+color: #ffffff;
 list-style: none;
 text-decoration: none;
 }
@@ -148,9 +143,11 @@ display: flex;
 align-items: center;
 
 img {
-  width: 128px;
+  width: 100px;
+  height: auto;
   transition: .5s ease all;
   margin-left: -10px;
+  margin-top: -10px;
 }
 }
 
@@ -159,6 +156,8 @@ display: flex;
 align-items: end;
 flex: 1;
 justify-content: flex-end;
+margin-top: 35px;
+font-family: Arial, Helvetica, sans-serif;
 }
 
 .icon {
@@ -168,6 +167,7 @@ position: absolute;
 top: 0;
 right: 24px;
 height: 100%;
+color: #ffffff;
 
 i {
   cursor: pointer;
@@ -187,23 +187,23 @@ position: fixed;
 width: 100%;
 max-width: 200px;
 height: 100vh;
-background-color: #D6EFD8;
+background-color: rgb(10, 140, 10);
 margin-top: 0;
-top: 0;
 left: 0;
 
 
 li {
   margin-left: 0;
+  margin-top: 10px;
 }
   .link {
-    color: #000;
+    color: white;
 }
 
   .user {
-    color: #000;
+    color: white;
     margin-left: 15px;
-    margin-top: 5px;
+    margin-top: 10px;
 }
 }
 
@@ -233,7 +233,6 @@ nav {
     img {
       width: 40px;
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
-    
     }
   }
 }
@@ -242,7 +241,7 @@ nav {
 
 .profile-trigger {
 font-size: 30px;
-color: #f6f8d5; 
+color: white; 
 transition: color 0.3s ease, transform 0.3s ease;
 margin-left: 10px;
 cursor: pointer;
