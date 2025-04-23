@@ -290,7 +290,7 @@ methods: {
 <style scoped>
 
 .con {
-  height: 570px; /* Full screen height */
+  height: 580px; /* Full screen height */
   overflow-y: auto;
   display: flex; 
   flex-direction: column;
@@ -301,11 +301,10 @@ methods: {
 .con-container {
 overflow-y: auto;
 padding-right: 10px; /* Optional: prevent hidden scrollbar */
-background: rgb(255, 255, 255);
+background: white;
 padding: 20px;
 border-radius: 10px;
 max-width: 1000px; /* Keep it responsive */
-width: 90%;
 margin: 20px auto; /* Centers the container */
 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
