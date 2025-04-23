@@ -120,15 +120,13 @@ export default {
 
 <style>
 header {
-position: absolute;
 background-color: #2a4935;
 z-index: 99;
 width: 102%;
-position: sticky;
+position: fixed;
 transition: .5s ease all;
-height: 100px;
+height: 120px;
 margin-left: -10px;
-margin-top: -10px;
 }
 
 nav {
@@ -180,11 +178,11 @@ display: flex;
 align-items: center;
 
 img {
-  width: 100px;
+  width: 110px;
   height: auto;
   transition: .5s ease all;
   margin-left: -10px;
-  margin-top: -5px;
+  margin-top: 2px;
 }
 }
 
@@ -366,7 +364,7 @@ body {
   height: 100vh;
   padding: 0 80px;
   gap: 50px;
-  margin-top: -100px;
+  margin-top: -10px;
 }
 
 
@@ -494,10 +492,11 @@ body {
   }
   .content h2 {
     margin-top: 10px;
-    font-size: 2.5em;
+    font-size: 1.8em;
   }
   .content p {
-    font-size: 1.3em;
+    font-size: 1em;
+    margin-bottom: 20px;
   }
 }
 
@@ -509,17 +508,19 @@ body {
   }
 
   .logo {
-    width: 300px;
-    height: 300px;
+    width: 330px;
+    height: 330px;
   }
   .content{
     margin: 0;
   }
   .content h2 {
+    margin-top: 10px;
     font-size: 1.5em;
   }
   .content p {
-    font-size: 1.1em;
+    font-size: 1em;
+    margin-bottom: 20px;
   }
 }
 
