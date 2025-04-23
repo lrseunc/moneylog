@@ -1,36 +1,5 @@
 <template>
-  <header :class="{ 'scrolled-nav': scrolledNav }">
-    <nav>
-      <div class="branding">
-        <img src="/LOGO.png" alt="Money Log Logo"/>
-      </div>
-      <ul v-show="!mobile" class="navigation">
-        <li><router-link class="link" to="/home">HOME</router-link></li>
-        <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
-        <li><router-link class="link" to="/group">GROUP</router-link></li>
-        <li><router-link class="link" to="/view">VIEW</router-link></li>
-        <li><router-link class="link" to="/about">ABOUT</router-link></li>
-        <router-link to="/profile" class="profile-trigger" aria-label="Profile">
-          <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
-        </router-link>
-      </ul>
-      <div class="icon">
-        <i @click="toggleMobileNav" v-show="mobile" class="far fa-bars" :class="{'icon-active': mobileNav }"></i>
-      </div>
-      <transition name="mobile-nav">
-        <ul v-show="mobileNav" class="dropdown-nav">
-          <li><router-link class="link" to="/home">HOME</router-link></li>
-          <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
-          <li><router-link class="link" to="/group">GROUP</router-link></li>
-          <li><router-link class="link" to="/view">VIEW</router-link></li>
-          <li><router-link class="link" to="/about">ABOUT US</router-link></li>
-          <router-link to="/profile" class="user" aria-label="Profile">
-            <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
-          </router-link>
-        </ul>
-      </transition>
-    </nav>
-  </header>
+<navigation/>
 
   <div class="con">
     <div class="con-container">
@@ -122,6 +91,7 @@
 
 
 <script>
+import Navigation from "./navigation.vue"; 
 import { Pie } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
 import jsPDF from 'jspdf';  
@@ -129,16 +99,13 @@ import jsPDF from 'jspdf';
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
 
 export default {
-  name: "Navigation",
   components: {
-    PieChart: Pie
+    Navigation,
+    PieChart: Pie,
   },
   data() {
     return {
       scrolledNav: null,
-      mobile: null,
-      mobileNav: null,
-      windowWidth: null,
       currentView: 'view',
       searchMember: '', // Member search filter
       filterCategory: 'all',
@@ -225,27 +192,15 @@ export default {
     }
   },
   created() {
-    window.addEventListener('resize', this.checkScreen);
-    this.checkScreen();
     this.updateChartData(); // Update chart data on creation
   },
   mounted() {
     window.addEventListener("scroll", this.updateScroll);
   },
   methods: {
-    toggleMobileNav() {
-      this.mobileNav = !this.mobileNav;
-    },
     updateScroll() {
       const scrollPosition = window.scrollY;
       this.scrolledNav = scrollPosition > 50;
-    },
-    checkScreen() {
-      this.windowWidth = window.innerWidth;
-      this.mobile = this.windowWidth <= 750;
-      if (!this.mobile) {
-        this.mobileNav = false;
-      }
     },
     filterExpenses(category) {
       this.filterCategory = category;
@@ -341,115 +296,25 @@ header {
   transition: .5s ease all;
   color: #f6f8d5;
 }
-.branding {
-    display: flex;
-}
-
-img {
-    width: 128px;
-    transition: .5s ease all;
-    margin-left: -10px;
-}
-
-.branding {
-  display: flex;
-}
-
-nav {
-  display: flex;
-  flex-direction: row;
-  padding: 8px 0;
-  width: 90%;
-  margin: 0 auto;
-}
-
-.navigation {
-  display: flex;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.link {
-  font-size: 16px;
-  color: #f6f8d5;
-  text-decoration: none;
-  padding-bottom: 1px;
-  transition: .5s ease all;
-  border-bottom: 2px solid transparent;
-}
-
-.link:hover {
-  color: black;
-  border-color: black;
-}
-
-.profile-trigger {
-  font-size: 30px;
-  color: #f6f8d5;
-  margin-left: 10px;
-  cursor: pointer;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-.profile-trigger:hover {
-  transform: scale(1.1);
-  color: black;
-}
-
-.icon {
-  position: absolute;
-  top: 0;
-  right: 24px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.icon i {
-  cursor: pointer;
-  font-size: 24px;
-  transition: .8s ease all;
-}
-
-.icon-active {
-  transform: rotate(180deg);
-}
-
-.dropdown-nav {
-  margin-top: 0px;
-}
-.dropdown-nav .link,
-.dropdown-nav .profile-trigger {
-  color: #2a4935; /* Sidebar text color */
-  font-size: 18px;
-  padding: 10px;
-}
-
-.scrolled-nav {
-  background-color: #2a4935;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
 
 .con {
-  height: 82vh; /* Full screen height */
+  height: 85vh; /* Full screen height */
   overflow-y: auto;
   display: flex; 
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: -12px;
 }
 
 .con-container {
-height:   80vh; /* Adjust based on your header height */
 overflow-y: auto;
-padding-right: 10px; /* Optional: prevent hidden scrollbar */
+padding-right: 10px;
 background: white;
 padding: 20px;
 border-radius: 10px;
-max-width: 90%; /* Keep it responsive */
-width: 1100px;
-margin: 30px auto; /* Centers the container */
+max-width: 1000px; /* Keep it responsive */
+width: 90%;
+margin: 20px auto; /* Centers the container */
 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -569,5 +434,10 @@ button:hover {
 
 .download-button:hover {
   background-color: #1e3731;
+}
+
+canvas {
+  max-width: 100%;
+  height: 400px !important;
 }
 </style>
