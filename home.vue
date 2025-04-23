@@ -5,7 +5,6 @@
       <img src="/LOGO.png" alt="Money Log Logo"/>
     </div>
   <ul v-show="!mobile" class="navigation">
-    <li><router-link class="link" to="/home">HOME</router-link></li>
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
     <li><router-link class="link" to="/view">VIEW</router-link></li>
@@ -20,11 +19,10 @@
   </div>
   <transition name="mobile-nav">
     <ul v-show="mobileNav" class="dropdown-nav">
-    <li><router-link class="link" to="/home">HOME</router-link></li>
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
     <li><router-link class="link" to="/view">VIEW</router-link></li>
-    <li><router-link class="link" to="/about">ABOUT US</router-link></li>   
+    <li><router-link class="link" to="/about">ABOUT</router-link></li>   
     <router-link to="/profile" class="user" aria-label="Profile">
       <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
     </router-link>
@@ -122,151 +120,195 @@ export default {
 
 <style>
 header {
-  background-color:#2a4935;
-  z-index: 99;
-  width: 100%;
-  position: fixed;
-  transition: .5s ease all;
-  color:#f6f8d5;
+position: absolute;
+background-color: green;
+z-index: 99;
+width: 102%;
+position: sticky;
+transition: .5s ease all;
+height: 100px;
+margin-left: -10px;
+margin-top: -10px;
 }
 
 nav {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  padding: 6px 0;
-  transition: .5s ease all;
-  width: 90%;
-  margin: 0 auto;
+font-family: 'Poppins', sans-serif;
+position: relative;
+display: flex;
+flex-direction: row;
+padding: 8px 0;
+transition: .5s ease all;
+width: 90%;
+margin: 0 auto;
 
 ul, 
 .link {
-  font-weight: 500;
-  color: #f6f8d5;
-  list-style: none;
-  text-decoration: none;
+font-weight: 500;
+color: #ffffff;
+list-style: none;
+text-decoration: none;
 }
 
 .user {
-  font-weight: 500;
-  color: #f6f8d5;
-  list-style: none;
-  text-decoration: none;
+font-weight: 500;
+color: #ffffff;
+list-style: none;
+text-decoration: none;
 }
 
 
 li {
-  text-transform: uppercase;
-  padding: 14px;
-  margin-left: 15px;
+text-transform: uppercase;
+padding: 14px;
+margin-left: 15px;
 }
 
 .link {
-  font-size: 16px;
-  transition: .5s ease all;
-  padding-bottom: 1px;
-  border-bottom: 2px solid transparent;
+font-size: 18px;
+transition: .5s ease all;
+padding-bottom: 1px;
+border-bottom: 2px solid transparent;
 
-  &:hover {
-    color: black;
-    border-color: black;
-  }
+&:hover {
+  color: black;
+  border-color: black;
+}
 }
 
 .branding {
-  display: flex;
-}
+display: flex;
+align-items: center;
 
-  p.title {
-  color: #f6f8d5;
+img {
+  width: 100px;
+  height: auto;
+  transition: .5s ease all;
   margin-left: -10px;
-  font-size: 40px;
-  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  margin-top: -5px;
 }
-
+}
 
 .navigation {
-  display: flex;
-  align-items: end;
-  flex: 1;
-  justify-content: flex-end;
+display: flex;
+align-items: end;
+flex: 1;
+justify-content: flex-end;
+margin-top: 35px;
+font-family: Arial, Helvetica, sans-serif;
 }
 
 .icon {
-  display: flex;
-  align-items: center;
-  position: absolute;
-  top: 0;
-  right: 24px;
-  height: 100%;
+display: flex;
+align-items: center;
+position: absolute;
+top: 0;
+right: 24px;
+height: 100%;
+color: #ffffff;
 
-  i {
-    cursor: pointer;
-    font-size: 24px;
-    transition: .8s ease all;
-  }
+i {
+  cursor: pointer;
+  font-size: 24px;
+  transition: .8s ease all;
+}
 }
 
 .icon-active {
-  transform: rotate(180deg);
+transform: rotate(180deg);
 }
 
 .dropdown-nav {
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  width: 100%;
-  max-width: 200px;
-  height: 100vh;
-  background-color: #D6EFD8;
-  top: 0;
-  left: 0;
+display: flex;
+flex-direction: column;
+position: fixed;
+width: 100%;
+max-width: 200px;
+height: 100vh;
+background-color: rgb(10, 140, 10);
+margin-top: 0;
+left: 0;
 
 
-  li {
-    margin-left: 0;
-  }
-    .link {
-      color: #000;
-  }
-
-    .user {
-      color: #000;
-      margin-left: 15px;
-      margin-top: 5px;
-  }
+li {
+  margin-left: 0;
+  margin-top: 10px;
+}
+  .link {
+    color: white;
 }
 
-  .mobile-nav-enter-active,
-  .mobile-nav-leave-active {
-    transition:  1s ease all;
-  }
+  .user {
+    color: white;
+    margin-left: 15px;
+    margin-top: 10px;
+}
+}
 
-  .mobile-nav-enter-from,
-  .mobile-nav-leave-to {
-    transform: translateX(-250px);
-  }
+.mobile-nav-enter-active,
+.mobile-nav-leave-active {
+  transition:  1s ease all;
+}
 
-  .mobile-nav-enter-to{
-    transform: translateX(0);
-  }
+.mobile-nav-enter-from,
+.mobile-nav-leave-to {
+  transform: translateX(-250px);
+}
+
+.mobile-nav-enter-to{
+  transform: translateX(0);
+}
 }
 
 .scrolled-nav {
-  background-color: #000;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
+background-color: #000;
+box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
 
-  nav {
-    padding: 8px 0;
+nav {
+  padding: 18px 0;
 
-    .branding {
-      p.title {
-        width: 40px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
-      
-      }
+  .branding {
+    img {
+      width: 40px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba (0, 0, 0, 0.6);
     }
   }
+}
+}
+
+
+.profile-trigger {
+font-size: 30px;
+color: white; 
+transition: color 0.3s ease, transform 0.3s ease;
+margin-left: 10px;
+cursor: pointer;
+display: flex;
+align-items: center;
+position: relative;
+right: -20px; /* Move right */
+bottom: 10px;
+text-decoration: none; /* Removes underline */
+
+&:hover {
+  color: black;
+  border-color: black;
+}
+}
+
+.profile-trigger:hover {
+transform: scale(1.1); 
+
+}
+.profile-overlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 1000;
 }
 
 body {
@@ -274,7 +316,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100vh;
-  background-color: #f6f8d5;
+  background-color: #fcffed;
   overflow-x: hidden; /* Prevents horizontal scrolling */
   overflow-y: auto; /* Allows vertical scrolling */
 }
@@ -282,7 +324,7 @@ body {
 
 .profile-trigger {
   font-size: 30px;
-  color: #f6f8d5; 
+  color: #ffffff; 
   transition: color 0.3s ease, transform 0.3s ease;
   margin-left: 10px;
   cursor: pointer;
@@ -323,14 +365,15 @@ body {
   height: 100vh;
   padding: 0 80px;
   gap: 80px;
+  margin-top: -100px;
 }
 
 
 .logo {
   width: 550px; /* Adjust size */
   height: 550px;
-  margin-top: 170px;
-  margin-left: 80px;
+  margin-top: 70px;
+  margin-left: 20px;
 }
 
 .content {
@@ -341,7 +384,6 @@ body {
   text-align: right;
   color: black; 
   margin-right: 40px;
-  margin-top: 170px;
 }
 
 .content h2 {
@@ -361,7 +403,7 @@ body {
 
 @media only screen and (max-width: 1440px) {
   .logo {
-    margin-top: 100px;
+    margin-top: 0px;
     margin-left: -10px;
     margin-bottom: -30px;
     width: 480px;
@@ -369,8 +411,8 @@ body {
   }
   .content {
     align-items: center;
+    margin-top: 120px;
     text-align: center;
-    margin-top: 170px;
     padding: 0;
   }
   .content h2 {
@@ -387,16 +429,17 @@ body {
 
 @media only screen and (max-width: 1280px) {
   .logo {
-    margin-top: 120px;
+    margin-top: 50px;
     margin-left: -10px;
     margin-bottom: -30px;
     width: 420px;
     height: 420px;
   }
+
   .content {
     align-items: center;
     text-align: center;
-    margin-top: 170px;
+    margin-top: 100px;
     margin-right: 10px;
     padding: 0;
   }
@@ -414,7 +457,7 @@ body {
 
 @media only screen and (max-width: 1120px) {
   .logo {
-    margin-top: 150px;
+    margin-top: 50px;
     margin-left: -10px;
     margin-bottom: -30px;
     width: 400px;
@@ -423,7 +466,7 @@ body {
   .content {
     align-items: center;
     text-align: center;
-    margin-top: 170px;
+    margin-top: 100px;
     margin-right: 10px;
     padding: 0;
   }
@@ -447,8 +490,8 @@ body {
   }
   .logo {
     margin-top: 150px;
-    width: 450px;
-    height: 450px;
+    width: 380px;
+    height: 380px;
   }
   .content{
     margin: 0;
@@ -470,8 +513,8 @@ body {
   }
 
   .logo {
-    width: 200px;
-    height: 200px;
+    width: 300px;
+    height: 300px;
   }
   .content{
     margin: 0;
