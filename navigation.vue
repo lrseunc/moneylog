@@ -187,7 +187,7 @@ position: fixed;
 width: 100%;
 max-width: 200px;
 height: 100vh;
-background-color: #7ec492; 
+background-color: #fcffed; 
 margin-top: 0;
 left: 0;
 
@@ -197,11 +197,11 @@ li {
   margin-top: 10px;
 }
   .link {
-    color: white;
+    color: black;
 }
 
   .user {
-    color: white;
+    color: black;
     margin-left: 15px;
     margin-top: 10px;
 }
