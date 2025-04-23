@@ -1,39 +1,4 @@
-<template>
-    <div class="login-bg">
-        <div class="container">
-            <div class="login-container">
-                <div class="login-form">
-                <form @submit.prevent="login">
-                    <div class="login-form-items">
-                        <span class="login-label">LOG IN</span>
-                        <div class="text-input-container">
-                        <label class="form-label">USERNAME</label>
-                            <input type="text" name="username" class="text-style" required>
-                        <label class="form-label">PASSWORD</label>
-                            <input type="password" name="password" class="text-style" required>
-                        </div>
-                        <router-link to="/home" class="login-btn">SIGN IN</router-link>
-                        <router-link to="/register" class="login-btn">SIGN UP</router-link>
-                    </div>
-                </form>    
-                </div>
-                
-        <div class="login-deco-container">
-        <div class="login-deco">
-        <span class="penny">MONEY <br> LOG</span>
-            <img src="/LOGO.png" alt="Logo Image" class="deco-image">  
-        </div>
-        </div>
-        </div>
-        </div>
-    </div>
-    </template>
-    
-    <script setup>
-    </script>
-    
-    
-    <style scoped>
+<style scoped>
     @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
     
     body {
@@ -48,15 +13,20 @@
     }
     
     .login-bg {
-        background-image: url("/circle.png");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-    }
+    background-image: url("/circle.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100vw;
+    height: 100vh; /* Ensure full screen height */
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Center vertically */
+}
     
     .container {
-        width: 100vw;
-        min-height: 100vh;
+        width: 100%;
+        min-height: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -114,7 +84,7 @@
         width: 100%;
         padding: 4px;
         font-size: 14px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
     }
     
     input.text-style {
@@ -219,13 +189,12 @@
         .login-container {
             padding: 20px;
             gap: 10px;
-            width: 90%;
-            margin-right: 100px;
+            margin: 80px;
         }
     
         .login-form,
         .login-deco-container {
-            width: 48%;
+            width: 50%;
         }
     
         .deco-image {
@@ -234,7 +203,7 @@
         }
     
         .penny {
-            font-size: 32px;
+            font-size: 36px;
         }
     
         .login-label {
@@ -244,22 +213,22 @@
     
     @media (max-width: 768px) {
         .login-container {
-            padding: 15px;
-            width: 90%;
-            margin-right: 100px;
+            padding: 20px;
+            gap: 10px;
+            margin: 80px;
         }
     
         .login-form,
         .login-deco-container {
-            width: 48%;
+            width: 50%;
         }
     
         .deco-image {
-            max-width: 200px;
+            max-width: 220px;
         }
     
         .penny {
-            font-size: 26px;
+            font-size: 32px;
         }
     
         .login-label {
@@ -274,23 +243,22 @@
     
     @media (max-width: 480px) {
         .login-container {
-            padding: 10px;
-            gap: 5px;
-            width: 90%;
-            margin-right: 100px;
+            padding: 20px;
+            gap: 10px;
+            margin: 80px;
         }
     
         .login-form,
         .login-deco-container {
-            width: 48%;
+            width: 50%;
         }
     
         .deco-image {
-            max-width: 150px;
+            max-width: 220px;
         }
     
         .penny {
-            font-size: 18px;
+            font-size: 28px;
         }
     
         .login-label {
