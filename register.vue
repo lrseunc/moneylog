@@ -1,7 +1,4 @@
 <style scoped>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
-    
     
     .register-bg {
     background-image: url("/circle.png");
@@ -24,6 +21,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        margin-top: -100px;
     }
     
     .login-container {
@@ -104,7 +102,6 @@
         font-weight: 350;
         font-size: 15px;
         margin-bottom: 5px;
-        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     }
     
     button.login-btn,
@@ -179,6 +176,7 @@
         letter-spacing: 2px;
         padding-top: 10px;
         text-align: center;
+        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     }
     
     /* RESPONSIVE — Keep side-by-side, scale content */
