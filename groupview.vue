@@ -290,7 +290,7 @@ export default {
 <style scoped>
 
 .con {
-  height: 85vh; /* Full screen height */
+  height: 580px; /* Full screen height */
   overflow-y: auto;
   display: flex; 
   flex-direction: column;
