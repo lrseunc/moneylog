@@ -25,26 +25,19 @@
   };
   </script>
   
-  <style scoped>
+<style scoped>
+
   * {
     box-sizing: border-box;
   }
-  
-  /* Prevent horizontal scroll */
-  html,
-  body {
-    max-width: 100vw;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
-  }
+
   
   .content-wrapper {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 190px; 
-    min-height: 90vh;
+    padding-top: 70px; 
+    min-height: 82vh;
     width: 100%;
     overflow-x: hidden;
   }
@@ -60,6 +53,7 @@
   }
   
   .profile-container h2 {
+    font-family: 'Poppins', sans-serif;
     font-style: italic;
     font-size: 28px;
     margin-bottom: 20px;
@@ -67,6 +61,7 @@
   
   .profile-container p {
     margin: 10px 0;
+    font-family: 'Poppins', sans-serif;
     font-style: italic;
     font-size: 16px;
     margin-bottom: 16px;
@@ -76,6 +71,7 @@
     display: inline-block;
     padding: 10px 30px;
     background-color: #2a4935;
+    font-family: 'Poppins', sans-serif;
     font-weight: bold;
     font-size: 16px;
     margin-top: 10px;
@@ -94,7 +90,7 @@
   /* Responsive Design */
   @media screen and (max-width: 1048px) {
     .content-wrapper {
-      padding-top: 180px;
+      padding-top: 70px;
       padding-left: 20px;
       padding-right: 20px;
     }
@@ -115,7 +111,7 @@
   
   @media screen and (max-width: 768px) {
     .content-wrapper {
-      padding-top: 170px;
+      padding-top: 60px;
       padding-left: 10px;
       padding-right: 10px;
     }
@@ -140,7 +136,7 @@
   
   @media screen and (max-width: 480px) {
     .content-wrapper {
-      padding-top: 160px;
+      padding-top: 60px;
       padding-left: 5px;
       padding-right: 5px;
     }
