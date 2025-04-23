@@ -84,11 +84,10 @@ checkScreen(){
 
 <style scoped>
 header {
-position: absolute;
+position: fixed;
 background-color: #2a4935;
 z-index: 99;
 width: 102%;
-position: fixed;
 transition: .5s ease all;
 height: 120px;
 margin-left: -10px;
