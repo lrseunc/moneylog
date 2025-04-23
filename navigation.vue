@@ -85,7 +85,7 @@ checkScreen(){
 <style scoped>
 header {
 position: absolute;
-background-color: green;
+background-color: #2a4935;
 z-index: 99;
 width: 102%;
 position: sticky;
