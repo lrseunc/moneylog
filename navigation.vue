@@ -22,7 +22,7 @@
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
     <li><router-link class="link" to="/view">VIEW</router-link></li>
-    <li><router-link class="link" to="/about">ABOUT US</router-link></li>   
+    <li><router-link class="link" to="/about">ABOUT</router-link></li>   
     <router-link to="/profile" class="user" aria-label="Profile">
       <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
     </router-link>
@@ -96,6 +96,7 @@ margin-top: -10px;
 }
 
 nav {
+font-family: 'Poppins', sans-serif;
 position: relative;
 display: flex;
 flex-direction: row;
@@ -147,7 +148,7 @@ img {
   height: auto;
   transition: .5s ease all;
   margin-left: -10px;
-  margin-top: -10px;
+  margin-top: -5px;
 }
 }
 
