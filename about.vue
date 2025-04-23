@@ -369,13 +369,14 @@ body {
 
 
 .logo {
-  width: 550px; /* Adjust size */
-  height: 550px;
+  width: 450px; /* Adjust size */
+  height: 450px;
   margin-top: 70px;
   margin-left: 20px;
 }
 
 .content {
+  margin-top: 100px;
   display: flex;
   flex: 1; 
   flex-direction: column;
@@ -389,6 +390,7 @@ body {
   font-size: 3em; 
   font-weight: bold;
   text-align: center;
+  margin-bottom: 10px;
 }
 
 .content p {
@@ -404,12 +406,12 @@ body {
     margin-top: 50px;
     margin-left: -10px;
     margin-bottom: -30px;
-    width: 480px;
-    height: 480px;
+    width: 450px;
+    height: 450px;
   }
   .content {
     align-items: center;
-    margin-top: 120px;
+    margin-top: 100px;
     text-align: center;
     padding: 0;
   }
@@ -429,8 +431,8 @@ body {
     margin-top: 50px;
     margin-left: -10px;
     margin-bottom: -30px;
-    width: 420px;
-    height: 420px;
+    width: 400px;
+    height: 400px;
   }
 
   .content {
@@ -473,7 +475,6 @@ body {
   }
   .content p {
     font-size: 1.1em;
-    margin: 0;
   }
 }
 
