@@ -43,6 +43,7 @@
   }
   
   .profile-container {
+    margin-top: 100px;
     background-color: #ffffff;
     border-radius: 15px;
     padding: 20px 15px;
@@ -159,4 +160,3 @@
     }
   }
   </style>
-  
