@@ -1,16 +1,6 @@
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
 
-body {
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Lato', sans-serif;
-}
 
 .register-bg {
     background-image: url("/circle.png");
@@ -60,6 +50,7 @@ body {
     flex-direction: column;
     align-items: center;
     width: 99%;
+    
 }
 
 span.login-label {
@@ -107,6 +98,7 @@ input:focus {
     font-weight: 350;
     font-size: 15px;
     margin-bottom: 5px;
+    font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 button.login-btn,
@@ -119,6 +111,7 @@ button.login-btn,
     color: black;
     font-weight: 700;
     font-size: 14px;
+    font-family: sans-serif;
     letter-spacing: 2px;
     margin-top: 10px;
     cursor: pointer;
