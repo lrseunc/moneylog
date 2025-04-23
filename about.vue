@@ -121,7 +121,7 @@ export default {
 <style>
 header {
 position: absolute;
-background-color: green;
+background-color: #2a4935;
 z-index: 99;
 width: 102%;
 position: sticky;
@@ -311,6 +311,7 @@ align-items: center;
 z-index: 1000;
 }
 
+
 body {
   font-family: 'Poppins', sans-serif;
   margin: 0;
@@ -364,7 +365,7 @@ body {
   justify-content: space-between;
   height: 100vh;
   padding: 0 80px;
-  gap: 80px;
+  gap: 50px;
   margin-top: -100px;
 }
 
@@ -383,18 +384,16 @@ body {
   justify-content: flex-end;
   text-align: right;
   color: black; 
-  margin-right: 40px;
+  font-size: 20px;
 }
 
 .content h2 {
   font-size: 3em; 
   font-weight: bold;
   text-align: center;
-  margin-bottom: 10px;
 }
 
 .content p {
-  font-size: 1.5em; 
   font-style: italic;
   text-align: justify;
 }
@@ -403,7 +402,7 @@ body {
 
 @media only screen and (max-width: 1440px) {
   .logo {
-    margin-top: 0px;
+    margin-top: 50px;
     margin-left: -10px;
     margin-bottom: -30px;
     width: 480px;
@@ -421,9 +420,8 @@ body {
     margin-bottom: 30px;
   }
   .content p {
-    font-size: 23px;
+    font-size: 1em;
     margin: 0;
-    margin-bottom: 60px;
   }
 }
 
@@ -444,14 +442,13 @@ body {
     padding: 0;
   }
   .content h2 {
-    font-size: 2.5em;
+    font-size: 2em;
     margin: 0;
     margin-bottom: 20px;
   }
   .content p {
-    font-size: 1.4em;
+    font-size: 1em;
     margin: 0;
-    margin-bottom: 30px;
   }
 }
 
@@ -471,14 +468,13 @@ body {
     padding: 0;
   }
   .content h2 {
-    font-size: 2.5em;
+    font-size: 2em;
     margin: 0;
     margin-bottom: 20px;
   }
   .content p {
-    font-size: 1.3em;
+    font-size: 0.9em;
     margin: 0;
-    margin-bottom: 10px;
   }
 }
 
