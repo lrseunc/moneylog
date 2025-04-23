@@ -128,7 +128,7 @@ margin-left: 15px;
 }
 
 .link {
-font-size: 16px;
+font-size: 18px;
 transition: .5s ease all;
 padding-bottom: 1px;
 border-bottom: 2px solid transparent;
