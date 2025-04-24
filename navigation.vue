@@ -187,7 +187,7 @@ width: 100%;
 max-width: 200px;
 height: 100vh;
 background-color: #fcffed; 
-margin-top: -6px;
+margin-top: 2px;
 left: 0;
 
 
