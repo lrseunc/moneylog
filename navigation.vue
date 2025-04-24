@@ -7,7 +7,8 @@
   <ul v-show="!mobile" class="navigation">
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
-    <li><router-link class="link" to="/view">VIEW</router-link></li>
+    <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
+    <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>
     <li><router-link class="link" to="/about">ABOUT</router-link></li>     
     <router-link to="/profile" class="profile-trigger" aria-label="Profile">
       <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
@@ -21,7 +22,8 @@
     <ul v-show="mobileNav" class="dropdown-nav">
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/group">GROUP</router-link></li>
-    <li><router-link class="link" to="/view">VIEW</router-link></li>
+    <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
+    <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>
     <li><router-link class="link" to="/about">ABOUT</router-link></li>   
     <router-link to="/profile" class="user" aria-label="Profile">
       <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
@@ -127,7 +129,7 @@ margin-left: 15px;
 }
 
 .link {
-font-size: 18px;
+font-size: 16px;
 transition: .5s ease all;
 padding-bottom: 1px;
 border-bottom: 2px solid transparent;
