@@ -21,7 +21,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: -100px;
     }
     
     .login-container {
@@ -38,7 +37,6 @@
         padding: 30px;
         gap: 20px;
         box-sizing: border-box;
-        margin-top: 100px;
     }
     
     .login-form {
