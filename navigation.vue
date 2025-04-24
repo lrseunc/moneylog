@@ -107,14 +107,14 @@ margin: 0 auto;
 ul, 
 .link {
 font-weight: 500;
-color: #ffffff;
+color: #fcffed;
 list-style: none;
 text-decoration: none;
 }
 
 .user {
 font-weight: 500;
-color: #ffffff;
+color: #fcffed;
 list-style: none;
 text-decoration: none;
 }
@@ -146,7 +146,6 @@ img {
   width: 110px;
   height: auto;
   transition: .5s ease all;
-  margin-left: -10px;
   margin-top: 2px;
 }
 }
@@ -167,7 +166,7 @@ position: absolute;
 top: 0;
 right: 24px;
 height: 100%;
-color: #ffffff;
+color: #fcffed;
 
 i {
   cursor: pointer;
@@ -188,7 +187,7 @@ width: 100%;
 max-width: 200px;
 height: 100vh;
 background-color: #fcffed; 
-margin-top: 0;
+margin-top: -6px;
 left: 0;
 
 
@@ -241,7 +240,7 @@ nav {
 
 .profile-trigger {
 font-size: 30px;
-color: white; 
+color: #fcffed; 
 transition: color 0.3s ease, transform 0.3s ease;
 margin-left: 10px;
 cursor: pointer;
