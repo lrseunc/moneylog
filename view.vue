@@ -341,7 +341,7 @@ button:hover {
   border: 2px solid #336333;
   border-radius: 20px;
   width: 70%; 
-  min-width: 345px;
+  min-width: 380px;
   max-width: 900px; /* Optional: keep for responsiveness */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
@@ -410,9 +410,10 @@ button:hover {
 }
 
 .chart{
+  width: 380px;
   padding: 20px;
   box-sizing: border-box;
-  background: #f4fff4;
+  background: #ecfcec;
   border-radius: 20px;
   max-height: 600px;
   border: 2px solid #336333;
@@ -447,14 +448,14 @@ background-color: #1e3731;
 
 .summary-box {
   padding: 12px 20px;
-  background-color: #e6fbe6;
+  background-color: #99da99;
   border: 2px solid #1e3731;
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   font-size: 16px;
   margin-bottom: 10px;
   text-align: center;
-  color: #2a4935;
+  color: #000000;
 }
 
 </style> 
