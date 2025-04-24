@@ -1,4 +1,3 @@
-
 <style scoped>
 .main-layout {
   display: flex;
@@ -22,6 +21,7 @@
   background-color: #4a7c59; 
   padding: 25px;
   border-radius: 15px;
+  border: 2px solid #2e4e38;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   height: auto;
   color: white;
@@ -200,6 +200,7 @@
   align-content: center;
   width: 70%;
   background-color: #85cf9d;
+  border: 2px solid #365c42;
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -214,6 +215,7 @@
   background-color: white;
   padding: 20px;
   border-radius: 15px;
+  border: 2px solid #85cf9d;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
  
