@@ -2,21 +2,11 @@
   <navigation/>
 
   <div class="con">
+    <div class="nav-con">
+          <h1>Personal Expenses</h1>
+    </div>
     <div class="con-container">
     <!-- Navigation Buttons (centered) -->
-    <div class="nav-con">
-        <button 
-            @click="currentView = 'view'" 
-            :class="{ active: $route.path === '/view' }">
-            Personal Expenses
-        </button>
-        <router-link to="/groupview" class="link">
-            <button :class="{ active: $route.path === '/groupview' }">
-                Group Expenses
-            </button>
-        </router-link>
-    </div>
-
     <!-- Content Based on the Current View -->
     <div v-if="currentView === 'view'" class="budget-section">
       <div class="content-wrapper">
@@ -65,29 +55,36 @@
         <div class="total-amount">
           <p>Total: {{ formatCurrency(totalAmount) }}</p>
         </div>
-
-        <div>
-          <pie-chart :data="chartData" 
-          :options="chartOptions" 
-          style="height: 400px; width: auto; justify-self: center;"/>
-        </div>
-      
-        <!-- Year and Month Picker for PDF generation -->
-        <select v-model="selectedYear">
-          <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
-        </select>
-
-        <select v-model="selectedMonth">
-          <option v-for="month in availableMonths" :key="month.value" :value="month.value">{{ month.label }}</option>
-        </select>
-
-        <button class="download-button" @click="generatePDF">Download Report</button>
       </div>
     </div>
   </div>
-</div>
-</template>
+  <div class="chart-summary">
+        <div class="chart">
+          <pie-chart :data="chartData" 
+          :options="chartOptions" 
+          style="height: 200px;"/>
+        
+          <!-- Year and Month Picker for PDF generation -->
+          <div class="download">
+          <select v-model="selectedYear">
+            <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+          </select>
 
+          <select v-model="selectedMonth">
+            <option v-for="month in availableMonths" :key="month.value" :value="month.value">{{ month.label }}</option>
+          </select>
+
+          <button class="download-button" @click="generatePDF">Download Report</button>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <p><strong>Total Expenses:</strong> {{ formatCurrency(totalAmount) }}</p>
+        <p><strong>Remaining Budget:</strong> {{ formatCurrency(budget - totalAmount) }}</p>
+      </div>
+    </div>
+    </div>
+</template>
 
 
 <script>
@@ -105,7 +102,7 @@ components: {
 },
 data() {
   return {
-    scrolledNav: null,
+    budget: 5000,
     currentView: 'view', // Default view is personal budget
     expenses: [
       { id: 1, category: 'Food', name: 'Lunch', amount: 50, date: '2024-03-30' },
@@ -129,8 +126,8 @@ data() {
       datasets: [{
         label: 'Expense Categories',
         data: [0, 0, 0, 0], // Initial data for the chart
-        backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3', '#ecbefe', '#fefdad', '#feadad', '#adb5fe'  ], // Segment colors
-        borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3', '#ecbefe', '#fefdad', '#feadad', '#adb5fe'],
+        backgroundColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3', '#ecbefe', '#fefdad', '#feadad', '#adb5fe' , '#e8b543'], // Segment colors
+        borderColor: ['#90fefb', '#febee9', '#aefda3', '#f5fda3', '#ecbefe', '#fefdad', '#feadad', '#adb5fe', '#e8b543'],
         borderWidth: 1,
       }],
     },
@@ -190,14 +187,7 @@ computed: {
 created() {
   this.updateChartData(); // Update chart data on creation
 },
-mounted() {
-  window.addEventListener("scroll", this.updateScroll);
-},
 methods: {
-  updateScroll() {
-    const scrollPosition = window.scrollY;
-    this.scrolledNav = scrollPosition > 50;
-  },
   filterExpenses(category) {
     this.filterCategory = category;
     this.updateChartData(); // Update chart data when the filter is changed
@@ -290,41 +280,34 @@ methods: {
 <style scoped>
 
 .con {
-  height: 580px; /* Full screen height */
-  overflow-y: auto;
-  display: flex; 
-  flex-direction: column;
+  display: flex;
   justify-content: center;
-  align-items: center;
-}
-
-.con-container {
-overflow-y: auto;
-padding-right: 10px; /* Optional: prevent hidden scrollbar */
-background: white;
-padding: 20px;
-border-radius: 10px;
-max-width: 1000px; /* Keep it responsive */
-margin: 20px auto; /* Centers the container */
-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  align-items: flex-start;
+  flex-wrap: wrap; /* Optional: stack on small screens */
+  gap: 10px;
 }
 
 .nav-con {
+font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+font-size: 20px;
+position: relative;
+margin-top: 120px;
 display: flex;
-flex-wrap: wrap;
 justify-content: center;
-align-items: center;
-gap: 10px;
+margin-bottom: -10px;
+width: 100%;
 }
 
+
 button {
-  padding: 15px 30px;
+  border-radius: 8px;
+  padding: 12px 20px;
   position: relative;
   font-size: 20px;
-  border: 2px solid #ccc;
-  background-color: #f4f4f4;
+  border: 2px solid #386233;
+  background-color: #fffef5;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: 0.3s ease;
 }
 
 button.active {
@@ -333,7 +316,8 @@ button.active {
 }
 
 button:hover {
-  background-color: #ddd;
+  background-color: #2a4935;
+  color: white;
 }
 
 .budget-section {
@@ -352,15 +336,29 @@ button:hover {
   color: red;
 }
 
+.con-container {
+  background: rgb(216, 248, 216);
+  border: 2px solid #336333;
+  border-radius: 20px;
+  width: 70%; 
+  min-width: 345px;
+  max-width: 900px; /* Optional: keep for responsiveness */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
 /* Filter Buttons Styling */
 .filter-buttons button {
   position: relative;
-  padding: 12px 20px;
-  margin: 5px;
-  border-radius: 5px;
-  background-color: #f2feed;
-  border: 2px solid #ccc;
+  padding: 8px;
+  margin: 3px;
+  border-radius: 1px;
+  background-color: #ffffff;
+  border: 2px solid #336333;
   transition: all 0.3s ease;
+  font-size: 15px;
+  border-radius: 6px;
 }
 
 .filter-buttons button.active {
@@ -370,7 +368,7 @@ button:hover {
 }
 
 .filter-buttons button:hover {
-  background-color: #ddd;
+  background-color: #2a4935;
 }
 
 /* Expense Table Styling */
@@ -388,6 +386,7 @@ button:hover {
   text-align: left;
   border: 1px solid #000000;
   vertical-align: top;
+  word-break: break-word; 
 }
 
 .expense-table th {
@@ -401,7 +400,7 @@ button:hover {
 
 /* Alternate Row Color */
 .expense-table tr.alternate-row {
-  background-color: #d2fcfe;
+  background-color: #fffef5;
 }
 
 /* Total Amount Styling */
@@ -410,22 +409,52 @@ button:hover {
   font-weight: bold;
 }
 
+.chart{
+  padding: 20px;
+  box-sizing: border-box;
+  background: #f4fff4;
+  border-radius: 20px;
+  max-height: 600px;
+  border: 2px solid #336333;
+  margin-bottom: 10px;
+}
+
+.download{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; 
+  align-items: center; 
+  margin-top: 10px;
+}
+
 .download-button {
+display: flex;
+flex-wrap: wrap;
 padding: 10px 20px;
 font-size: 16px;
 background-color: #2a4935;
 color: white;
 border: none;
 cursor: pointer;
-margin-top: 20px;
+align-self: center;
+margin-bottom: 10px;
+margin-left: 3px;
 }
 
 .download-button:hover {
 background-color: #1e3731;
 }
 
-canvas {
-  max-width: 100%;
-  height: 400px !important;
+.summary-box {
+  padding: 12px 20px;
+  background-color: #e6fbe6;
+  border: 2px solid #1e3731;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-size: 16px;
+  margin-bottom: 10px;
+  text-align: center;
+  color: #2a4935;
 }
+
 </style> 
