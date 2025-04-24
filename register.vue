@@ -1,18 +1,17 @@
-<style scoped>
+ <style scoped>
     
     .register-bg {
     background-image: url("/circle.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
     padding: 20px;
     box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow-x: hidden;
     }
 
     .container {
@@ -21,7 +20,6 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: -100px;
     }
     
     .login-container {
@@ -37,7 +35,6 @@
         padding: 30px;
         gap: 20px;
         box-sizing: border-box;
-        margin-top: 100px;
     }
     
     .login-form {
