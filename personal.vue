@@ -1,36 +1,69 @@
 <template>
   <navigation/>
   <div class="main-layout">
-    <div class="top-row"> <!-- NEWWWWWWWWWWWWWWWWWW-->
+    <div class="top-row"> 
   <div class="budget-container">
     <div class="budget-content">
+      <div v-if="budgetSuccessMessage" class="budget-success-message" :class="{ hide: budgetHideMessage }">{{ budgetSuccessMessage }}</div>
+      <div class="budget-header"> <!--NEWWWWWWWWWW-->
       <h3>Monthly Budget</h3>
-      <div class="budget-form">
+      <button v-if="!hasExistingBudget" @click="showAddBudgetForm" class="add-budget-btn">Add Budget</button>
+      <button @click="showEditBudgetForm" class="edit-budget-btn">Edit Budget</button>
+    </div>
+
+      <div v-if="!isAddingBudget && !isEditingBudget" class="budget-display">
+            <div class="budget-info">
+              <div class="budget-month-row"> <!--NEWWWWWWWWWWW-->
+                <span class="budget-label">Month-Year:</span>
+              <span class="budget-month">{{ formatMonthYear(selectedMonthYear) }}</span>
+              </div>
+              <div class="budget-amount-row">
+                <span class="budget-label">Budget Amount:</span>
+              <span class="budget-amount">{{ formatPHP(currentBudgetAmount) }}</span>
+            </div>
+        </div>
+        </div>
+
+        <!--FOR ADDING BUDGET-->
+        <div v-if="isAddingBudget" class="budget-form">
         <div class="form-group">
           <label for="monthYear">Month-Year:</label>
           <select id="monthYear" v-model="selectedMonthYear">
-            <option v-for="month in availableMonths" :key="month" :value="month">
-              {{ formatMonthYear(month) }}
-            </option>
+            <option v-for="month in availableMonths" :key="month" :value="month">{{ formatMonthYear(month) }}</option>
           </select>
         </div>
         <div class="form-group">
           <label for="budgetAmount">Budget Amount (₱):</label>
-          <input 
-            type="number" 
-            id="budgetAmount" 
-            v-model="budgetAmount" 
-            placeholder="Enter budget amount" 
-            step="0.01"
-            min="0"
-          >
+          <input type="number" id="budgetAmount" v-model="budgetAmount" placeholder="Enter budget amount" step="0.01" min="0">
         </div>
-        <button class="budget-btn" @click="handleBudgetSubmit">
-          {{ budgetEditId ? 'Update Budget' : 'Set Budget' }}
-        </button>
-      </div>
+
+        <div class="budget-form-buttons"> <!--NEWWWWWWWW-->
+          <button class="budget-btn cancel-btn" @click="cancelBudgetForm">Cancel </button>
+            <button class="budget-btn" @click="addBudget">Set Budget</button>
+      
+          </div>
     </div>
-  </div>
+
+            <!-- FOR EDITING BUDGET -->
+            <div v-if="isEditingBudget" class="budget-form">
+          <div class="form-group">
+            <label for="editMonthYear">Month-Year:</label>
+            <select id="editMonthYear" v-model="selectedMonthYear">
+            <option v-for="month in availableMonths" :key="month" :value="month">{{ formatMonthYear(month) }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editBudgetAmount">Budget Amount (₱):</label>
+            <input type="number" id="editBudgetAmount" v-model="budgetAmount" placeholder="Enter budget amount" step="0.01" min="0" >
+          </div>
+          <div class="budget-form-buttons">
+            <button class="budget-btn cancel-btn" @click="cancelBudgetForm">Cancel</button>
+            <button class="budget-btn" @click="updateBudget">Update Budget</button>
+          </div>
+        </div>
+</div>
+</div>
+
 
   <!--ADDING EXPENSESSSS-->
     <div class="content-wrapper">
@@ -69,19 +102,17 @@
          </div>
  
          <button class="btn" type="submit">{{ editId ? 'Save Changes' : 'Add Expense' }}</button>
-       
+         <div v-if="expenseSuccessMessage" class="expense-success-message" :class="{ hide: expenseHideMessage }">{{ expenseSuccessMessage }}</div>
       </form>
 
-      <div v-if="successMessage" ref="successMessage" class="success-message" :class="{ hide: hideMessage }"> {{ successMessage }} </div>
-
       </div>
       </div>
 
-      <!--YOUR EXPENSESSSSS-->
+      <!--YOUR LIST OF EXPENSES-->
       <div class="expenses-container">
-      <div class="expenses-section"> <!-- NEWWWWWWWWWWW-->
-        <h3>Your Expenses</h3> <!-- NEWWWWWWWWWWW-->
-         <div class="expenses-table"> <!-- NEWWWWWWWWWWW-->
+      <div class="expenses-section"> 
+        <h3>Your Expenses</h3> 
+         <div class="expenses-table"> 
           <table>
             <thead>
               <tr>
@@ -98,12 +129,6 @@
                 <td>{{ expense.item_name }}</td>
                 <td>₱{{ expense.item_price.toFixed(2) }}</td>
                 <td>{{ formatDate(expense.expense_date) }}</td>
-                <td>
-                  <span v-if="getBudgetForExpense(expense)">
-                    {{ formatPHP(getBudgetForExpense(expense).budget_amount) }}
-                  </span>
-                  <span v-else>Not set</span>
-                  </td> <!--NEWWWWW-->
                   <td class="actions">
                   <button @click="editExpense(expense)" class="edit-btn">Edit</button>
                   <button @click="deleteExpense(expense.id)" class="delete-btn">Delete</button>
@@ -136,15 +161,24 @@
        successMessage: '',
        editId: null,
        expenses: [],
-       personalBudgetId: null, //TEMPORARYYYYYYYYYYYYYYYYYY
+       personalBudgetId: null,
        action: 'add',
        hideMessage: false,
        successTimeout: null,
        usdExchangeRate: 56.50,
        selectedMonthYear: '',
-      budgetAmount: '',
-      budgetEditId: null,
-      personalBudgets: [] 
+       budgetAmount: '',
+       budgetEditId: null,
+       personalBudgets: [], 
+       isAddingBudget: false,
+       isEditingBudget: false,
+       messageContext: '',
+       budgetSuccessMessage: '',
+       budgetHideMessage: false,
+       budgetSuccessTimeout: null,
+       expenseSuccessMessage: '',
+       expenseHideMessage: false,
+       expenseSuccessTimeout: null,
      };
    },
    computed: {
@@ -156,11 +190,11 @@
       return (this.totalAmount / this.usdExchangeRate).toFixed(2);
     },
 
-  currentMonthYear() {  // Moved to computed
+    currentMonthYear() {  
       const now = new Date();
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     },
-    availableMonths() {  // Moved to computed
+    availableMonths() {  
       const months = [];
       const date = new Date();
       for (let i = 0; i < 12; i++) {
@@ -170,6 +204,18 @@
         date.setMonth(date.getMonth() + 1);
       }
       return months;
+    },
+
+    currentBudgetAmount() {
+      const budget = this.personalBudgets.find(
+        b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
+      );
+      return budget ? budget.budget_amount : 0;
+    },
+    hasExistingBudget() {
+      return this.personalBudgets.some(
+        b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
+      );
     }
   },
 
@@ -206,6 +252,7 @@
       });
     },
 
+    //FOR BUDGET
     formatMonthYear(monthYear) {  // Added this method
       const [year, month] = monthYear.split('-');
       const date = new Date(year, month - 1);
@@ -222,14 +269,87 @@
       }
     },
 
-    getCurrentBudgetId() {
+    showAddBudgetForm() {
+    this.isAddingBudget = true;
+    this.isEditingBudget = false;
+    this.selectedMonthYear = this.currentMonthYear;
+    this.budgetAmount = '';
+  },
+
+    showEditBudgetForm() {
+    this.isEditingBudget = true;
+    this.isAddingBudget = false;
+    const budget = this.personalBudgets.find(
+    b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
+  );
+  if (budget) {
+    this.budgetAmount = budget.budget_amount;
+  }
+},
+
+  cancelBudgetForm() {
+    this.isAddingBudget = false;
+    this.isEditingBudget = false;
+    this.budgetAmount = '';
+  },
+
+  async addBudget() {
+    try {
+      const response = await axios.post('/api/personal-budgets', {
+        month_year: this.selectedMonthYear,
+        budget_amount: this.budgetAmount
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jsontoken')}` }
+      });
+
+      if (response.data.success === 1) {
+        this.showBudgetSuccessMessage('Budget added successfully!', 'budget'); //NEWWWWWWW
+        await this.fetchPersonalBudgets();
+        this.isAddingBudget = false;
+        this.budgetAmount = '';
+      } else {
+        this.showBudgetSuccessMessage(response.data.message || 'Failed to add budget', 'budget');
+      }
+    } catch (error) {
+      console.error('Error adding budget:', error);
+      this.showBudgetSuccessMessage(error.response?.data?.message || 'Failed to add budget', 'budget');
+    }
+  },
+
+  async updateBudget() {
+  try {
     const currentBudget = this.personalBudgets.find(
       b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
     );
-    return currentBudget ? currentBudget.id : null;
-  },
+    
+    if (!currentBudget) {
+      this.showBudgetSuccessMessage('No budget found to update', 'budget');
+      return;
+    }
 
-    async handleBudgetSubmit() {  // Added this method
+    const response = await axios.put('/api/personal-budgets', {
+      original_month_year: currentBudget.month_year, 
+      month_year: this.selectedMonthYear, 
+      budget_amount: this.budgetAmount
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('jsontoken')}` }
+    });
+
+    if (response.data.success === 1) {
+      this.showBudgetSuccessMessage('Budget updated successfully!', 'budget');
+      await this.fetchPersonalBudgets();
+      this.isEditingBudget = false;
+      this.budgetAmount = '';
+    } else {
+      this.showBudgetSuccessMessage(response.data.message || 'Failed to update budget', 'budget');
+    }
+  } catch (error) {
+    console.error('Error updating budget:', error);
+    this.showBudgetSuccessMessage(error.response?.data?.message || 'Failed to update budget', 'budget');
+  }
+},
+
+    async handleBudgetSubmit() {  
       try {
         const config = {
           headers: { Authorization: `Bearer ${localStorage.getItem('jsontoken')}` }
@@ -248,7 +368,7 @@
         
         const response = await axios[method](url, budgetData, config);
         
-        this.showSuccessMessage(
+        this.showBudgetSuccessMessage(
           response.data.success === 1 
             ? this.budgetEditId 
               ? 'Budget updated successfully!' 
@@ -259,41 +379,75 @@
         this.fetchPersonalBudgets();
         this.budgetAmount = '';
         this.budgetEditId = null;
+        this.isEditingBudget = false;
       } catch (error) {
         console.error("Budget error:", error);
-        this.showSuccessMessage('Failed to process budget. Please try again.');
+        this.showBudgetSuccessMessage('Failed to process budget. Please try again.');
       }
     },
-    editBudget(budget) {  // Added this method
+
+
+    editBudget(budget) {  
       this.budgetEditId = budget.id;
       this.selectedMonthYear = budget.month_year;
       this.budgetAmount = budget.budget_amount;
+      this.isEditingBudget = true;
     },
+
+    toggleEditBudget() {
+      this.isEditingBudget = !this.isEditingBudget;
+      if (this.isEditingBudget) {
+        const budget = this.personalBudgets.find(
+          b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
+        );
+        if (budget) {
+          this.budgetEditId = budget.id;
+          this.budgetAmount = budget.budget_amount;
+        }
+      } else {
+        this.budgetEditId = null;
+        this.budgetAmount = '';
+      }
+    },
+
     getBudgetForExpense(expense) {  // Added this method
       if (!expense.personal_budget_id) return null;
       return this.personalBudgets.find(b => b.id === expense.personal_budget_id);
     },
 
-  showSuccessMessage(message) {
-    if (this.successTimeout) {
-      clearTimeout(this.successTimeout);
+    showBudgetSuccessMessage(message) {
+    if (this.budgetSuccessTimeout) {
+      clearTimeout(this.budgetSuccessTimeout);
     }
     
-    // Reset hide state and set message
-    this.hideMessage = false;
-    this.successMessage = message;
+    this.budgetHideMessage = false;
+    this.budgetSuccessMessage = message;
     
-    // Set timeout to hide after 2.5s
-    this.successTimeout = setTimeout(() => {
-      this.hideMessage = true;
-      
-      // Clear message after fade out completes
+    this.budgetSuccessTimeout = setTimeout(() => {
+      this.budgetHideMessage = true;
       setTimeout(() => {
-        this.successMessage = '';
+        this.budgetSuccessMessage = '';
+      }, 500);
+    }, 2500);
+  },
+  
+  showExpenseSuccessMessage(message) {
+    if (this.expenseSuccessTimeout) {
+      clearTimeout(this.expenseSuccessTimeout);
+    }
+    
+    this.expenseHideMessage = false;
+    this.expenseSuccessMessage = message;
+    
+    this.expenseSuccessTimeout = setTimeout(() => {
+      this.expenseHideMessage = true;
+      setTimeout(() => {
+        this.expenseSuccessMessage = '';
       }, 500);
     }, 2500);
   },
 
+  //FOR EXPENSES
      fetchExpenses() {
        axios.get('/api/expenses', {
          headers: { Authorization: `Bearer ${localStorage.getItem('jsontoken')}` }
@@ -305,10 +459,20 @@
        .catch(error => {
         console.error("Error fetching expenses:", error);
         this.expenses = []; // Reset to empty array on error
-        this.showSuccessMessage('Failed to load expenses. Please try again.');
+        this.showExpenseSuccessMessage('Failed to load expenses. Please try again.');
         });
     },
+
+    getCurrentBudgetId() {
+    const budget = this.personalBudgets.find(
+    b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
+    );
+    return budget ? budget.id : null;
+    },
      handleSubmit() {
+      const currentBudget = this.personalBudgets.find(
+    b => b.month_year === (this.selectedMonthYear || this.currentMonthYear)
+    );
        const expenseData = {
          item_price: this.itemPrice,
          expense_type: this.expenseType === 'Other' ? this.customExpenseType : this.expenseType,
@@ -325,31 +489,31 @@
          // Edit existing expense
          axios.put(`/api/expenses/${this.editId}`, expenseData, config)
          .then(() => {
-           this.showSuccessMessage('Expense updated successfully!');
+           this.showExpenseSuccessMessage('Expense updated successfully!');
            this.fetchExpenses();
            this.resetForm();
          })
          .catch(error => {
            console.error("Error updating expense:", error);
-           this.showSuccessMessage('Failed to update expense.'); 
+           this.showExpenseSuccessMessage('Failed to update expense.'); 
          });
        } else {
 
          // Add new expense
          axios.post('/api/expenses', expenseData, config)
       .then(response => {
-        console.log('Full response:', response); //NEWWWWWWWWWWWWWWW
+        console.log('Full response:', response); 
         if (response.data.success === 1) {
-          this.showSuccessMessage('Expense added successfully!');
+          this.showExpenseSuccessMessage('Expense added successfully!');
           this.fetchExpenses();
           this.resetForm();
         } else {
-          this.showSuccessMessage('Failed to add expense: ' + (response.data.message || 'Unknown error'));
+          this.sshowExpenseSuccessMessage('Failed to add expense: ' + (response.data.message || 'Unknown error'));
         }
       })
       .catch(error => {
-        console.error("Full error:", error.response); // Add this
-        this.showSuccessMessage('Failed to add expense: ' + 
+        console.error("Full error:", error.response); 
+        this.showExpenseSuccessMessage('Failed to add expense: ' + 
           (error.response?.data?.message || error.message || 'Unknown error')); 
     });
   }
@@ -360,16 +524,16 @@ formatDate(dateString) {
   
   try {
     const options = { 
-      day: 'numeric',    // 23
-      month: 'short',    // Apr
-      year: 'numeric'    // 2025
+      day: 'numeric',   
+      month: 'short',   
+      year: 'numeric'    
     };
     return new Date(dateString).toLocaleDateString('en-US', options);
   } catch (e) {
     console.error('Date formatting error:', e);
     return 'N/A';
   }
-}, // FOR TABLE (NEWWWWWWWWWWWWWWWWW)
+}, // FOR TABLE 
 
      editExpense(expense) {
        this.editId = expense.id;
@@ -383,7 +547,7 @@ formatDate(dateString) {
            headers: { Authorization: `Bearer ${localStorage.getItem('jsontoken')}` }
          })
          .then(() => {
-           this.showSuccessMessage('Expense deleted successfully!');
+           this.showExpenseSuccessMessage('Expense deleted successfully!');
            this.fetchExpenses();
          });
        }
@@ -407,8 +571,7 @@ formatDate(dateString) {
 
  
  
- <style scoped>
-
+<style scoped>
 .main-layout {
   display: flex;
   flex-direction: column;
@@ -416,71 +579,197 @@ formatDate(dateString) {
   gap: 20px;
   padding: 20px;
   box-sizing: border-box;
-}/*NEWWWWWWWW*/
+}
 
 .top-row {
+  margin-top: 100px;
   display: flex;
   gap: 20px;
   width: 100%;
-} /*NEWWWWWWWWWWWWWWWWWWWW*/
+} 
 
 /* Budget Container Styles */
 .budget-container {
-  margin-top: 100px;
   width: 30%;
-  background-color: rgb(104, 179, 104);
-  padding: 20px;
+  background-color: #4a7c59; 
+  padding: 25px;
   border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   height: auto;
+  color: white;
+}
+
+.budget-header {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.budget-header h3 {
+  color: white;
+  font-size: 1.5rem;
+  margin-right: 16px;
 }
 
 .budget-content {
   width: 100%;
 }
 
-.budget-form {
+.add-budget-btn, .edit-budget-btn {
+  background: #2a4935;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  max-width: 72px;
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+
+.add-budget-btn:hover, .edit-budget-btn:hover {
+  background: #12301f;
+  transform: translateY(-2px);
+}
+
+.budget-display {
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.budget-info {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
+.budget-month-row, .budget-amount-row {
+  flex-wrap: wrap;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.budget-label {
+  font-weight: 500;
+  font-size: 1rem;
+}
+.budget-month, .budget-amount {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.budget-amount {
+  color: #ffea00; 
+}
+
+.budget-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.budget-form .form-group {
+  margin: 0;
+}
+
+.budget-form label {
+  color: white;
+  margin-bottom: 8px;
+}
+
+.budget-form input, .budget-form select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+}
+
+.budget-form-buttons {
+  display: flex;
+  flex-wrap: wrap; /* allows buttons to wrap on small screens */
+  gap: 12px;        /* space between buttons */
+  justify-content: center; /* or 'center' if you prefer */
+  box-sizing: border-box;
+  margin-top: 20px;
+  width: 100%;
+}
+
 .budget-btn {
-  padding: 12px 20px;
+  padding: 12px 0;
   background-color: #2a4935;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 1rem;
-  transition: all 0.3s ease;
-  margin-top: 10px;
-  width: 100%;
+  transition: all 0.3s;
+  flex: 1;
 }
 
- /*.container {
-    background-color: #9dd7af;
-    max-width: 1000px;
-    max-height: 75vh;
-    width: 75%;
-    margin: 20px auto 20px auto; 
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 74vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    justify-content: flex-start;
-    padding-top: 20px;
-    z-index: 1;
-    position: relative; 
-    box-sizing: border-box;
-} TEMPORARYYYYYYYY NA WALAAAAAAA*/ 
+.budget-btn:hover {
+  background-color: #12301f;
+  transform: translateY(-2px);
+}
 
+.cancel-btn {
+  background-color: #6c757d;
+}
+
+.cancel-btn:hover {
+  background-color: #4b5256;
+}
+
+.budget-success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+
+.expense-success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  text-align: center;
+  transition: opacity 0.5s ease;
+} /* for expenses*/
+
+.budget-success-message.hide,
+.expense-success-message.hide {
+  opacity: 0;
+}
+
+
+.uneditable-month {
+  display: inline-block;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #ffea00;
+  font-weight: bold;
+}
  
  .content-wrapper {
-  margin-top: 100px;
+  align-content: center;
   width: 70%;
   background-color: #85cf9d;
   padding: 20px;
@@ -490,7 +779,7 @@ formatDate(dateString) {
 }
 
 .expenses-container {
-  max-width: 1300px; /* prevents it from getting too wide on large screens */
+  max-width: 100%; 
   margin: 0 auto;
   box-sizing: border-box;
   width: 100%;
@@ -500,92 +789,71 @@ formatDate(dateString) {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
  
- .success-message {
-  color: black;
-  padding: 10px;
-  margin-bottom: 20px;
-  border-radius: 5px;
-  text-align: center;
-  background-color: #dff0d8;
-  border: 1px solid #d6e9c6;
-  opacity: 1;
-  transition: opacity 0.5s ease-out;
-  position: relative;
-  z-index: 100;
-}
-
-.success-message.hide {
-  opacity: 0;
-  height: 0;
-  padding: 0;
-  margin: 0;
-  border: none;
-  overflow: hidden;
-  transition: opacity 0.5s ease-out, height 0.5s 0.5s, padding 0.5s 0.5s, margin 0.5s 0.5s;
-} /* NEWWWWWWWWWWWWWWWWWWWWWWWWWW*/ 
 
  .expense-form {
+  margin-top: -40px;
+  text-align: center;
   width: 100%; 
-}  /*NEWWWWWWWWWWWWWWWWWWWWW*/
+}  
  
 
 .expenses-section {
-  margin-top: 10px; /* Added top margin */
+  margin-top: 10px; 
 }
 
 .expenses-section h3 {
   margin-top: 10px;
-  margin-bottom: 25px; /* Increased from 15px */
+  margin-bottom: 25px; 
   color: #333;
-  font-size: 1.5rem; /* Larger font */
+  font-size: 1.5rem; 
   padding-bottom: 10px;
-  border-bottom: 2px solid #eee; /* Added separator */
-} /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+  border-bottom: 2px solid #eee; 
+} 
 
 .expenses-table {
   overflow-x: auto;
-  margin: 30px 0; /* Added vertical spacing */
-}  /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+  margin: 30px 0; 
+}  
 
 table {
   width: 100%;
-  border-collapse: separate; /* Changed from collapse */
-  border-spacing: 0 10px; /* Space between rows */
-  margin-bottom: 30px; /* Increased from 20px */
-}  /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+  border-collapse: separate; 
+  border-spacing: 0 10px; 
+  margin-bottom: 30px; 
+}  
 
 th, td {
-  padding: 6px 20px; /* Increased padding */
+  padding: 6px 20px; 
   text-align: center;
-  border-bottom: 2px solid #ddd; /* Thicker border */
+  border-bottom: 2px solid #ddd;
   color: #333;
-} /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+} 
 
 th {
   background-color: #f8f9fa;
   font-weight: 600;
-  font-size: 1rem; /* Larger header text */
-  padding: 12px 20px; /* More padding for headers */
-} /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+  font-size: 1rem; 
+  padding: 12px 20px; 
+} 
 
 tr {
   background-color: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
-  margin-bottom: 15px; /* Space between rows */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+  margin-bottom: 15px; 
 }
 
 tr:hover {
   background-color: #f5f5f5;
-  transform: translateY(-2px); /* Lift effect */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Stronger shadow on hover */
-  transition: all 0.2s ease; /* Smooth transition */
-} /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+  transition: all 0.2s ease; 
+} 
 
 .actions {
   display: flex;
   gap: 10px;
   justify-content: center;
-} /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+} 
 
 .edit-btn, .delete-btn {
   padding: 8px 15px;
@@ -601,23 +869,22 @@ tr:hover {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* Edit Button Specific Styles */
 .edit-btn {
   background-color: #2196F3;
 }
 
-/* Delete Button Specific Styles */
+
 .delete-btn {
   background-color: #f44336;
 }
 
-/* Hover Effects */
+
 .edit-btn:hover {
   background-color: #1976D2;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
   
-  /* Ripple Effect */
+
   &::after {
     content: '';
     position: absolute;
@@ -642,11 +909,11 @@ tr:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
   
-  /* Pulse Effect */
+
   animation: pulse 0.5s ease-in-out;
 }
 
-/* Ripple Animation */
+
 @keyframes ripple {
   0% {
     transform: scale(0, 0);
@@ -658,7 +925,7 @@ tr:hover {
   }
 }
 
-/* Pulse Animation */
+
 @keyframes pulse {
   0% {
     transform: translateY(-2px) scale(1);
@@ -671,11 +938,11 @@ tr:hover {
   }
 }
 
-/* Active State */
+
 .edit-btn:active, .delete-btn:active {
   transform: translateY(0);
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-} /*NEWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*/
+}
 
 .total {
      font-size: 20px;
@@ -686,12 +953,11 @@ tr:hover {
      box-sizing: border-box;
      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
      text-align: center;
-     max-width: 181vh;
+     max-width: 1300px;
      width: 100%;
-     position: relative; /* Keeps it visible at the bottom */
-     bottom: 0; /* Stick to the bottom */
-     
-}/*NEWWWWWWWWWWWWWWWWWWWWW */
+     position: relative; 
+     bottom: 0;   
+}
 
  
  .form-group {
@@ -700,6 +966,8 @@ tr:hover {
  }
  
  label {
+     margin-left: 10px;
+     text-align: left;
      display: block;
      margin-bottom: 5px;
      font-size: 17px;
@@ -715,16 +983,16 @@ tr:hover {
      font-size: 16px;
      border-radius: 10px;
      border: 3px solid #ddd;
-     border-color: black;
+     border-color: #2a4935;
      box-sizing: border-box;
      min-height: 35px;
  }
  
  .btn {
      padding: 12px 50px;
-     background-color: white;
+     background-color: #2a4935;
      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-     color: black;
+     color: white;
      border: none;
      border-radius: 12px;
      cursor: pointer;
@@ -733,8 +1001,9 @@ tr:hover {
 }
 
 .btn:hover {
-    background-color: rgb(26, 25, 25); /* Change to any color you want */
+    background-color: #12301f; /* Change to any color you want */
     color: white; /* Text color on hover */
+    transform: translateY(-2px);
 }
 
 .btn1 {
@@ -765,30 +1034,20 @@ tr:hover {
         height: 500px;
     }
 
-    .content-wrapper {
-        padding: 0px;
+    .expense-form{
+      margin-top: -100px;
     }
 
-    .form-group {
-        width: 100%;
-        padding: 0 0 10 0px;
-        margin: 20px 0;
+    .content-wrapper {
+        padding: 0px;
     }
 
     input[type="text"],
     input[type="number"],
     select {
-        width: 100%;
-        max-width: 500px;
+        width: 90%;
+        max-width: 600px;
         font-size: 15px;
-    }
-
-    .btn,
-    .btn1 {
-        width: 100%;
-        font-size: 15px;
-        margin: 10px auto;
-        display: block;
     }
 
     .h3{
@@ -798,17 +1057,10 @@ tr:hover {
       color: white;
     }
 
-    .total {
-        max-width: 700px;
-        font-size: 17px;
-        position: relative;
-    }
     .expenses-container{
         width: 100%;
-        max-width: 750px;
+        max-width: 1000px;
     }
 }
-
-
 
 </style>
