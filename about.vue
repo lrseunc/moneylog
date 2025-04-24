@@ -58,12 +58,12 @@ export default {
 <style>
 body {
   font-family: 'Poppins', sans-serif;
+  margin: 0;
   padding: 0;
   width: 100%;
-  max-width: 1500px;
   background-color: #fcffed;
-  overflow-x: hidden; /* Prevents horizontal scrolling */
-  overflow-y: auto; /* Allows vertical scrolling */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 </style>
 
