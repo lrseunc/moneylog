@@ -6,7 +6,7 @@
     </div>
   <ul v-show="!mobile" class="navigation">
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
-    <li><router-link class="link" to="/group">GROUP</router-link></li>
+    <li><router-link class="link" to="/GC">GROUP</router-link></li>
     <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
     <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>
     <li><router-link class="link" to="/about">ABOUT</router-link></li>     
