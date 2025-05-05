@@ -7,15 +7,16 @@ import View from './components/view.vue';
 import Group from './components/group.vue';
 import Profile from './components/profile.vue';
 import About from './components/about.vue';
+import GC from './components/GC.vue';
 
-
+//PUBLIC PAGE
 const routes = [
   { path: '/', redirect: '/login' },
   { 
     path: '/login', 
     name: 'Login', 
     component: Login,
-    meta: { requiresAuth: false } // Explicitly mark as public
+    meta: { requiresAuth: false } 
   },
   { 
     path: '/register', 
@@ -24,17 +25,23 @@ const routes = [
     meta: { requiresAuth: false }
   },
   { 
-    path: '/about', 
-    name: 'About', 
+    path: '/about',
+    name: 'About',
     component: About,
-    meta: { requiresAuth: true } // Protected route
+    meta: { requiresAuth: false }
   },
-  // All other protected routes
+
+  // PROTECTED ROUTES
   { path: '/personal', name: 'Personal', component: Personal, meta: { requiresAuth: true } },
   { path: '/groupview', name: 'Groupview', component: Groupview, meta: { requiresAuth: true } },
   { path: '/view', name: 'View', component: View, meta: { requiresAuth: true } },
-  { path: '/group', name: 'Group', component: Group, meta: { requiresAuth: true } },
+  { path: '/about', name: 'About', component: About, meta: { requiresAuth: true } },
   { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true } },
+
+ //GROUP EXPENSES
+ { path: '/GC', name: 'GC', component: GC, meta: { requiresAuth: true }},
+{ path: '/group/:groupId', name: 'Group', component: Group, meta: { requiresAuth: true }, props: true },
+{ path: '/', redirect: to => {const token = localStorage.getItem('jsontoken');return token ? { name: 'GC' } : { name: 'Login' }}}
 ];
 
 const router = createRouter({
@@ -42,21 +49,23 @@ const router = createRouter({
   routes
 });
 
-// Simplified authentication check
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('jsontoken'); // Changed from authToken to token
+router.beforeEach(async (to, from, next) => {
+  const token = localStorage.getItem('jsontoken');
   
-  // Check if the route requires authentication
   if (to.meta.requiresAuth && !token) {
-    // Redirect to login with return URL
     next({
       name: 'Login',
       query: { redirect: to.fullPath }
     });
-  } else {
-    // Proceed to the route
-    next();
+    return; 
   }
+
+  
+  if (from.name === 'GC' && to.name === 'Group') {
+    next();
+    return;
+  }
+  next();
 });
 
 export default router;
