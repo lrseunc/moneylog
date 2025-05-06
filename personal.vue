@@ -8,6 +8,12 @@
         <button @click="dismissAlert" class="dismiss-btn">×</button>
       </div>
       </div>
+      <div v-if="showDeleteConfirmation" class="floating-alert alert alert-warning" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <span>Are you sure you want to delete this expense?</span>
+      <button @click="confirmDeleteExpense" class="btn btn-danger btn-sm ml-2">Yes</button>
+      <button @click="cancelDeleteExpense" class="btn btn-secondary btn-sm ml-1">No</button>
+    </div>
     <div v-if="error" class="error-message">
         An error occurred: {{ error }}
         <button @click="resetError">Try Again</button>
@@ -212,6 +218,8 @@
        currentMonthYear: this.getCurrentMonthYear(),
        showBudgetExceededAlert: false,
        alertDismissed: false,
+       showDeleteConfirmation: false,
+       expenseToDelete: null,
        lastCheckedMonthYear: null,
        isPredicting: false,
        showPredictionFeedback: false,
@@ -490,41 +498,49 @@ shouldSuggestAlternative(itemName) {
       }
     },
 
-     checkBudgetStatus() {
-  console.log('--- Checking Budget Status ---');
-  console.log('Current Budget:', this.currentBudget);
-  console.log('Budget Amount:', this.currentBudget?.budget_amount);
-  console.log('Total Expenses:', this.totalAmount);
-
-  if (!this.currentBudget?.budget_amount) {
+    dismissAlert() {
     this.showBudgetExceededAlert = false;
-    return;
-  }
-  
-  const currentMonthYear = this.getCurrentMonthYear();
-  if (this.lastCheckedMonthYear !== currentMonthYear) {
-    this.alertDismissed = false;
-    localStorage.removeItem('budgetAlertDismissed');
-    this.lastCheckedMonthYear = currentMonthYear;
-  }
+    this.alertDismissed = true;
+    localStorage.setItem('budgetAlertDismissed', 'true');
+  },
 
-  const isExceeded = this.totalAmount > Number(this.currentBudget.budget_amount);
-  
-  if (isExceeded && !this.alertDismissed) {
-    console.log('Showing budget exceeded alert');
-    this.showBudgetExceededAlert = true;
-  } else {
-    console.log('Hiding budget exceeded alert');
-    this.showBudgetExceededAlert = false;
-  }
-},
-  
   dismissAlert() {
     this.showBudgetExceededAlert = false;
     this.alertDismissed = true;
-    // Optional: Store dismissal in localStorage to persist across page refreshes
     localStorage.setItem('budgetAlertDismissed', 'true');
   },
+
+  checkBudgetStatus(forceShow = false) {
+    if (!this.currentBudget?.budget_amount) {
+      this.showBudgetExceededAlert = false;
+      return;
+    }
+
+    const currentMonthYear = this.getCurrentMonthYear();
+
+    if (this.lastCheckedMonthYear !== currentMonthYear) {
+      this.alertDismissed = false;
+      localStorage.removeItem('budgetAlertDismissed');
+      this.lastCheckedMonthYear = currentMonthYear;
+    }
+
+    const isExceeded = this.totalAmount > Number(this.currentBudget.budget_amount);
+
+    if (isExceeded) {
+      if (forceShow) {
+        this.alertDismissed = false;
+        localStorage.removeItem('budgetAlertDismissed');
+      }
+
+      if (!this.alertDismissed) {
+        this.showBudgetExceededAlert = true;
+        return;
+      }
+    }
+
+    this.showBudgetExceededAlert = false;
+  },
+  
      getCurrentMonthYear() {
       const now = new Date();
       const month = now.getMonth() + 1; // JavaScript months are 0-indexed
@@ -747,9 +763,9 @@ shouldSuggestAlternative(itemName) {
       
       // Force a check after everything is updated
       this.$nextTick(() => {
-        console.log('Checking budget after expense update');
-        this.checkBudgetStatus();
-      });
+      console.log('Checking budget after expense update');
+      this.checkBudgetStatus(true); // Force re-check and re-alert
+    });
     } else {
       this.showExpenseSuccessMessage(result.message || 'Operation failed');
     }
@@ -800,14 +816,28 @@ editExpense(expense) {
   console.log('Editing expense ID:', this.editId);
 },
  
-     async deleteExpenseHandler(id) {
-       const result = await this.deleteExpense(id);
-       if (result.success) {
-         this.showExpenseSuccessMessage('Expense deleted successfully!');
-       } else {
-         this.showExpenseSuccessMessage(result.message || 'Failed to delete expense');
-       }
-     },
+async deleteExpenseHandler(id) {
+    this.showDeleteConfirmation = true;
+    this.expenseToDelete = id; // Save the id of the expense to be deleted
+  },
+
+  confirmDeleteExpense() {
+    const id = this.expenseToDelete;
+    this.deleteExpense(id).then(result => {
+      if (result.success) {
+        this.showExpenseSuccessMessage('Expense deleted successfully!');
+      } else {
+        this.showExpenseSuccessMessage(result.message || 'Failed to delete expense');
+      }
+      this.showDeleteConfirmation = false; // Hide confirmation after the operation
+      this.expenseToDelete = null; // Clear the stored expense id
+    });
+  },
+
+  cancelDeleteExpense() {
+    this.showDeleteConfirmation = false; // Hide confirmation if user cancels
+    this.expenseToDelete = null; // Clear the stored expense id
+  },
 
      handleError(error) {
     console.error('Component error:', error);
@@ -966,6 +996,37 @@ editExpense(expense) {
   color: #b71c1c;
 }
 
+/* Floating Delete Confirmation Alert */
+.floating-alert {
+  position: fixed;
+  top: 290px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 6px;
+  padding: 20px 30px; /* Increased padding */
+  min-width: 350px;    /* Optional: ensures a wider box */
+  color: #c62828;
+  font-weight: bold;
+  font-size: 1.2em;    /* Increased font size */
+  z-index: 1000;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  animation: slideDown 0.3s ease-out;
+}
+
+.alert-icon {
+  font-size: 1.5em; /* Increased icon size */
+}
+
+.floating-alert button {
+  padding: 10px 10px;
+  margin-left: 10px;
+  width: 80px;
+}
+
 
 @keyframes slideDown {
   from {
@@ -1094,7 +1155,7 @@ editExpense(expense) {
 }
 
 .budget-form label {
-  min-width: 100px;
+  min-width: 60px;
 }
 
 .budget-form input, .budget-form select {
@@ -1176,7 +1237,7 @@ editExpense(expense) {
   border-radius: 4px;
   font-weight: bold;
   text-align: center;
-  min-width: 60px;
+  min-width: 50px;
   width: 120px;
 }
  
