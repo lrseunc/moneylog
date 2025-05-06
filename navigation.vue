@@ -21,7 +21,7 @@
   <transition name="mobile-nav">
     <ul v-show="mobileNav" class="dropdown-nav">
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
-    <li><router-link class="link" to="/group">GROUP</router-link></li>
+    <li><router-link class="link" to="/GC">GROUP</router-link></li>
     <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
     <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>
     <li><router-link class="link" to="/about">ABOUT</router-link></li>   
@@ -70,7 +70,7 @@ updateScroll() {
 
 checkScreen(){
   this.windowWidth = window.innerWidth;
-  if (this.windowWidth <=750){
+  if (this.windowWidth <=800){
     this.mobile = true;
     return;
   }
@@ -104,7 +104,7 @@ flex-direction: row;
 padding: 8px 0;
 transition: .5s ease all;
 width: 90%;
-margin: 0 auto;
+margin-left: 40px;
 
 ul, 
 .link {
@@ -149,6 +149,7 @@ img {
   height: auto;
   transition: .5s ease all;
   margin-top: 2px;
+  margin-left: -10px;
 }
 }
 
