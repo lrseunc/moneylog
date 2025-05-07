@@ -1251,7 +1251,7 @@ tr:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 2px solid #2e4e38;
   padding: 25px;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 
 .group-header {
