@@ -289,6 +289,16 @@
         <div class="modal-body">
           <form @submit.prevent="submitExpense">
             <div class="form-group">
+              <label>Category</label>
+              <select v-model="newExpense.expense_type" required>
+                <option value="Food">Food</option>
+                <option value="Transportation">Transportation</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
   <label>Item Name</label>
   <input 
     v-model="newExpense.item_name" 
@@ -310,16 +320,6 @@
   >
   <small v-if="!newExpense.item_price" class="error">Amount is required</small>
 </div>
-            <div class="form-group">
-              <label>Category</label>
-              <select v-model="newExpense.expense_type" required>
-                <option value="Food">Food</option>
-                <option value="Transportation">Transportation</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Utilities">Utilities</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
             <div class="form-actions">
               <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
               <button type="submit" class="submit-button">Add Expense</button>
@@ -339,14 +339,6 @@
         <div class="modal-body">
           <form @submit.prevent="handleUpdateExpense">
             <div class="form-group">
-              <label>Item Name</label>
-              <input v-model="editingExpense.item_name" type="text" required>
-            </div>
-            <div class="form-group">
-              <label>Amount</label>
-              <input v-model="editingExpense.item_price" type="number" step="0.01" min="0" required>
-            </div>
-            <div class="form-group">
               <label>Category</label>
               <select v-model="editingExpense.expense_type" required>
                 <option value="Food">Food</option>
@@ -355,6 +347,14 @@
                 <option value="Utilities">Utilities</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label>Item Name</label>
+              <input v-model="editingExpense.item_name" type="text" required>
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input v-model="editingExpense.item_price" type="number" step="0.01" min="0" required>
             </div>
             <div class="form-actions">
               <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
@@ -1142,7 +1142,6 @@ export default {
   width: 100%;
   border-collapse: collapse;
   border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   overflow-x: auto;
 }
@@ -1970,12 +1969,23 @@ tr:hover {
   font-weight: bold;
 }
 
-.form-group input,
+.form-group input {
+  width: 96%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
 .form-group select {
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
+}
+
+small {
+    font-size: 11px;
+    color: red;
 }
 
 .form-actions {
