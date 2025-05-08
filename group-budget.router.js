@@ -1,0 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const groupBudgetController = require('../grp_expenses/group-budget.controller');
+const { checkToken } = require('../../auth/token_validation');
+
+
+router.post('/groups/:groupId/budget', checkToken, groupBudgetController.addBudget);
+router.get('/groups/:groupId/budget', checkToken, groupBudgetController.getBudget);
+router.put('/groups/:groupId/budget/:budgetId', checkToken, groupBudgetController.updateBudget);
+
+module.exports = router;
