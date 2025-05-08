@@ -609,13 +609,22 @@ export default {
   },
 
   async created() {
-    console.log('Group component created');
-
-    const savedBudget = localStorage.getItem('groupBudget');
-    if (savedBudget) {
-      this.budgetAmountValue = parseFloat(savedBudget);
-      this.calculateRemaining(); // Recalculate remaining budget
-      this.hasBudget = true; // Ensure the budget is marked as set
+  console.log('Group component created');
+  
+    if (this.groupId) {
+      this.isBudgetLoading = true;
+      try {
+        const res = await this.$axios.get(`/api/groups/${this.groupId}/budget`);
+        if (res.data && res.data.amount != null) {
+          this.budgetAmountValue = parseFloat(res.data.amount);
+          this.hasBudget = true;
+          this.calculateRemaining();
+        }
+      } catch (error) {
+        console.error('Failed to fetch budget:', error);
+      } finally {
+        this.isBudgetLoading = false;
+      }
     }
 
     const user = JSON.parse(localStorage.getItem('user'));
@@ -689,20 +698,55 @@ export default {
     this.isAddingBudget = false;
     this.isEditingBudget = false;
   },
-  submitAddBudget() {
-    this.budgetAmountValue = parseFloat(this.budgetAmountInput);
-    this.calculateRemaining();
-    this.isAddingBudget = false;
-    this.hasBudget = true;
-    this.showSuccess('Budget added successfully!');
-    localStorage.setItem('groupBudget', this.budgetAmountValue);
-  },
-  updateBudget() {
-    this.budgetAmountValue = parseFloat(this.budgetAmountInput);
-    this.calculateRemaining();
-    this.isEditingBudget = false;
-    this.showSuccess('Budget updated successfully!');
-    localStorage.setItem('groupBudget', this.budgetAmountValue);
+  async submitAddBudget() {
+  const amount = parseFloat(this.budgetAmountInput); 
+
+  if (isNaN(amount) || amount <= 0) {
+    console.error('Invalid budget amount');
+    return;  
+  }
+
+  console.log('Group ID:', this.groupId); 
+  console.log('Budget Amount:', amount); 
+
+  try {
+    await this.$axios.post(
+      `/api/grp_expenses/groups/${this.groupId}/budget`,
+      { budget_amount: amount },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    this.budgetAmountValue = amount; 
+    this.calculateRemaining();         
+    this.isAddingBudget = false;    
+    this.hasBudget = true;            
+    this.showSuccess('Budget added successfully!');  
+  } catch (err) {
+    console.error('Failed to add budget:', err);
+    this.showError('Failed to add budget. Please try again.');
+  }
+},
+
+  async updateBudget() {
+    const amount = parseFloat(this.budgetAmountInput);
+    try {
+      await this.$axios.post(`/api/grp_expenses/groups/${this.groupId}/budget`, { budget_amount: amount },
+      {
+      headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      this.budgetAmountValue = amount;
+      this.calculateRemaining();
+      this.isEditingBudget = false;
+      this.showSuccess('Budget updated successfully!');
+    } catch (err) {
+      console.error('Failed to update budget:', err);
+    }
   },
   calculateRemaining() {
   this.remainingBudget = this.budgetAmountValue - this.totalAmount; // Use totalAmount instead of totalExpenses
@@ -1208,7 +1252,6 @@ export default {
 }
 
 .budget-total-container {
-  flex: 1 1 300px;
   max-width: 350px;
   box-sizing: border-box;
 }
@@ -1217,7 +1260,7 @@ export default {
   background-color: #5a926a;
   padding: 20px;
   border-radius: 15px;
-  border: 2px solid #2e4e38;
+  border: 1px solid #2e4e38;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   color: white;
   height: auto;
@@ -1229,6 +1272,7 @@ export default {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 20px;
   gap: 10px;
 }
 
