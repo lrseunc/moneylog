@@ -75,6 +75,80 @@
     </div>
   </div>
 
+  <div class="group-con">
+    <div class="budget-total-container">
+    <div class="budget-container">
+    <div class="budget-content">
+      <div v-if="budgetSuccessMessage" class="budget-success-message" :class="{ hide: budgetHideMessage }">
+        {{ budgetSuccessMessage }}
+      </div>
+
+      <div class="budget-display">
+        <div class="budget-header">
+          <h3>Allotted Budget</h3>
+          <button v-if="!hasBudget" @click="showAddBudgetForm" class="btn-add">Add</button>
+          <button v-else @click="showEditBudgetForm" class="btn-edit">Edit</button>
+        </div>
+
+        <div class="budget-details" v-if="!isBudgetLoading">
+          <div class="budget-amount">
+            <span>Budget:</span>
+            <strong>{{ formatPHP(budgetAmountValue) }}</strong>
+          </div>
+
+          <div class="expenses-amount">
+            <span>Total Expenses:</span>
+            <strong>{{ formatPHP(totalExpenses) }}</strong>
+          </div>
+
+          <div class="remaining-budget">
+            <span>Remaining:</span>
+            <strong :class="{ 'text-danger': remainingBudget < 0 }">{{ formatPHP(remainingBudget) }}</strong>
+          </div>
+
+          <div class="budget-progress">
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                :style="{ width: budgetProgress + '%' }"
+                :class="{ exceeded: budgetProgress >= 100 }"
+              ></div>
+            </div>
+            <div class="progress-text">{{ budgetProgress.toFixed(1) }}% used</div>
+          </div>
+        </div>
+
+        <div v-else class="loading">Loading budget...</div>
+
+        <!-- Budget Form Modal -->
+        <div v-if="isAddingBudget || isEditingBudget" class="budget-form-modal">
+          <div class="budget-form">
+            <h3>{{ isEditingBudget ? 'Edit' : 'Add' }} Allotted Budget</h3>
+
+            <div class="form-group">
+              <label>Budget Amount (₱):</label>
+              <input
+                type="text"
+                v-model="budgetAmountInput"
+                placeholder="Enter budget amount"
+                @input="formatCurrencyInput"
+                required
+              />
+            </div>
+
+            <div class="form-actions">
+              <button @click="isEditingBudget ? updateBudget() : submitAddBudget()" class="btn-save">
+                {{ isEditingBudget ? 'Update' : 'Save' }}
+              </button>
+              <button @click="cancelBudgetForm" class="btn-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
     <div class="group-body">
       <div class="group-tabs">
         <button 
@@ -111,10 +185,6 @@
 
           <div v-if="expensesLoading" class="loading-expenses">
             <div class="spinner small"></div>
-          </div>
-          
-          <div v-else-if="expensesError" class="error-message">
-            {{ expensesError }}
           </div>
 
           <div v-else-if="expensesError" class="error-message">
@@ -154,42 +224,44 @@
                   <td>{{ formatDate(expense.expense_date) }}</td>
                   <td>{{ expense.username }}</td>
                   <td class="actions">
-                    <button 
-                      @click="editExpense(expense)" 
-                      class="edit-btn"
-                      :disabled="!canEditExpense(expense)"
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      @click="confirmDeleteExpense(expense)" 
-                      class="delete-btn"
-                      :disabled="!canEditExpense(expense)"
-                    >
-                      Delete
-                    </button>
+                    <div class="action-buttons">
+                      <button 
+                        @click="editExpense(expense)" 
+                        class="edit-btn"
+                        :disabled="!canEditExpense(expense)"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        @click="confirmDeleteExpense(expense)" 
+                        class="delete-btn"
+                        :disabled="!canEditExpense(expense)"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
+        <div class="total-summary">
+              <div class="total-amount-card">
+                <div class="total-label">Total Expenses</div>
+                <div class="amount-display">
+                  <span class="currency php">{{ formatPHP(totalAmount) }}</span>
+                  <span class="currency usd">≈ {{ formatUsd(convertPhpToUsd(totalAmount)) }}</span>
+                </div>
+                <div class="exchange-rate-display">
+                  <i class="fas fa-sync-alt"></i> 1 PHP = {{ (exchangeRate || 0.018045).toFixed(6) }} USD
+                </div>
+              </div>
+            </div>
       </div>
     </div>
   </div>
-
-      <div class="total-summary">
-      <div class="total-amount-card">
-        <div class="total-label">Total Expenses</div>
-        <div class="amount-display">
-          <span class="currency php">{{ formatPHP(totalAmount) }}</span>
-          <span class="currency usd">≈ {{ formatUsd(convertPhpToUsd(totalAmount)) }}</span>
-        </div>
-        <div class="exchange-rate-display">
-          <i class="fas fa-sync-alt"></i> 1 PHP = {{ (exchangeRate || 0.018045).toFixed(6) }} USD
-        </div>
-      </div>
-    </div>
+  
 
         <!-- Members Tab -->
         <div v-if="activeTab === 'members'" class="members-tab">
@@ -236,48 +308,50 @@
             <h3>Group Settings</h3>
             <div class="setting-item">
               <label>Group Name</label>
-  <div class="input-group">
-    <input 
-      v-model="group.group_name" 
-      @blur="handleNameUpdate"
-      @keyup.enter="handleNameUpdate"
-      type="text" 
-      class="setting-input"
-      :disabled="updatingName"
-    >
-    <button 
-      @click="handleNameUpdate" 
-      class="save-button"
-      :disabled="!nameChanged || updatingName"
-    >
-      <span v-if="updatingName">Saving...</span>
-      <span v-else>Save</span>
-    </button>
-  </div>
-  <p v-if="nameError" class="error-message">{{ nameError }}</p>
-  </div>
-</div>
+          <div class="input-group">
+            <input 
+              v-model="group.group_name" 
+              @blur="handleNameUpdate"
+              @keyup.enter="handleNameUpdate"
+              type="text" 
+              class="setting-input"
+              :disabled="updatingName"
+            >
+            <button 
+              @click="handleNameUpdate" 
+              class="save-button"
+              :disabled="!nameChanged || updatingName"
+            >
+              <span v-if="updatingName">Saving...</span>
+              <span v-else>Save</span>
+            </button>
+          </div>
+          <p v-if="nameError" class="error-message">{{ nameError }}</p>
+          </div>
+        </div>
           
           <div class="danger-zone">
             <h3>Danger Zone</h3>
             <div class="danger-item">
               <p>Delete this group permanently  (including all expenses and members) </p>
               <button 
-      @click="confirmDeleteGroup" 
-      class="delete-button"
-      :disabled="deletingGroup"
-    >
-      <span v-if="deletingGroup">
-        <i class="fas fa-spinner fa-spin"></i> Deleting...
-      </span>
-      <span v-else>Delete Group</span>
-    </button>
-    <p v-if="deleteGroupError" class="error-message">{{ deleteGroupError }}</p>
+                @click="confirmDeleteGroup" 
+                class="delete-button"
+                :disabled="deletingGroup"
+              >
+                <span v-if="deletingGroup">
+                  <i class="fas fa-spinner fa-spin"></i> Deleting...
+                </span>
+                <span v-else>Delete Group</span>
+              </button>
+              <p v-if="deleteGroupError" class="error-message">{{ deleteGroupError }}</p>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+
 
     <!-- Add Expense Modal -->
     <div v-if="showAddExpenseModal" class="modal-overlay">
@@ -299,27 +373,27 @@
               </select>
             </div>
             <div class="form-group">
-  <label>Item Name</label>
-  <input 
-    v-model="newExpense.item_name" 
-    type="text" 
-    required
-    minlength="2"
-    maxlength="255"
-  >
-  <small v-if="!newExpense.item_name" class="error">Item name is required</small>
-</div>
-<div class="form-group">
-  <label>Amount</label>
-  <input 
-    v-model="newExpense.item_price" 
-    type="number" 
-    step="0.01" 
-    min="0" 
-    required
-  >
-  <small v-if="!newExpense.item_price" class="error">Amount is required</small>
-</div>
+            <label>Item Name</label>
+              <input 
+                v-model="newExpense.item_name" 
+                type="text" 
+                required
+                minlength="2"
+                maxlength="255"
+              >
+              <small v-if="!newExpense.item_name" class="error">Item name is required</small>
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input 
+                v-model="newExpense.item_price" 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                required
+              >
+              <small v-if="!newExpense.item_price" class="error">Amount is required</small>
+            </div>
             <div class="form-actions">
               <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
               <button type="submit" class="submit-button">Add Expense</button>
@@ -364,6 +438,7 @@
         </div>
       </div>
     </div>
+    
 
     <!-- Confirmation Modal -->
     <div v-if="showConfirmationModal" class="modal-overlay">
@@ -414,6 +489,17 @@ export default {
       deleteGroupError: '',
       exchangeRate: null,
       lastExchangeRateUpdate: null,
+      budgetAmountValue: 0,
+      totalExpenses: 0,
+      remainingBudget: 0,
+      budgetProgress: 0,
+      isBudgetLoading: false,
+      isAddingBudget: false,
+      isEditingBudget: false,
+      budgetAmountInput: '',
+      hasBudget: false,
+      budgetSuccessMessage: '',
+      budgetHideMessage: false,
       // Modals
       showAddExpenseModal: false,
       showEditExpenseModal: false,
@@ -446,6 +532,10 @@ export default {
       error: state => state.error,
       isAdmin: state => state.isAdmin
     }),
+    totalExpenses() {
+    return this.totalAmount; // Use totalAmount to dynamically reflect the total of all expenses
+  },
+
     ...mapGetters('group', ['creatorName']),
 
     nameChanged() {
@@ -520,6 +610,14 @@ export default {
 
   async created() {
     console.log('Group component created');
+
+    const savedBudget = localStorage.getItem('groupBudget');
+    if (savedBudget) {
+      this.budgetAmountValue = parseFloat(savedBudget);
+      this.calculateRemaining(); // Recalculate remaining budget
+      this.hasBudget = true; // Ensure the budget is marked as set
+    }
+
     const user = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('jsontoken');
 
@@ -575,6 +673,49 @@ export default {
       'removeMember',
       'deleteGroup'
     ]),
+
+    formatPHP(value) {
+    return '₱' + parseFloat(value).toLocaleString();
+  },
+  showAddBudgetForm() {
+    this.isAddingBudget = true;
+    this.budgetAmountInput = '';
+  },
+  showEditBudgetForm() {
+    this.isEditingBudget = true;
+    this.budgetAmountInput = this.budgetAmountValue;
+  },
+  cancelBudgetForm() {
+    this.isAddingBudget = false;
+    this.isEditingBudget = false;
+  },
+  submitAddBudget() {
+    this.budgetAmountValue = parseFloat(this.budgetAmountInput);
+    this.calculateRemaining();
+    this.isAddingBudget = false;
+    this.hasBudget = true;
+    this.showSuccess('Budget added successfully!');
+    localStorage.setItem('groupBudget', this.budgetAmountValue);
+  },
+  updateBudget() {
+    this.budgetAmountValue = parseFloat(this.budgetAmountInput);
+    this.calculateRemaining();
+    this.isEditingBudget = false;
+    this.showSuccess('Budget updated successfully!');
+    localStorage.setItem('groupBudget', this.budgetAmountValue);
+  },
+  calculateRemaining() {
+  this.remainingBudget = this.budgetAmountValue - this.totalAmount; // Use totalAmount instead of totalExpenses
+  this.budgetProgress = (this.totalAmount / this.budgetAmountValue) * 100; // Use totalAmount here too
+  },
+  showSuccess(message) {
+    this.budgetSuccessMessage = message;
+    this.budgetHideMessage = false;
+    setTimeout(() => this.budgetHideMessage = true, 3000);
+  },
+  formatCurrencyInput() {
+    this.budgetAmountInput = this.budgetAmountInput.replace(/[^\d.]/g, '');
+  },
 
     toggleGroupList() {
       this.showGroupList = !this.showGroupList;
@@ -1058,42 +1199,246 @@ export default {
   border-radius: 2px;
 }
 
-.group-body{
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 2px solid #85cf9d;
-  padding: 25px;
+.group-con {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.budget-total-container {
+  flex: 1 1 300px;
+  max-width: 350px;
+  box-sizing: border-box;
+}
+
+.budget-container {
+  background-color: #5a926a;
+  padding: 20px;
+  border-radius: 15px;
+  border: 2px solid #2e4e38;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  color: white;
+  height: auto;
   margin-bottom: 10px;
 }
 
-.total-summary {
-  margin: 25px 0;
+.budget-header {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.total-amount-card {
-  background: white;
+.budget-header h3 {
+  font-size: 1.5rem;
+  color: white;
+  margin: 0;
+}
+
+.btn-add, .btn-edit {
+  background: #2a4935;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.btn-add:hover, .btn-edit:hover {
+  background: #dcdcdc;
+  color: #333;
+  transform: translateY(-2px);
+}
+
+.budget-display {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
   border-radius: 10px;
+  align-items: center;
+}
+
+.budget-details {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.budget-amount,
+.expenses-amount,
+.remaining-budget {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+}
+
+.remaining-budget .text-danger {
+  color: #f44336;
+}
+
+.budget-progress {
+  margin-top: 15px;
+}
+
+.progress-bar {
+  height: 20px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #4CAF50;
+  transition: width 0.3s;
+}
+
+.progress-fill.exceeded {
+  background-color: #f44336;
+}
+
+.progress-text {
+  text-align: right;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.budget-form-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.budget-form {
+  background-color: white;
+  color: #333;
+  padding: 25px;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.budget-form .form-group {
+  margin-bottom: 15px;
+}
+
+.budget-form label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.budget-form input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-save {
+  background-color: #2a4935;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-save:hover {
+  background: #dcdcdc;
+  color: #333;
+}
+
+.btn-cancel {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background-color: #4b5256;
+}
+
+.budget-success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+
+.hide {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.group-body {
+  flex: 1 1 600px;
+  min-width: 300px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #85cf9d;
+  padding: 25px;
+}
+
+.total-summary {
+  text-align: center;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+/* Total amount card responsiveness */
+.total-amount-card {
+  background: #d0ebdd;
+  border-radius: 10px;
+  height: 100px;
   padding: 20px;
   width: 100%;
-  max-width: 350px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-top: 4px solid #2a4935;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+  text-align: center;
 }
 
 .total-label {
   font-size: 0.9rem;
   color: #5a6a7a;
   margin-bottom: 8px;
+  margin-top: -7px;
   font-weight: 500;
 }
 
 .amount-display {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 5px;
+  justify-content: center; /* centers items horizontally */
+  align-items: center;     /* centers items vertically (optional) */
+  text-align: center; 
 }
 
 .currency {
@@ -1115,9 +1460,12 @@ export default {
   font-size: 0.8rem;
   color: #6c757d;
   display: flex;
-  align-items: center;
   gap: 5px;
+  justify-content: center; /* centers items horizontally */
+  align-items: center;     /* centers items vertically (optional) */
+  text-align: center; 
 }
+
 .retry-btn {
   background-color: #1976d2;
   color: white;
@@ -1132,22 +1480,18 @@ export default {
   background-color: #1565c0;
 }
 
-.expenses-container {
-  margin-top: 20px;
-}
-
-.expenses-table table {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  border-collapse: collapse;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+.expenses-section {
   overflow-x: auto;
 }
 
+.expenses-table table {
+  width: 100%;
+  border-collapse: separate; 
+  border-spacing: 0 10px; 
+  margin-bottom: 30px;
+}
+
 th, td {
-  width: 150px;
   padding: 6px 20px; 
   text-align: center;
   border-bottom: 2px solid #e0e0e0;
@@ -1161,15 +1505,8 @@ th, td {
   position: sticky;
   top: 0;
   font-weight: 600;
-}
-
-th {
-  background-color: #ecfdf5;
-  font-weight: 700;
-  font-size: 1rem; 
   padding: 12px 20px; 
-  color: rgb(46, 41, 41);
-} 
+}
 
 tr {
   background-color: #ecfdf5;
@@ -1179,13 +1516,21 @@ tr {
 }
 
 tr:hover {
-  background-color: #f5f5f5;
+  background-color: #f9f9f9;
+  transform: translateY(-2px); 
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08); 
+  transition: all 0.2s ease;
 }
 
 .actions {
+  vertical-align: middle; /* Keep table alignment intact */
+}
+
+.action-buttons {
   display: flex;
   gap: 8px;
   justify-content: center;
+  align-items: center;
 }
 
 .edit-btn, .delete-btn {
@@ -1245,6 +1590,7 @@ tr:hover {
 }
 
 .group-content {
+  width: 100%;
   background: rgb(216, 248, 216);
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -1330,18 +1676,6 @@ tr:hover {
   background-color: #1e3a27;
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-@media (max-width: 768px) {
-  .total-amount-card {
-    max-width: 100%;
-  }
-  
-  .amount-display {
-    flex-direction: row;
-    align-items: baseline;
-    gap: 15px;
-  }
 }
 
 .manage-groups-btn {
@@ -1476,22 +1810,6 @@ tr:hover {
   font-size: 0.9rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .header-top-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .group-action-buttons {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  
-  .group-list-container {
-    width: 95%;
-  }
-}
 .group-list-toggle {
   position: fixed;
   top: 80px;
@@ -1514,6 +1832,8 @@ tr:hover {
 }
 
 .group-container {
+  display: flex;
+  flex-wrap: wrap;
   max-width: 1200px;
   margin: 0 auto;
   padding: 120px 20px 20px;
@@ -1844,9 +2164,10 @@ tr:hover {
   margin-bottom: 20px;
 }
 
-.total-expenses {
+.total-summary {
   font-size: 1.2rem;
   font-weight: bold;
+  height: 100px;
 }
 
 .member-summary, .category-summary {
