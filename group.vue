@@ -1,7 +1,9 @@
 <template>
   <Navigation />
   <div class="group-header-decoration">
+
   <div class="group-container">
+
     <!-- Add this container for the group list -->
     <div v-if="showGroupList" class="group-list-container">
       <div class="group-list-header">
@@ -82,18 +84,20 @@
       </div>
 
       <div class="budget-display">
+         <div v-if="showBudgetExceededAlert" class="floating-alert">
+          <div class="alert-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>{{ budgetExceededMessage }}</span>
+            <button @click="closeAlert" class="close-alert-btn">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
         <div class="budget-header">
           <h3>Allotted Budget</h3>
           <button v-if="!hasBudget" @click="showAddBudgetForm" class="btn-add">Add</button>
           <button v-else @click="showEditBudgetForm" class="btn-edit">Edit</button>
-        </div>
-
-        <div v-if="showBudgetExceededAlert" class="budget-alert">
-          <div class="alert-content">
-            <span class="alert-icon">⚠️</span>
-            <span>You have exceeded your monthly budget!</span>
-            <button @click="dismissAlert" class="dismiss-btn">×</button>
-          </div>
         </div>
 
         <div class="budget-details" v-if="!isBudgetLoading">
@@ -508,8 +512,7 @@ export default {
       budgetSuccessMessage: '',
       budgetHideMessage: false,
       showBudgetExceededAlert: false,
-      alertDismissed: false,
-      dismissedAlerts: {},
+      budgetExceededMessage: "Warning: You have exceeded the allotted budget!",
       // Modals
       showAddExpenseModal: false,
       showEditExpenseModal: false,
@@ -571,6 +574,7 @@ export default {
     });
   },
 
+
   totalAmount() {
   return this.filteredExpenses.reduce((total, expense) => {
     return total + (parseFloat(expense.item_price) || 0); 
@@ -628,18 +632,12 @@ export default {
           this.budgetAmountValue = parseFloat(res.data.amount);
           this.hasBudget = true;
           this.calculateRemaining();
-          this.checkBudgetStatus();
         }
       } catch (error) {
         console.error('Failed to fetch budget:', error);
       } finally {
         this.isBudgetLoading = false;
       }
-    }
-
-    const savedAlerts = localStorage.getItem('dismissedAlerts');
-    if (savedAlerts) {
-      this.dismissedAlerts = JSON.parse(savedAlerts);
     }
 
     const user = JSON.parse(localStorage.getItem('user'));
@@ -698,29 +696,10 @@ export default {
       'deleteGroup'
     ]),
 
-    dismissAlert() {
-  this.showBudgetExceededAlert = false;
-  this.$set(this.dismissedAlerts, this.budgetAmountValue, true);
-  localStorage.setItem('dismissedAlerts', JSON.stringify(this.dismissedAlerts));
-},
-
-checkBudgetStatus(forceShow = false) {
-  const budget = this.budgetAmountValue;
-
-  if (!budget || budget <= 0) {
-    this.showBudgetExceededAlert = false;
-    return;
-  }
-
-  const expensesForSelectedMonth = this.filteredExpenses.reduce((sum, expense) => {
-    return sum + (Number(expense.item_price) || 0);
-  }, 0);
-
-  const isExceeded = expensesForSelectedMonth > budget;
-  const isDismissed = this.dismissedAlerts[budget] || false;
-
-  this.showBudgetExceededAlert = isExceeded && (forceShow || !isDismissed);
-},
+    editExpense(expense) {
+    this.editingExpense = { ...expense };  // Create a copy of the expense to edit
+    this.showEditExpenseModal = true;     // Set the modal visibility to true
+  },
 
     formatPHP(value) {
     return '₱' + parseFloat(value).toLocaleString();
@@ -788,8 +767,8 @@ checkBudgetStatus(forceShow = false) {
     }
   },
   calculateRemaining() {
-  this.remainingBudget = this.budgetAmountValue - this.totalAmount; // Use totalAmount instead of totalExpenses
-  this.budgetProgress = (this.totalAmount / this.budgetAmountValue) * 100; // Use totalAmount here too
+    this.remainingBudget = this.budgetAmountValue - this.totalAmount; 
+    this.budgetProgress = (this.totalAmount / this.budgetAmountValue) * 100; 
   },
   showSuccess(message) {
     this.budgetSuccessMessage = message;
@@ -1008,44 +987,104 @@ checkBudgetStatus(forceShow = false) {
     },
     
     async submitExpense() {
-  try {
-    const user = JSON.parse(localStorage.getItem('user'));
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
 
-    const expenseData = {
-      item_name: this.newExpense.item_name,
-      item_price: parseFloat(this.newExpense.item_price),
-      expense_type: this.newExpense.expense_type,
-      group_id: this.localGroupId,
-      user_id: user.id   
-    };
+        const expenseData = {
+          item_name: this.newExpense.item_name,
+          item_price: parseFloat(this.newExpense.item_price),
+          expense_type: this.newExpense.expense_type,
+          group_id: this.localGroupId,
+          user_id: user.id   
+        };
 
-    console.log('Submitting expense:', expenseData);
+        console.log('Submitting expense:', expenseData);
 
-    await this.addExpense(expenseData);
+        // Add the expense
+        await this.addExpense(expenseData);
+
+        // Show success notification
+        this.$notify({
+          title: 'Success',
+          message: 'Expense added successfully',
+          type: 'success'
+        });
+
+        // Close the modal and reset form
+        this.closeModal();
+        this.resetNewExpense();
+
+        // Reload the expenses
+        await this.loadExpenses();
+
+        // Recalculate the remaining budget
+        this.calculateRemaining();
+
+        // If the remaining budget is less than zero, show the alert
+        if (this.remainingBudget < 0) {
+          this.showBudgetExceededAlert = true; // Show alert without auto hiding
+        }
+      } catch (err) {
+        console.error('Error adding expense:', err);
+        this.$notify({
+          title: 'Error',
+          message: err.response?.data?.message || 'Failed to add expense',
+          type: 'error'
+        });
+      }
+    },
+
+    closeAlert() {
+    this.showBudgetExceededAlert = false;
+  },
     
-    this.$notify({
-      title: 'Success',
-      message: 'Expense added successfully',
-      type: 'success'
-    });
+    async submitEditExpense() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
 
-    this.closeModal();
-    this.resetNewExpense();
-    
-    await this.loadExpenses();
-  } catch (err) {
-    console.error('Error adding expense:', err);
-    this.$notify({
-      title: 'Error',
-      message: err.response?.data?.message || 'Failed to add expense',
-      type: 'error'
-    });
-  }
-},
-    
-    editExpense(expense) {
-      this.editingExpense = { ...expense };
-      this.showEditExpenseModal = true;
+        const expenseData = {
+          id: this.editingExpense.id,  // Assuming you're editing an existing expense, send its ID
+          item_name: this.editingExpense.item_name,
+          item_price: parseFloat(this.editingExpense.item_price),
+          expense_type: this.editingExpense.expense_type,
+          group_id: this.localGroupId,
+          user_id: user.id   
+        };
+
+        console.log('Editing expense:', expenseData);
+
+        // Call your API to update the expense (replace with your method)
+        await this.updateExpense(expenseData);
+
+        // Show success notification
+        this.$notify({
+          title: 'Success',
+          message: 'Expense updated successfully',
+          type: 'success'
+        });
+
+        // Close the modal and reset form
+        this.closeEditModal();
+        this.resetEditingExpense();
+
+        // Reload the expenses
+        await this.loadExpenses();
+
+        // Recalculate the remaining budget
+        this.calculateRemaining();
+
+        // If the remaining budget is less than zero, show the alert
+        if (this.remainingBudget < 0) {
+          this.showBudgetExceededAlert = true; // Show alert without auto hiding
+        }
+      } catch (err) {
+        console.error('Error editing expense:', err);
+        this.$notify({
+          title: 'Error',
+          message: err.response?.data?.message || 'Failed to update expense',
+          type: 'error'
+        });
+      }
     },
 
     deleteExpenseHandler(expenseId) {
@@ -1282,48 +1321,55 @@ checkBudgetStatus(forceShow = false) {
   border-radius: 2px;
 }
 
-.budget-alert {
+.floating-alert {
   position: fixed;
-  top: 290px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; 
+  align-items: center; 
   background-color: #ffebee;
   border: 1px solid #ef9a9a;
-  border-radius: 6px;
-  padding: 20px 30px; /* Increased padding */
-  min-width: 350px;    /* Optional: ensures a wider box */
   color: #c62828;
-  font-weight: bold;
-  font-size: 1.2em;    /* Increased font size */
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-  display: flex;
-  align-items: center;
-  animation: slideDown 0.3s ease-out;
+  max-width: 65%;
+  min-height: 70px;
+  font-size: 20px;
+  width: 100%; 
+}
+
+.alert-content i {
+  color: #cc0000;
+  font-size: 32px;
 }
 
 .alert-content {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-.alert-icon {
-  font-size: 1.5em;
+.alert-content i {
+  color: #cc0000;
 }
 
-.dismiss-btn {
+.close-alert-btn {
   background: none;
   border: none;
-  color: #c62828;
-  font-size: 1.8em; /* Bigger button */
+  color: #333;
   cursor: pointer;
-  margin-left: 20px;
-  padding: 0 8px;
+  font-size: 18px;
+  padding: 0;
+  margin-left: 10px;
 }
 
-.dismiss-btn:hover {
-  color: #b71c1c;
+.close-alert-btn:hover {
+  color: #cc0000;
 }
 
 .group-con {
@@ -1522,7 +1568,7 @@ h2 {
   font-size: 1rem;
 }
 
-.budget-success-message.hide {
+.budget-success-message.hide{
   opacity: 0;
 }
 
