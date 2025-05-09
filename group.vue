@@ -2,7 +2,6 @@
   <Navigation />
   <div class="group-header-decoration">
   <div class="group-container">
-
     <!-- Add this container for the group list -->
     <div v-if="showGroupList" class="group-list-container">
       <div class="group-list-header">
@@ -74,11 +73,10 @@
       </div>
     </div>
   </div>
-
+  
   <div class="group-con">
     <div class="budget-total-container">
     <div class="budget-container">
-    <div class="budget-content">
       <div v-if="budgetSuccessMessage" class="budget-success-message" :class="{ hide: budgetHideMessage }">
         {{ budgetSuccessMessage }}
       </div>
@@ -88,6 +86,14 @@
           <h3>Allotted Budget</h3>
           <button v-if="!hasBudget" @click="showAddBudgetForm" class="btn-add">Add</button>
           <button v-else @click="showEditBudgetForm" class="btn-edit">Edit</button>
+        </div>
+
+        <div v-if="showBudgetExceededAlert" class="budget-alert">
+          <div class="alert-content">
+            <span class="alert-icon">⚠️</span>
+            <span>You have exceeded your monthly budget!</span>
+            <button @click="dismissAlert" class="dismiss-btn">×</button>
+          </div>
         </div>
 
         <div class="budget-details" v-if="!isBudgetLoading">
@@ -123,7 +129,7 @@
         <!-- Budget Form Modal -->
         <div v-if="isAddingBudget || isEditingBudget" class="budget-form-modal">
           <div class="budget-form">
-            <h3>{{ isEditingBudget ? 'Edit' : 'Add' }} Allotted Budget</h3>
+              <h2>{{ isEditingBudget ? 'Edit' : 'Add' }} Allotted Budget</h2>
 
             <div class="form-group">
               <label>Budget Amount (₱):</label>
@@ -147,8 +153,8 @@
       </div>
     </div>
   </div>
-  </div>
 
+    <div class="group-wrapper">
     <div class="group-body">
       <div class="group-tabs">
         <button 
@@ -258,6 +264,7 @@
                 </div>
               </div>
             </div>
+        </div>
       </div>
     </div>
   </div>
@@ -441,13 +448,13 @@
     
 
     <!-- Confirmation Modal -->
-    <div v-if="showConfirmationModal" class="modal-overlay">
+    <div v-if="showConfirmationModal" class="modal-overlay2">
       <div class="modal-content confirmation-modal">
-        <div class="modal-header">
+        <div class="modal-header2">
           <h3>{{ confirmationTitle }}</h3>
           <button @click="closeModal" class="close-button">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body2">
           <p>{{ confirmationMessage }}</p>
           <div class="confirmation-actions">
             <button @click="closeModal" class="cancel-button">Cancel</button>
@@ -500,6 +507,9 @@ export default {
       hasBudget: false,
       budgetSuccessMessage: '',
       budgetHideMessage: false,
+      showBudgetExceededAlert: false,
+      alertDismissed: false,
+      dismissedAlerts: {},
       // Modals
       showAddExpenseModal: false,
       showEditExpenseModal: false,
@@ -561,7 +571,6 @@ export default {
     });
   },
 
-
   totalAmount() {
   return this.filteredExpenses.reduce((total, expense) => {
     return total + (parseFloat(expense.item_price) || 0); 
@@ -619,12 +628,18 @@ export default {
           this.budgetAmountValue = parseFloat(res.data.amount);
           this.hasBudget = true;
           this.calculateRemaining();
+          this.checkBudgetStatus();
         }
       } catch (error) {
         console.error('Failed to fetch budget:', error);
       } finally {
         this.isBudgetLoading = false;
       }
+    }
+
+    const savedAlerts = localStorage.getItem('dismissedAlerts');
+    if (savedAlerts) {
+      this.dismissedAlerts = JSON.parse(savedAlerts);
     }
 
     const user = JSON.parse(localStorage.getItem('user'));
@@ -682,6 +697,30 @@ export default {
       'removeMember',
       'deleteGroup'
     ]),
+
+    dismissAlert() {
+  this.showBudgetExceededAlert = false;
+  this.$set(this.dismissedAlerts, this.budgetAmountValue, true);
+  localStorage.setItem('dismissedAlerts', JSON.stringify(this.dismissedAlerts));
+},
+
+checkBudgetStatus(forceShow = false) {
+  const budget = this.budgetAmountValue;
+
+  if (!budget || budget <= 0) {
+    this.showBudgetExceededAlert = false;
+    return;
+  }
+
+  const expensesForSelectedMonth = this.filteredExpenses.reduce((sum, expense) => {
+    return sum + (Number(expense.item_price) || 0);
+  }, 0);
+
+  const isExceeded = expensesForSelectedMonth > budget;
+  const isDismissed = this.dismissedAlerts[budget] || false;
+
+  this.showBudgetExceededAlert = isExceeded && (forceShow || !isDismissed);
+},
 
     formatPHP(value) {
     return '₱' + parseFloat(value).toLocaleString();
@@ -1243,21 +1282,65 @@ export default {
   border-radius: 2px;
 }
 
+.budget-alert {
+  position: fixed;
+  top: 290px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 6px;
+  padding: 20px 30px; /* Increased padding */
+  min-width: 350px;    /* Optional: ensures a wider box */
+  color: #c62828;
+  font-weight: bold;
+  font-size: 1.2em;    /* Increased font size */
+  z-index: 1000;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  animation: slideDown 0.3s ease-out;
+}
+
+.alert-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alert-icon {
+  font-size: 1.5em;
+}
+
+.dismiss-btn {
+  background: none;
+  border: none;
+  color: #c62828;
+  font-size: 1.8em; /* Bigger button */
+  cursor: pointer;
+  margin-left: 20px;
+  padding: 0 8px;
+}
+
+.dismiss-btn:hover {
+  color: #b71c1c;
+}
+
 .group-con {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap; /* prevent wrapping by default */
+  gap: 12px;
   width: 100%;
-  box-sizing: border-box;
+  flex-direction: row;
 }
 
 .budget-total-container {
-  max-width: 350px;
+  max-width: 30%;
   box-sizing: border-box;
 }
 
 .budget-container {
-  background-color: #5a926a;
+  background-color: #daf9da;
   padding: 20px;
   border-radius: 15px;
   border: 1px solid #2e4e38;
@@ -1272,13 +1355,13 @@ export default {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   gap: 10px;
 }
 
 .budget-header h3 {
   font-size: 1.5rem;
-  color: white;
+  color: #2a4935;
   margin: 0;
 }
 
@@ -1300,13 +1383,14 @@ export default {
 }
 
 .budget-display {
-  background: rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+  background: rgba(32, 28, 28, 0.05);
   padding: 20px;
   border-radius: 10px;
-  align-items: center;
 }
 
 .budget-details {
+  color: #1d4d2b;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -1346,9 +1430,9 @@ export default {
 }
 
 .progress-text {
+  color: #2a4935;
   text-align: right;
   font-size: 0.9rem;
-  color: #fff;
 }
 
 .budget-form-modal {
@@ -1361,8 +1445,13 @@ export default {
   z-index: 1000;
 }
 
+h2 {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
 .budget-form {
-  background-color: white;
+  background-color: #daf9da;
   color: #333;
   padding: 25px;
   border-radius: 10px;
@@ -1372,6 +1461,7 @@ export default {
 
 .budget-form .form-group {
   margin-bottom: 15px;
+  margin-top: 20px;
 }
 
 .budget-form label {
@@ -1423,23 +1513,25 @@ export default {
 
 .budget-success-message {
   background-color: #d4edda;
-  color: #155724;
+  color: #1d4d2b;
   padding: 10px;
   border-radius: 4px;
-  margin-bottom: 10px;
+  margin: 10px 0;
   text-align: center;
   transition: opacity 0.5s ease;
+  font-size: 1rem;
 }
 
-.hide {
+.budget-success-message.hide {
   opacity: 0;
-  pointer-events: none;
+}
+
+.group-wrapper {
+  width: 70%;
+  box-sizing: border-box;
 }
 
 .group-body {
-  flex: 1 1 600px;
-  min-width: 300px;
-  box-sizing: border-box;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -1635,7 +1727,7 @@ tr:hover {
 
 .group-content {
   width: 100%;
-  background: rgb(216, 248, 216);
+  background: #a7f0b1;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 2px solid #2e4e38;
@@ -2309,7 +2401,9 @@ tr:hover {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #2e4e38;
+  background-color: #a3f6ae; 
+  
 }
 
 .close-button {
@@ -2317,11 +2411,42 @@ tr:hover {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #666;
+  color: black;
 }
 
 .modal-body {
   padding: 20px;
+  background-color: #e4f9e4; 
+}
+
+.modal-overlay2 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-header2 {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 20px;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f56161;
+  border-bottom: 1px solid #a40505;
+  color: black;
+}
+
+
+.modal-body2 {
+  padding: 20px;
+  background-color: #ffebee;
 }
 
 .form-group {
@@ -2369,6 +2494,10 @@ small {
   cursor: pointer;
 }
 
+button.cancel-button{
+  border: 1px solid #2e4e38;
+}
+
 .submit-button {
   background-color: #2a4935;
   color: white;
@@ -2413,5 +2542,18 @@ small {
 .success-message {
   color: #2e7d32;
   margin-top: 10px;
+}
+
+@media (max-width: 760px) {
+  .group-con {
+    flex-wrap: wrap;
+    flex-direction: column;
+  }
+  .budget-total-container{
+    max-width: 100%;
+  }
+  .group-wrapper{
+    width: 100%;
+  }
 }
 </style>
