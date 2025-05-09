@@ -1337,21 +1337,22 @@ export default {
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  max-width: 65%;
-  min-height: 70px;
+  min-width: 350px;
+  min-height: 50px;
   font-size: 20px;
-  width: 100%; 
 }
 
 .alert-content i {
   color: #cc0000;
-  font-size: 32px;
+  font-size: 28px;
 }
 
 .alert-content {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .alert-content i {
