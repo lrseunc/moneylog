@@ -9,7 +9,14 @@
 
     <div v-if="currentView === 'view'" class="budget-section">
       <div class="content-wrapper">
-        <div class="month-year-selector">
+        <div class="view-toggle">
+            <button @click="toggleYearFilter" class="toggle-button">
+              {{ showYearFilter ? 'Switch to Month View' : 'Switch to Year View' }}
+            </button>
+          </div>
+
+          <!-- Modified month/year selector section -->
+          <div v-if="!showYearFilter" class="month-year-selector">
             <div class="year-selector">
               <label for="year">Year:</label>
               <select id="year" v-model="selectedYear" @change="updateSelectedMonthYear">
@@ -28,6 +35,16 @@
               </button>
             </div>
           </div>
+
+          <div v-if="showYearFilter" class="year-only-selector">
+            <div class="year-selector">
+              <label for="year-filter">YEAR:</label>
+              <select id="year-filter" v-model="yearFilter" @change="updateExpenseView">
+                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+              </select>
+            </div>
+          </div>
+
         <!-- Filter Buttons -->
         <div class="filter-buttons">
           <button @click="filterExpenses('Food')" :class="{ active: filterCategory === 'Food' }">Food</button>
@@ -42,7 +59,12 @@
 
         <!-- Expense Table -->
         <div class="expense-table">
-          <h3>Expenses for {{ availableMonths.find(m => m.value === selectedMonth)?.label }} {{ selectedYear }}</h3>
+          <h3 v-if="!showYearFilter">Expenses for  {{ availableMonths.find(m => m.value === selectedMonth)?.label }} {{ selectedYear }}
+          <span class="category-label">&nbsp;({{ filterCategory === 'all' ? 'All Categories' : filterCategory }})</span>
+        </h3>
+          <h3 v-else>Expenses for  {{ yearFilter }}
+            <span class="category-label">&nbsp;({{ filterCategory === 'all' ? 'All Categories' : filterCategory }})</span>
+        </h3>
           <table>
             <thead>
               <tr>
@@ -53,19 +75,29 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(expense, index) in filteredExpenses" :key="expense.id" :class="{'alternate-row': index % 2 !== 0}">
-                <td>{{ expense.category }}</td>
-                <td>{{ expense.name }}</td>
-                <td>{{ formatCurrency(expense.amount) }}</td> <!-- Use formatCurrency method here -->
-                <td>{{ expense.date }}</td>
-              </tr>
-            </tbody>
+      <tr v-if="filteredExpenses.length === 0">
+        <td colspan="4" class="no-expenses-message">
+          NO EXPENSES
+        </td>
+      </tr>
+      <tr 
+        v-for="(expense, index) in filteredExpenses" 
+        v-else
+        :key="expense.id" 
+        :class="{'alternate-row': index % 2 !== 0}"
+      >
+        <td>{{ expense.category }}</td>
+        <td>{{ expense.name }}</td>
+        <td>{{ formatCurrency(expense.amount) }}</td>
+        <td>{{ expense.date }}</td>
+      </tr>
+    </tbody>
           </table>
         </div>
 
         <!-- Display Total Amount -->
         <div class="total-amount">
-          <p>Total: {{ formatCurrency(totalAmount) }}</p>
+          <p>Total: {{ formatCurrency(totalAmount) }} ({{ formatUsd(totalAmount) }})</p>
         </div>
       </div>
     </div>
@@ -90,34 +122,66 @@
         </div>
       </div>
 
-      <div class="summary-box">
+  <div v-if="showYearFilter" class="summary-box">
+  <h3>Annual Summary for {{ yearFilter }}</h3>
+    <div class="summary-item">
+      <span>Total Budget:</span>
+      <span>{{ formatCurrency(yearlyBudgetsTotal) }}</span>
+    </div>
+    
+    <div class="summary-item">
+  <span>{{ filterCategory === 'All' ? 'Expenses' : filterCategory + ' Expenses' }}:</span>
+  <span>{{ formatCurrency(yearlyExpensesByCategory) }}</span>
+</div>
+    
+    <div class="summary-item remaining">
+    <span>Remaining Budget:</span>
+    <span :class="{ 'negative': yearlyRemainingByCategory < 0 }">
+      {{ formatCurrency(yearlyRemainingByCategory) }}
+    </span>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress" :style="{ width: yearlyBudgetPercentageByCategory + '%' }"></div>
+  </div>
+  <div class="percentage">{{ yearlyBudgetPercentageByCategory.toFixed(0) }}%</div>
+</div>
+
+      <!--MONTHLY-->
+      <div v-else class="summary-box">
     <h3>Budget Summary</h3>
     <div class="summary-item">
       <span>Budget:</span>
       <span>{{ formatCurrency(currentBudget?.budget_amount || 0) }}</span>
     </div>
+
     <div class="summary-item">
-      <span>Spent:</span>
-      <span>{{ formatCurrency(totalAmount) }}</span>
-    </div>
+    <span>{{ filterCategory === 'All' ? 'Expenses' : filterCategory + ' Expenses' }}:</span>
+  <span>{{ formatCurrency(totalAmount) }}</span>
+</div>
+
     <div class="summary-item remaining">
-      <span>Remaining:</span>
+      <span>Remaining Budget:</span>
       <span :class="{ 'negative': remainingBudget < 0 }">
         {{ formatCurrency(remainingBudget) }}
       </span>
     </div>
+
     <div class="progress-bar">
       <div class="progress" :style="{ width: budgetPercentage + '%' }"></div>
     </div>
     <div class="percentage">{{ budgetPercentage.toFixed(0) }}%</div>
   </div>
-</div>
-</div>
-
-<div v-if="isBudgetExceeded" class="exceeded-warning">
-    ⚠️ Budget exceeded by {{ formatCurrency(totalAmount - currentBudget.budget_amount) }}
   </div>
 
+<div v-if="isBudgetExceeded && !showYearFilter" class="exceeded-warning">
+  ⚠️ Monthly budget exceeded by {{ formatCurrency(totalAmount - currentBudget.budget_amount) }}
+</div>
+
+<div v-if="showYearFilter && isYearlyBudgetExceeded" class="exceeded-warning">
+  ⚠️ Annual budget {{ filterCategory !== 'all' ? `(${filterCategory}) ` : '' }}exceeded by {{ formatCurrency(yearlyExpensesByCategory - yearlyBudgetsTotal) }}
+</div>
+</div>
 </template>
 
 
@@ -125,11 +189,15 @@
 import Navigation from "./navigation.vue"; 
 import { Pie } from 'vue-chartjs';
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { mapGetters, mapActions } from 'vuex';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale);
+ChartJS.register(
+  Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, 
+  ChartDataLabels 
+);
 
 export default {
   components: {
@@ -144,16 +212,30 @@ export default {
       wasBudgetExceeded: false,
       selectedYear: new Date().getFullYear().toString(), 
       selectedMonth: (new Date().getMonth() + 1).toString().padStart(2, '0'),
+      yearFilter: null, // Add this for year-only filtering
+      showYearFilter: false,
       chartOptions: {
         responsive: true,
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const month = this.availableMonths[index];
-            this.selectMonth(month.value);
-          }
-        },
         plugins: {
+          datalabels: {
+            formatter: (value, context) => {
+              const dataset = context.chart.data.datasets[0].data;
+              const total = dataset.reduce((sum, val) => sum + val, 0);
+              if (value > 0) {
+                return (value / total * 100).toFixed(1) + '%';
+              }
+              return null; // This will hide the label for zero values
+            },
+            color: '#000',
+            font: {
+              weight: 'bold',
+              size: 12
+            },
+            anchor: 'center',
+            align: 'center',
+            offset: 0,
+            padding: 0
+          },
           legend: {
             position: 'top',
           },
@@ -165,12 +247,92 @@ export default {
             },
           },
         },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const month = this.availableMonths[index];
+            this.selectMonth(month.value);
+          }
+        }
       },
     };
   },
 
   computed: {
     ...mapGetters(['getViewExpenses', 'getPersonalBudgets', 'getViewPageMonthYear']),
+    
+    yearlyExpensesByCategory() {
+  if (!this.showYearFilter || !this.yearFilter) return 0; 
+  return this.getViewExpenses.reduce((sum, expense) => {
+
+    const matchesCategory = this.filterCategory === 'all' || 
+                          expense.expense_type === this.filterCategory;
+    
+    return matchesCategory ? sum + (Number(expense.item_price) || 0) : sum;
+  }, 0);
+},
+    
+  yearlyRemainingByCategory() {
+    return this.yearlyBudgetsTotal - this.yearlyExpensesByCategory;
+  },
+
+  yearlyBudgetPercentageByCategory() {
+    if (!this.yearlyBudgetsTotal) return 0;
+    return Math.min(100, (this.yearlyExpensesByCategory / this.yearlyBudgetsTotal) * 100);
+  },
+
+    yearlyExpensesTotal() {
+    if (!this.showYearFilter || !this.yearFilter) return 0;
+    return this.getViewExpenses.reduce((sum, expense) => {
+      return sum + (Number(expense.item_price) || 0);
+    }, 0);
+  },
+
+
+  yearlyBudgetsTotal() {
+    if (!this.showYearFilter || !this.yearFilter) return 0;
+    return this.getPersonalBudgets.reduce((sum, budget) => {
+      if (budget.month_year && budget.month_year.startsWith(this.yearFilter)) {
+        return sum + (Number(budget.budget_amount) || 0);
+      }
+      return sum;
+    }, 0);
+  },
+
+  // Calculate remaining budget for the year
+  yearlyRemainingBudget() {
+    return this.yearlyBudgetsTotal - this.yearlyExpensesTotal;
+  },
+
+  // Calculate budget percentage for the year
+  yearlyBudgetPercentage() {
+    if (!this.yearlyBudgetsTotal) return 0;
+    return Math.min(100, (this.yearlyExpensesTotal / this.yearlyBudgetsTotal) * 100);
+  },
+
+  // Check if yearly budget is exceeded
+  isYearlyBudgetExceeded() {
+    return this.yearlyExpensesByCategory > this.yearlyBudgetsTotal;
+  },
+
+    availableYears() {
+  const years = new Set();
+  this.getViewExpenses.forEach(expense => {
+    if (expense.expense_date) {
+      years.add(new Date(expense.expense_date).getFullYear());
+    }
+  });
+  this.getPersonalBudgets.forEach(budget => {
+    if (budget.month_year) {
+      years.add(parseInt(budget.month_year.split('-')[0]));
+    }
+  });
+  return Array.from(years).sort((a, b) => b - a); // Descending order
+},
+
+    usdExchangeRate() {
+      return this.$store.state.usdExchangeRate || 0.018045;
+    },
 
    selectedMonthYear: {
     get() {
@@ -258,13 +420,64 @@ export default {
     },
 
     filteredExpenses() {
-      return this.expenses.filter(expense => {
-        const categoryMatch = this.filterCategory === 'all' || expense.category === this.filterCategory;
-        const monthMatch = !this.selectedMonth || 
-          (expense.date && expense.date.startsWith(`${this.selectedYear}-${this.selectedMonth}`));
-        return categoryMatch && monthMatch;
-      });
-    },
+  let expenses = this.getViewExpenses || [];
+  
+  // Apply year filter if enabled
+  if (this.showYearFilter && this.yearFilter) {
+    expenses = expenses.filter(expense => {
+      if (!expense.expense_date) return false;
+      return new Date(expense.expense_date).getFullYear() == this.yearFilter;
+    });
+  } 
+  // Apply month filter if not in year view
+  else {
+    const currentBudget = this.$store.getters.getCurrentBudget(
+      `${this.selectedYear}-${this.selectedMonth}`
+    );
+    
+    if (!currentBudget?.id) return [];
+    
+    expenses = expenses.filter(expense => 
+      expense.personal_budget_id === currentBudget.id
+    );
+  }
+
+  if (this.filterCategory && this.filterCategory !== 'all') {
+    expenses = expenses.filter(expense => 
+      expense.expense_type.toLowerCase() === this.filterCategory.toLowerCase()
+    );
+  }
+
+  return expenses.map(expense => ({
+    ...expense,
+    category: expense.expense_type,
+    name: expense.item_name,
+    amount: Number(expense.item_price),
+    date: this.formatDateForView(expense.expense_date)
+  }));
+},
+
+toggleYearFilter() {
+  this.showYearFilter = !this.showYearFilter;
+  this.updateExpenseView();
+},
+
+updateExpenseView() {
+  if (this.showYearFilter) {
+    this.$store.dispatch('fetchViewExpenses', { year: this.yearFilter });
+  } else {
+    const monthYear = `${this.selectedYear}-${this.selectedMonth}`;
+    this.$store.dispatch('fetchViewExpenses', { monthYear });
+  }
+},
+
+  currentBudget() {
+    const monthYear = `${this.selectedYear}-${this.selectedMonth}`;
+    return this.$store.getters.getCurrentBudget(monthYear) || {
+      month_year: monthYear,
+      budget_amount: 0
+    };
+  },
 
     totalAmount() {
       return this.filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -313,11 +526,18 @@ export default {
   created() {
     this.fetchViewExpenses();
     this.fetchPersonalBudgets();
+    this.fetchExchangeRate();
   },
 
   methods: {
-    ...mapActions(['fetchViewExpenses', 'fetchPersonalBudgets']),
+    ...mapActions(['fetchViewExpenses', 'fetchPersonalBudgets', 'fetchExchangeRate']),
     
+    formatUsd(value) {
+    const rate = this.$store.state.usdExchangeRate || 0.018045;
+    const usdAmount = parseFloat(value) * rate;
+    return `$${usdAmount.toFixed(2)}`;
+  },
+
     filterExpenses(category) {
       this.filterCategory = category;
     },
@@ -328,10 +548,17 @@ export default {
     },
 
     updateSelectedMonthYear() {
-    const monthYear = `${this.selectedYear}-${this.selectedMonth}`;
-    this.$store.commit('SET_VIEW_PAGE_MONTH_YEAR', monthYear);
-    this.fetchViewExpenses();
-  },
+  const monthYear = `${this.selectedYear}-${this.selectedMonth}`;
+  this.$store.commit('SET_VIEW_PAGE_MONTH_YEAR', monthYear);
+  
+  this.$store.dispatch('fetchViewExpenses', monthYear)
+    .then(() => {
+      console.log('Successfully fetched expenses for:', monthYear);
+    })
+    .catch((error) => {
+      console.error('Error fetching expenses:', error);
+    });
+},
     
     formatCurrency(value) {
       if (value == null || isNaN(value)) return '₱0.00';
@@ -364,19 +591,37 @@ export default {
     doc.text('Expense Report', 105, 20, { align: 'center' });
     
     doc.setFontSize(12);
-    const monthName = this.availableMonths.find(m => m.value === this.selectedMonth)?.label || '';
-    doc.text(`Period: ${monthName} ${this.selectedYear}`, 105, 30, { align: 'center' });
+    let periodText;
+    if (this.showYearFilter) {
+      periodText = `Period: Year ${this.yearFilter}`;
+    } else {
+      const monthName = this.availableMonths.find(m => m.value === this.selectedMonth)?.label || '';
+      periodText = `Period: ${monthName} ${this.selectedYear}`;
+    }
+      
+      // Add category filter info if not 'all'
+      if (this.filterCategory && this.filterCategory !== 'all') {
+        periodText += ` (${this.filterCategory} only)`;
+      }
+      
+      doc.text(periodText, 105, 30, { align: 'center' });
     
     // Budget summary
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Budget: ${this.formatCurrency(this.currentBudget?.budget_amount || 0)}`, 20, 45);
-    doc.text(`Total Expenses: ${this.formatCurrency(this.totalAmount)}`, 165, 45, { align: 'center' });
-    doc.text(`Remaining: ${this.formatCurrency(this.remainingBudget)}`, 128, 55, { align: 'right' });
+    if (this.showYearFilter) {
+      // Year view summary
+      doc.text(`Total Budget: ${this.formatCurrency(this.yearlyBudgetsTotal)}`, 20, 45);
+      doc.text(`Total Expenses: ${this.formatCurrency(this.yearlyExpensesTotal)}`, 165, 45, { align: 'center' });
+      doc.text(`Remaining: ${this.formatCurrency(this.yearlyRemainingBudget)}`, 128, 55, { align: 'right' });
+    } else {
+      // Month view summary
+      doc.text(`Budget: ${this.formatCurrency(this.currentBudget?.budget_amount || 0)}`, 20, 45);
+      doc.text(`Total Expenses: ${this.formatCurrency(this.totalAmount)}`, 165, 45, { align: 'center' });
+      doc.text(`Remaining: ${this.formatCurrency(this.remainingBudget)}`, 128, 55, { align: 'right' });
+    }
     
-    const pdfExpenses = this.expenses.filter(expense => {
-      return expense.date && expense.date.startsWith(`${this.selectedYear}-${this.selectedMonth}`);
-    });
+    const pdfExpenses = this.filteredExpenses;
     
     // Prepare table data
     const tableData = pdfExpenses.map(expense => [
@@ -390,10 +635,10 @@ export default {
     autoTable(doc, {
   head: [['Date', 'Category', 'Description', 'Amount']],
   body: tableData,
-  startY: 70, // Lower starting position
+  startY: 70, 
   margin: { left: 10, right: 10 },
   styles: {
-    cellPadding: 4, // Reduced padding
+    cellPadding: 4, 
     fontSize: 9,
     halign: 'left',
     valign: 'middle',
@@ -449,7 +694,71 @@ export default {
 
 
 <style scoped>
-/* Month/Year Selector Styles */
+
+.no-expenses-message {
+  justify-content: center;   
+  align-items: center;                 
+  padding: 20px;
+  text-align: center;
+  font-style: italic;
+  font-size: 23px;
+  color: #666;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.no-expenses-message {
+  animation: fadeIn 0.5s ease-in-out;
+}
+.view-toggle {
+  margin-bottom: 5px;
+  text-align: center;
+}
+
+.toggle-button {
+  background-color: #e6f4ea; /* soft green background */
+  color: #2e5940; /* darker green text */
+  border: 2px solid #2e5940;
+  padding: 10px 18px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toggle-button:hover {
+  background-color: #2e5940;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.year-only-selector {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.year-only-selector .year-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.year-only-selector select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
 .month-year-selector {
   margin: 1px 0 0px 0; 
   padding: 15px;
@@ -512,42 +821,46 @@ export default {
 }
 
 .exceeded-warning {
+  margin-top: 0px !important;
   background-color: #e53935;
-  border-left: 4px solid #b71c1c;
-  padding: 10px 15px;
-  margin: 10px auto; /* vertically space + center horizontally */
-  margin-inline: 30px; /* adds left and right margin */
+  border-left: 6px solid #b71c1c;
+  border-right: 6px solid #b71c1c;
+  padding: 14px 20px;
+  margin: 20px auto; /* vertically space + center horizontally */
+  margin-inline: 30px; 
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 20px;
   text-align: center;
-  max-width: 100%; /* avoids overflowing if parent is small */
+  width: 100%; 
   box-sizing: border-box;
 }
 
 
 
 .summary-box {
+  display: flex;
+  flex-wrap: wrap;
   padding: 2px 16px 6px 16px; 
   background-color: #99da99;
   border: 2px solid #1e3731;
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
-  margin: 2px 0 6px 0; /* Liit ang top margin to 2px */
   text-align: center;
   color: #000000;
-  min-width: 280px;
+  min-width: 200px;
+  margin: 5px;
   max-width: 100%;
 }
 
 .progress-bar {
   width: 100%;
-  height: 9px; /* Smaller progress bar height */
+  height: 9px;
   background-color: #e0e0e0;
   border-radius: 4px;
   overflow: hidden;
@@ -590,11 +903,11 @@ export default {
   font-weight: 500;
 }
 
+
 .con {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  align-items: flex-start;
-  flex-wrap: wrap; /* Optional: stack on small screens */
   gap: 10px;
 }
 
@@ -648,14 +961,15 @@ button:hover {
 }
 
 .con-container {
+  display: flex;
+  flex-wrap: wrap;
   background: rgb(216, 248, 216);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 70%; 
-  min-width: 380px;
-  max-width: 900px;
+  width: 100%;
+  min-width: 300px;
+  max-width: 800px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  align-items: flex-start;
   margin-bottom: 10px;
   overflow-y: auto; /* Enables vertical scrolling when needed */
   max-height: 105vh; /* Limits height to 80% of viewport height */
@@ -702,6 +1016,11 @@ button:hover {
 }
 
 /* Expense Table Styling */
+.expense-table {
+  overflow-x: auto;
+  width: 100%;
+}
+
 .expense-table table {
   position: relative;
   width: 90%;
@@ -713,7 +1032,7 @@ button:hover {
 
 .expense-table th, .expense-table td {
   padding: 12px;
-  text-align: left;
+  text-align: center;
   border: 1px solid #000000;
   vertical-align: top;
   word-break: break-word; 
@@ -739,8 +1058,19 @@ button:hover {
   font-weight: bold;
 }
 
+.chart-summary{
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 400px;
+  justify-content: center;
+}
+
 .chart{
-  width: 380px;
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 200px;
+  width: 100%;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
@@ -749,6 +1079,7 @@ button:hover {
   border: 2px solid #336333;
   margin-bottom: 10px;
 }
+
 .download {
   display: flex;
   flex-wrap: wrap;
@@ -784,6 +1115,58 @@ margin-left: 3px;
 
 .download-button:hover {
 background-color: #1e3731;
+}
+
+
+/* Already good mobile responsiveness */
+@media (max-width: 760px) {
+  .con {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .con-container {
+    width: 100%;
+    max-width: 600px;
+    max-height: none; /* allow auto height on small screens */
+  }
+
+  .chart-summary {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .chart {
+    width: 100%;
+    max-width: 600px;
+  }
+  canvas{
+    height: 500px;
+    }
+
+  .toggle-button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .summary-box {
+    font-size: 12px;
+  }
+
+  .summary-item {
+    font-size: 14px;
+  }
+
+  .download-button,
+  .download select {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  button {
+    font-size: 16px;
+    padding: 10px 14px;
+  }
 }
 
 </style> 
