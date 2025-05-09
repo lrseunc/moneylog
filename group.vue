@@ -1365,7 +1365,7 @@ export default {
   cursor: pointer;
   font-size: 18px;
   padding: 0;
-  margin-left: 10px;
+  
 }
 
 .close-alert-btn:hover {
@@ -1389,7 +1389,7 @@ export default {
   background-color: #daf9da;
   padding: 20px;
   border-radius: 15px;
-  border: 1px solid #2e4e38;
+  border: 2px solid #2e4e38;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   color: white;
   height: auto;
@@ -1497,7 +1497,8 @@ h2 {
 }
 
 .budget-form {
-  background-color: #daf9da;
+  background-color: #e4f7e4;
+  border: 1px solid #2a4935;
   color: #333;
   padding: 25px;
   border-radius: 10px;
@@ -1573,7 +1574,8 @@ h2 {
 }
 
 .group-wrapper {
-  width: 70%;
+  min-width: 68%;
+  width: 72%;
   box-sizing: border-box;
 }
 
@@ -1581,8 +1583,8 @@ h2 {
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #85cf9d;
-  padding: 25px;
+  border: 2px solid #6A9C89;
+  padding: 30px;
 }
 
 .total-summary {
@@ -1773,7 +1775,7 @@ tr:hover {
 
 .group-content {
   width: 100%;
-  background: #a7f0b1;
+  background: #ecfdf0;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border: 2px solid #2e4e38;
@@ -2434,21 +2436,21 @@ tr:hover {
 
 .modal-content {
   background-color: white;
-  border-radius: 8px;
+  border-radius: 18px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  border-top: 4px solid #2a4935;
+  border: 1px solid #2a4935;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 25px;
   border-bottom: 1px solid #2e4e38;
-  background-color: #a3f6ae; 
+  background-color: #7dc887; 
   
 }
 
