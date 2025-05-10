@@ -839,8 +839,8 @@ async fetchAvailableBudgets() {
   async updateBudget() {
     const amount = parseFloat(this.budgetAmountInput);
     try {
-      await this.$axios.post(
-        `/api/grp_expenses/groups/${this.groupId}/budget`,
+      await this.$axios.put(
+        `/api/grp_expenses/groups/${this.groupId}/budget/${this.groupId}`,
         {
           budget_amount: amount,
           budget_name: this.budgetName
