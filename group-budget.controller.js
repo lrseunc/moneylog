@@ -2,52 +2,57 @@ const groupBudgetService = require('../grp_expenses/group-budget.service');
 
 module.exports = {
   addBudget: async (req, res) => {
-    try {
-      const groupId = parseInt(req.params.groupId, 10);
-      const budget_amount = parseFloat(req.body.budget_amount);
+  try {
+    const groupId = parseInt(req.params.groupId, 10);
+    const budget_amount = parseFloat(req.body.budget_amount);
+    const budget_name = req.body.budget_name;
 
-      if (isNaN(groupId)) {
-        return res.status(400).json({
-          success: 0,
-          message: "Group ID is required and must be a valid number"
-        });
-      }
-
-      if (isNaN(budget_amount)) {
-        return res.status(400).json({
-          success: 0,
-          message: "Budget amount is required and must be a valid number"
-        });
-      }
-
-      console.log("Adding budget with:", { groupId, budget_amount });
-
-      // Check if a budget already exists for this group
-      const existingBudget = await groupBudgetService.checkBudgetExists(groupId);
-
-      if (existingBudget) {
-        return res.status(409).json({
-          success: 0,
-          message: "Budget already set for this group. Try updating it instead."
-        });
-      }
-
-      // Add the new budget
-      const result = await groupBudgetService.addBudget(groupId, budget_amount);
-
-      return res.json({
-        success: 1,
-        message: "Budget added successfully",
-        data: result
-      });
-    } catch (err) {
-      console.error("Error adding budget:", err);
-      return res.status(500).json({
+    if (isNaN(groupId)) {
+      return res.status(400).json({
         success: 0,
-        message: err.message || "Database error"
+        message: "Group ID is required and must be a valid number"
       });
     }
-  },
+
+    if (isNaN(budget_amount)) {
+      return res.status(400).json({
+        success: 0,
+        message: "Budget amount is required and must be a valid number"
+      });
+    }
+
+    console.log("Adding budget with:", { groupId, budget_amount, budget_name });
+    console.log("budget_name type:", typeof budget_name, "| value:", budget_name);
+    // Check if a budget already exists for this group
+    const existingBudget = await groupBudgetService.checkBudgetExists(groupId);
+
+    if (existingBudget) {
+      return res.status(409).json({
+        success: 0,
+        message: "Budget already set for this group. Try updating it instead."
+      });
+    }
+
+    // ✅ Correct object syntax
+    const result = await groupBudgetService.addBudget({
+      groupId,
+      budgetAmount: budget_amount,
+      budgetName: budget_name
+    });
+
+    return res.json({
+      success: 1,
+      message: "Budget added successfully",
+      data: result
+    });
+  } catch (err) {
+    console.error("Error adding budget:", err);
+    return res.status(500).json({
+      success: 0,
+      message: err.message || "Database error"
+    });
+  }
+},
 
   updateBudget: async (req, res) => {
     try {
@@ -136,5 +141,38 @@ module.exports = {
         message: "Database error"
       });
     }
+  },
+
+getBudgetsByGroup: async (req, res) => {
+  try {
+    const groupId = parseInt(req.params.groupId, 10);
+    
+    if (isNaN(groupId)) {
+      return res.status(400).json({
+        success: 0,
+        message: "Invalid group ID"
+      });
+    }
+
+    const budgets = await groupBudgetService.getBudgetsByGroup(groupId);
+    
+    if (!budgets || budgets.length === 0) {
+      return res.status(404).json({
+        success: 0,
+        message: "No budgets found for this group"
+      });
+    }
+
+    return res.json({
+      success: 1,
+      data: budgets
+    });
+  } catch (err) {
+    console.error("Error fetching group budgets:", err);
+    return res.status(500).json({
+      success: 0,
+      message: "Database error"
+    });
   }
+}
 };
