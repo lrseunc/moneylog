@@ -1382,7 +1382,7 @@ export default {
 }
 
 .budget-total-container {
-  max-width: 30%;
+  min-width: 28%;
   box-sizing: border-box;
 }
 
@@ -1393,7 +1393,8 @@ export default {
   border: 2px solid #2e4e38;
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   color: white;
-  height: auto;
+  min-height: 250px;
+  max-height: 400px;
   margin-bottom: 10px;
 }
 
@@ -1576,7 +1577,7 @@ h2 {
 
 .group-wrapper {
   min-width: 68%;
-  width: 72%;
+  width: 100%;
   box-sizing: border-box;
 }
 
@@ -2019,7 +2020,7 @@ tr:hover {
 .group-container {
   display: flex;
   flex-wrap: wrap;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 120px 20px 20px;
 }
