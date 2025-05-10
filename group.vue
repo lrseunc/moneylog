@@ -83,6 +83,16 @@
         {{ budgetSuccessMessage }}
       </div>
 
+      <div v-if="availableBudgets.length">
+        <label>Select Existing Budget:</label>
+        <select v-model="selectedBudgetId" @change="onBudgetSelect">
+          <option disabled value="">-- Select Budget --</option>
+          <option v-for="budget in availableBudgets" :key="budget.id" :value="budget.id">
+            {{ budget.budget_name }} - ₱{{ budget.budget_amount }}
+          </option>
+        </select>
+      </div>
+
       <div class="budget-display">
          <div v-if="showBudgetExceededAlert" class="floating-alert">
           <div class="alert-content">
@@ -100,10 +110,16 @@
           <button v-else @click="showEditBudgetForm" class="btn-edit">Edit</button>
         </div>
 
+
         <div class="budget-details" v-if="!isBudgetLoading">
+          <div class="budget-name">
+            <span>Budget Name:</span>
+            <strong>{{ budgetName }}</strong>
+          </div>
+
           <div class="budget-amount">
             <span>Budget:</span>
-            <strong>{{ formatPHP(budgetAmountValue) }}</strong>
+            <strong class="budget">{{ formatPHP(budgetAmountInput) }}</strong>
           </div>
 
           <div class="expenses-amount">
@@ -134,6 +150,16 @@
         <div v-if="isAddingBudget || isEditingBudget" class="budget-form-modal">
           <div class="budget-form">
               <h2>{{ isEditingBudget ? 'Edit' : 'Add' }} Allotted Budget</h2>
+
+              <div class="form-group">
+              <label>Budget Name:</label>
+              <input
+                type="text"
+                v-model="budgetName"
+                placeholder="e.g. Birthday Party"
+                required
+              />
+            </div>
 
             <div class="form-group">
               <label>Budget Amount (₱):</label>
@@ -504,6 +530,9 @@ export default {
       totalExpenses: 0,
       remainingBudget: 0,
       budgetProgress: 0,
+      budgetName: '',
+      availableBudgets: [], // List of budgets for selection
+      selectedBudgetId: null,
       isBudgetLoading: false,
       isAddingBudget: false,
       isEditingBudget: false,
@@ -574,6 +603,16 @@ export default {
     });
   },
 
+  onBudgetSelect() {
+  const selected = this.availableBudgets.find(b => b.id === this.selectedBudgetId);
+  if (selected) {
+    this.budgetName = selected.budget_name;
+    this.budgetAmountInput = selected.budget_amount;
+    this.budgetAmountValue = selected.budget_amount;
+    this.hasBudget = true;
+    this.calculateRemaining();
+  }
+},
 
   totalAmount() {
   return this.filteredExpenses.reduce((total, expense) => {
@@ -670,6 +709,7 @@ export default {
     this.originalName = this.group.group_name || '';
 
     await this.fetchUserGroups();
+    await this.fetchAvailableBudgets();
   } catch (err) {
     console.error('Failed to load group data:', err);
     this.$notify({
@@ -693,8 +733,17 @@ export default {
       'deleteExpense',
       'sendInvite',
       'removeMember',
-      'deleteGroup'
+      'deleteGroup',
+      'fetchGroupBudget',
+      'fetchAvailableBudgets'
     ]),
+
+    showError(message) {
+    console.error(message);
+    },
+    showSuccess(message) {
+      console.log(message); 
+    },
 
     editExpense(expense) {
     this.editingExpense = { ...expense };  // Create a copy of the expense to edit
@@ -716,6 +765,7 @@ export default {
     this.isAddingBudget = false;
     this.isEditingBudget = false;
   },
+
   async submitAddBudget() {
   const amount = parseFloat(this.budgetAmountInput); 
 
@@ -724,13 +774,18 @@ export default {
     return;  
   }
 
-  console.log('Group ID:', this.groupId); 
-  console.log('Budget Amount:', amount); 
+  console.log('Group ID:', this.groupId);
+  console.log('Budget Name:', this.budgetName);
+  console.log('Budget Amount:', amount);
+  console.log('Token:', localStorage.getItem('jsontoken'));
 
   try {
     await this.$axios.post(
       `/api/grp_expenses/groups/${this.groupId}/budget`,
-      { budget_amount: amount },
+      {
+        budget_amount: amount,
+        budget_name: this.budgetName
+      },
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
@@ -748,12 +803,50 @@ export default {
   }
 },
 
+async fetchGroupBudget() {
+    try {
+      const res = await this.$axios.get(`/api/grp_expenses/groups/${this.groupId}/budget`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      });
+      if (res.data && res.data.success) {
+        this.budgetAmountValue = res.data.data.budget_amount;
+        this.hasBudget = true;
+      }
+    } catch (err) {
+      console.error("Failed to fetch budget:", err);
+      this.hasBudget = false;
+    }
+  },
+
+async fetchAvailableBudgets() {
+  try {
+    const res = await this.$axios.get(`/api/grp_expenses/groups/${this.groupId}/budget`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+      }
+    });
+    console.log("Fetched budgets:", res.data);
+    if (res.data.success) {
+      this.availableBudgets = res.data.data || [];
+    }
+  } catch (err) {
+    console.error('Failed to fetch budgets:', err);
+  }
+},
+
   async updateBudget() {
     const amount = parseFloat(this.budgetAmountInput);
     try {
-      await this.$axios.post(`/api/grp_expenses/groups/${this.groupId}/budget`, { budget_amount: amount },
-      {
-      headers: {
+      await this.$axios.post(
+        `/api/grp_expenses/groups/${this.groupId}/budget`,
+        {
+          budget_amount: amount,
+          budget_name: this.budgetName
+        },
+        {
+          headers: {
             Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
           }
         }
@@ -770,6 +863,11 @@ export default {
     this.remainingBudget = this.budgetAmountValue - this.totalAmount; 
     this.budgetProgress = (this.totalAmount / this.budgetAmountValue) * 100; 
   },
+  updateTotalAmount() {
+  this.totalAmount = this.expenses.reduce((total, expense) => total + expense.amount, 0);
+  this.calculateRemaining();
+},
+
   showSuccess(message) {
     this.budgetSuccessMessage = message;
     this.budgetHideMessage = false;
@@ -1070,6 +1168,7 @@ export default {
         // Reload the expenses
         await this.loadExpenses();
 
+        this.updateTotalAmount()
         // Recalculate the remaining budget
         this.calculateRemaining();
 
@@ -1094,51 +1193,54 @@ export default {
     }
   },
     
-  async handleUpdateExpense() {
-      try {
-        await this.updateExpense(this.editingExpense);
-        this.$notify({
-          title: 'Success',
-          message: 'Expense updated successfully',
-          type: 'success'
-        });
-        this.closeModal();
-        await this.loadExpenses()
-      } catch (err) {
-        console.error('Error updating expense:', err);
-        this.$notify({
-          title: 'Error',
-          message: err.response?.data?.message || 'Failed to update expense',
-          type: 'error'
-        });
-      }
-    },
+async handleUpdateExpense() {
+  try {
+    await this.updateExpense(this.editingExpense);
+    this.$notify({
+      title: 'Success',
+      message: 'Expense updated successfully',
+      type: 'success'
+    });
+    this.closeModal();
+    await this.loadExpenses();
+    this.updateTotalAmount(); // <-- Add this
+  } catch (err) {
+    console.error('Error updating expense:', err);
+    this.$notify({
+      title: 'Error',
+      message: err.response?.data?.message || 'Failed to update expense',
+      type: 'error'
+    });
+  }
+}
+,
     
     confirmDeleteExpense(expense) {
       this.confirmationTitle = 'Delete Expense';
       this.confirmationMessage = `Are you sure you want to delete "${expense.item_name}" (${this.formatPHP(expense.item_price)})?`;
       this.confirmAction = async () => {
-        try {
-          await this.deleteExpense({
-        expenseId: expense.id,
-        groupId: this.localGroupId
-      });
-          this.$notify({
-            title: 'Success',
-            message: 'Expense deleted successfully',
-            type: 'success'
-          });
-          await this.loadExpenses(); 
-          this.closeModal();
-        } catch (err) {
-          console.error('Error deleting expense:', err);
-          this.$notify({
-            title: 'Error',
-            message: err.response?.data?.message || 'Failed to delete expense',
-            type: 'error'
-          });
-        }
-      };
+      try {
+        await this.deleteExpense({
+          expenseId: expense.id,
+          groupId: this.localGroupId
+        });
+        this.$notify({
+          title: 'Success',
+          message: 'Expense deleted successfully',
+          type: 'success'
+        });
+        await this.loadExpenses();
+        this.updateTotalAmount(); // <-- Add this
+        this.closeModal();
+      } catch (err) {
+        console.error('Error deleting expense:', err);
+        this.$notify({
+          title: 'Error',
+          message: err.response?.data?.message || 'Failed to delete expense',
+          type: 'error'
+        });
+      }
+    };
       this.showConfirmationModal = true;
     },
     
@@ -1394,7 +1496,7 @@ export default {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   color: white;
   min-height: 250px;
-  max-height: 400px;
+  max-height: 500px;
   margin-bottom: 10px;
 }
 
@@ -1442,6 +1544,16 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 15px;
+}
+
+.budget-name {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+}
+
+.budget-amount .budget {
+  color: gold;
 }
 
 .budget-amount,
