@@ -1,19 +1,19 @@
 const pool = require('../../config/database');  // Assuming this is the correct path to your DB connection
 
 module.exports = {
-  addBudget: async (data) => {
-    try {
-      const [results] = await pool.query(
-        `INSERT INTO group_budgets 
-         (group_id, budget_amount, created_at) 
-         VALUES (?, ?, NOW())`,
-        [data.groupId, data.budgetAmount]
-      );
-      return results;
-    } catch (err) {
-      throw err;
-    }
-  },
+ addBudget: async (data) => {
+  try {
+    const [results] = await pool.query(
+      `INSERT INTO group_budgets 
+       (group_id, budget_amount, budget_name, created_at) 
+       VALUES (?, ?, ?, NOW())`,
+      [data.groupId, data.budgetAmount, data.budgetName]
+    );
+    return results;
+  } catch (err) {
+    throw err;
+  }
+},
 
   updateBudget: async (data) => {
     try {
@@ -38,7 +38,7 @@ module.exports = {
         `SELECT * FROM group_budgets WHERE group_id = ?`,
         [groupId]
       );
-      return results[0]  || null;  // Return the first match
+      return results[0] || null;
     } catch (err) {
       throw err;
     }
@@ -71,7 +71,7 @@ module.exports = {
   getBudgetsByGroup: async (groupId) => {
     try {
       const [results] = await pool.query(
-        `SELECT id, group_id, budget_amount, created_at 
+        `SELECT id, group_id, budget_amount, budget_name, created_at 
          FROM group_budgets 
          WHERE group_id = ?`,
         [groupId]
@@ -85,7 +85,7 @@ module.exports = {
   getAllBudgets: async () => {
     try {
       const [results] = await pool.query(
-        `SELECT id, group_id, budget_amount, created_at FROM group_budgets`
+        `SELECT id, group_id, budget_amount, budget_name, created_at FROM group_budgets`
       );
       return results;
     } catch (err) {
