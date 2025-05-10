@@ -6,6 +6,7 @@ const { checkToken } = require('../../auth/token_validation');
 
 router.post('/groups/:groupId/budget', checkToken, groupBudgetController.addBudget);
 router.get('/groups/:groupId/budget', checkToken, groupBudgetController.getBudget);
-router.put('/groups/:groupId/budget/:budgetId', checkToken, groupBudgetController.updateBudget);
+router.put('/groups/:groupId/budget/:id', checkToken, groupBudgetController.updateBudget);
+router.get('/groups/:groupId/budget', checkToken, groupBudgetController.getBudgetsByGroup);
 
 module.exports = router;
