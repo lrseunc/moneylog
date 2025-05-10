@@ -83,16 +83,6 @@
         {{ budgetSuccessMessage }}
       </div>
 
-      <div v-if="availableBudgets.length">
-        <label>Select Existing Budget:</label>
-        <select v-model="selectedBudgetId" @change="onBudgetSelect">
-          <option disabled value="">-- Select Budget --</option>
-          <option v-for="budget in availableBudgets" :key="budget.id" :value="budget.id">
-            {{ budget.budget_name }} - ₱{{ budget.budget_amount }}
-          </option>
-        </select>
-      </div>
-
       <div class="budget-display">
          <div v-if="showBudgetExceededAlert" class="floating-alert">
           <div class="alert-content">
@@ -297,7 +287,7 @@
         </div>
       </div>
     </div>
-  </div>
+  
   
 
         <!-- Members Tab -->
@@ -494,6 +484,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script>
@@ -531,7 +522,6 @@ export default {
       remainingBudget: 0,
       budgetProgress: 0,
       budgetName: '',
-      availableBudgets: [], // List of budgets for selection
       selectedBudgetId: null,
       isBudgetLoading: false,
       isAddingBudget: false,
@@ -603,17 +593,6 @@ export default {
     });
   },
 
-  onBudgetSelect() {
-  const selected = this.availableBudgets.find(b => b.id === this.selectedBudgetId);
-  if (selected) {
-    this.budgetName = selected.budget_name;
-    this.budgetAmountInput = selected.budget_amount;
-    this.budgetAmountValue = selected.budget_amount;
-    this.hasBudget = true;
-    this.calculateRemaining();
-  }
-},
-
   totalAmount() {
   return this.filteredExpenses.reduce((total, expense) => {
     return total + (parseFloat(expense.item_price) || 0); 
@@ -657,7 +636,21 @@ export default {
           this.originalName = this.group.group_name || '';
         }
       }
+    },
+
+    budgetSuccessMessage(newVal) {
+    if (newVal) {
+      this.budgetHideMessage = false; // Reset if showing again
+      setTimeout(() => {
+        this.budgetHideMessage = true; // Trigger fade-out
+
+        // After fade-out completes, remove message from DOM
+        setTimeout(() => {
+          this.budgetSuccessMessage = null;
+        }, 500); // matches .hide opacity transition
+      }, 3000); // message stays visible for 3 seconds
     }
+  }
   },
 
   async created() {
@@ -819,22 +812,6 @@ async fetchGroupBudget() {
       this.hasBudget = false;
     }
   },
-
-async fetchAvailableBudgets() {
-  try {
-    const res = await this.$axios.get(`/api/grp_expenses/groups/${this.groupId}/budget`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-      }
-    });
-    console.log("Fetched budgets:", res.data);
-    if (res.data.success) {
-      this.availableBudgets = res.data.data || [];
-    }
-  } catch (err) {
-    console.error('Failed to fetch budgets:', err);
-  }
-},
 
   async updateBudget() {
     const amount = parseFloat(this.budgetAmountInput);
@@ -1533,6 +1510,8 @@ async handleUpdateExpense() {
 }
 
 .budget-display {
+  transition: margin-top 0.3s ease;
+  margin-top: 0;
   flex-wrap: wrap;
   background: rgba(32, 28, 28, 0.05);
   padding: 20px;
@@ -1674,17 +1653,18 @@ h2 {
 
 .budget-success-message {
   background-color: #d4edda;
-  color: #1d4d2b;
+  color: #155724;
   padding: 10px;
   border-radius: 4px;
   margin: 10px 0;
   text-align: center;
   transition: opacity 0.5s ease;
-  font-size: 1rem;
+  opacity: 1;
 }
 
-.budget-success-message.hide{
+.budget-success-message.hide {
   opacity: 0;
+  pointer-events: none;
 }
 
 .group-wrapper {
@@ -2355,7 +2335,7 @@ tr:hover {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background-color: white;
+  background-color: #ecfdf0;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
