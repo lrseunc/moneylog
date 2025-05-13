@@ -1692,7 +1692,7 @@ async deleteExpenseHandler(id) {
   align-content: center;
   flex: 1 1 65%;
   min-width: 280px;
-  background-color: #c5f8cc;
+  background-color: #b8ebc0;
   border: 2px solid #365c42;
   padding: 20px;
   border-radius: 15px;
@@ -1708,7 +1708,7 @@ async deleteExpenseHandler(id) {
   background-color: white;
   padding: 20px;
   border-radius: 15px;
-  border: 3px solid #6A9C89;
+  border: 2px solid #6A9C89;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   margin-top: 30px;
   transition: box-shadow 0.3s ease;
