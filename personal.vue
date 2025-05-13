@@ -55,6 +55,8 @@
     <strong class="amount-value">{{ formatPHP(currentMonthBudget.budget_amount) }}</strong>
   </div>
 
+  <div class="expenses-summary">
+  <div class="expenses-summary1">
           <div class="expenses-amount">
           <span>TOTAL EXPENSES:</span>
           <strong>{{ formatPHP(totalExpensesForMonth) }}</strong>
@@ -66,7 +68,9 @@
             {{ formatPHP(remainingBudget) }}
           </strong>
         </div>
-          
+        </div> 
+        </div> 
+
           <div class="budget-progress">
             <div class="progress-bar">
               <div 
@@ -388,7 +392,7 @@ currentBudget() {
     this.isLoading = true;
     const savedDismissedAlerts = localStorage.getItem('dismissedAlerts');
     if (savedDismissedAlerts) {
-      this.dismissedAlerts = JSON.parse(savedDismissedAlerts);
+      this.dismissedAlerts = savedDismissedAlerts ? JSON.parse(savedDismissedAlerts) : {};
     }
     
     const now = new Date();
@@ -443,11 +447,13 @@ currentBudget() {
   
   currentMonthYear: {
     immediate: true,
-    handler() {
-      this.checkBudgetStatus();
+    handler(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.checkBudgetStatus(true);
+      }
     }
   }
-},
+  },
 
    methods: {
      ...mapActions([
@@ -488,15 +494,18 @@ currentBudget() {
 
   async changeMonth(date) {
     const newMonthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-    this.currentMonthYear = newMonthYear;
+  this.currentMonthYear = newMonthYear;
 
-    
-    await Promise.all([
-      this.$store.dispatch('fetchAddExpenses'),
-      this.loadBudgetForMonth(newMonthYear)
-    ]);
-    this.checkBudgetStatus();
-  },
+  await Promise.all([
+    this.$store.dispatch('fetchAddExpenses'),
+    this.loadBudgetForMonth(newMonthYear)
+  ]);
+  
+  this.checkBudgetStatus(true);
+
+  this.dismissedAlerts[newMonthYear] = false;
+  localStorage.setItem('dismissedAlerts', JSON.stringify(this.dismissedAlerts));
+},
 
     checkMonthChange() {
     const lastAccessedMonth = localStorage.getItem('lastAccessedMonth');
@@ -532,29 +541,78 @@ currentBudget() {
       }, 500); // Debounce to avoid too many requests
     },
     
-    async predictCategory() {
-      if (this.isPredicting || !this.itemName || this.itemName.length < 3) return;
+    async handleLearningData(expenseData) { 
+  try {
+    // Skip if missing required fields
+    if (!expenseData.item_name?.trim() || !expenseData.expense_type) {
+      console.log('Skipping learning - missing required fields');
+      return { success: false, reason: 'Missing required fields' };
+    }
+
+    const payload = {
+      item_name: expenseData.item_name.trim(),
+      expense_type: expenseData.expense_type,
+      item_price: expenseData.item_price ? Number(expenseData.item_price) : null,
+      personal_budget_id: expenseData.personal_budget_id || null,
+      userId: this.$store.state.user?.id || null
+    };
+
+    console.log('Attempting to send learning data:', payload);
       
-      try {
-        this.isPredicting = true;
-        
-        const response = await this.$axios.post('/api/predictions/predict', {
-          item_name: this.itemName
-        }, {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-          }
-        });
-        
-        if (response.data.success) {
+    const response = await this.$axios.post('/api/predictions/learn', payload, {
+      headers: { 
+        Authorization: `Bearer ${localStorage.getItem('jsontoken')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('Learning response:', response.data);
+    return { success: true, data: response.data };
+
+  } catch (error) {
+    const errorDetails = {
+      message: error.message,
+      response: error.response?.data,
+      config: error.config
+    };
+    
+    console.error('Learning failed (non-critical):', errorDetails);
+    
+    // Return error details but don't throw - learning failure shouldn't block UI
+    return { 
+      success: false, 
+      error: errorDetails,
+      isCritical: false 
+    };
+  }
+},
+
+async predictCategory() {
+  if (this.isPredicting || !this.itemName || this.itemName.length < 3) return;
+  
+  try {
+    this.isPredicting = true;
+    
+    const response = await this.$axios.post('/api/predictions/predict', {
+      item_name: this.itemName.trim() // Add trim() to clean input
+    }, {
+      headers: { 
+        Authorization: `Bearer ${localStorage.getItem('jsontoken')}`,
+        'Content-Type': 'application/json' // Explicit content type
+      }
+    });
+    
+    if (response.data.success) {
       const predictedCategory = response.data.data.expense_type;
-      this.expenseType = predictedCategory;
+      const confidence = response.data.data.confidence;
+    //  this.expenseType = predictedCategory;
       
-      this.showPredictionFeedback = predictedCategory === 'Other' && 
-        this.shouldSuggestAlternative(this.itemName);
+    this.showPredictionFeedback = (confidence < 0.7) || (predictedCategory === 'Other');
+      this.expenseType = predictedCategory;
     }
   } catch (error) {
     console.error('Prediction failed:', error);
+    this.$toast.error("Prediction service unavailable. Please try later.");
   } finally {
     this.isPredicting = false;
   }
@@ -608,35 +666,47 @@ shouldSuggestAlternative(itemName) {
 
   return isUnknown;
 },
-    async submitPredictionFeedback(isCorrect) {
-      try {
-        if (!isCorrect) {
-          // Send correction to backend to learn
-          await this.$axios.post('/api/predictions/learn', {
-            item_name: this.itemName,
-            expense_type: this.expenseType 
-          }, {
-            headers: { 
-              Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-            }
-          });
-        }
-        
-        this.showPredictionFeedback = false;
-      } catch (error) {
-        console.error('Feedback submission failed:', error);
-      }
-    },
 
-    dismissAlert() {
-    this.showBudgetExceededAlert = false;
-    this.$set(this.dismissedAlerts, this.currentMonthYear, true);
-    localStorage.setItem('dismissedAlerts', JSON.stringify(this.dismissedAlerts));
+async submitPredictionFeedback(isCorrect) {
+  try {
+    const payload = {
+      item_name: this.itemName.trim(),
+      expense_type: isCorrect ? this.expenseType : 'Other', // Use correct type or 'Other'
+      correction_source: isCorrect ? 'manual' : 'auto',
+      userId: this.$store.state.user?.id, // Match your column name (userId not user_id)
+      // Optional fields you might want to include:
+      // item_price: this.itemPrice, // If available
+      // expense_date: new Date(), // Will use default if not provided
+      // confidence_score: this.confidenceScore // If available
+    };
+
+    // For both correct and incorrect cases
+    await this.$axios.post('/api/predictions/learn', payload, {
+      headers: { 
+        Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+      }
+    });
+
+    if (isCorrect) {
+      this.$toast.success("Category confirmed!");
+    } else {
+      this.expenseType = '';
+      this.$toast.info("Prediction rejected. Will learn from this.");
+    }
+
+    this.showPredictionFeedback = false;
+  } catch (error) {
+    console.error('Feedback error:', error);
+    this.$toast.error("Feedback submission failed");
+  }
 },
 
   dismissAlert() {
     this.showBudgetExceededAlert = false;
-    this.$set(this.dismissedAlerts, this.currentMonthYear, true);
+    this.dismissedAlerts = {
+    ...this.dismissedAlerts,
+    [this.currentMonthYear]: true
+  };
   localStorage.setItem('dismissedAlerts', JSON.stringify(this.dismissedAlerts));
 },
 
@@ -855,7 +925,7 @@ shouldSuggestAlternative(itemName) {
      },
  
      // Expense Methods
-  async handleSubmit() {
+     async handleSubmit() {
   try {
     if (!this.hasBudgetForCurrentMonth) {
       this.showExpenseSuccessMessage('Please create a budget for this month before adding expenses');
@@ -875,11 +945,13 @@ shouldSuggestAlternative(itemName) {
     }
 
     const expenseData = {
-      item_price: Number(this.itemPrice), 
-      expense_type: this.expenseType === 'Other' ? this.customExpenseType : this.expenseType,
-      item_name: this.itemName,
-      personal_budget_id: budget.id 
-    };
+  item_price: Number(this.itemPrice),
+  expense_type: this.expenseType === 'Other' ? this.customExpenseType : this.expenseType,
+  item_name: this.itemName,
+  personal_budget_id: budget.id,
+};
+
+    console.log('Submitting expense:', expenseData);
     
     let result;
     if (this.editId) {
@@ -889,57 +961,52 @@ shouldSuggestAlternative(itemName) {
       });
     } else {
       result = await this.addExpense(expenseData);
+      
+      if (result.success) {
+        await this.handleLearningData({
+          item_name: expenseData.item_name,
+          expense_type: expenseData.expense_type,
+          item_price: expenseData.item_price,
+          personal_budget_id: expenseData.personal_budget_id,
+         // custom_type: expenseData.custom_type
+        });
+      }
     }
 
     if (result.success) {
-      try {
-        await this.$axios.post('/api/predictions/learn', {
-          item_name: this.itemName,
-          expense_type: this.expenseType 
-        }, {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-          }
-        });
-      } catch (learnError) {
-        console.error('Failed to send learning data:', learnError);
-      }
-    
-      this.showExpenseSuccessMessage(result.message || (this.editId ? 'Expense updated!' : 'Expense added successfully!'));
-      this.resetForm();
+      console.log('Expense added successfully:', result.data);
       
-      // Wait for both the expenses and budget to be refreshed
+      // Refresh data
       await Promise.all([
         this.fetchAddExpenses(),
         this.fetchPersonalBudgets()
       ]);
-
+      
       this.checkBudgetStatus(true);
       
-      this.showExpenseSuccessMessage(result.message || (this.editId ? 'Expense updated!' : 'Expense added successfully!'));
+      this.showExpenseSuccessMessage(this.editId ? 'Expense updated!' : 'Expense added!');
       this.resetForm();
-      if (this.editId) {
-        // For edits, scroll back to the form
-        this.$nextTick(() => {
-          this.$refs.expenseForm.scrollIntoView({ behavior: 'smooth' });
-        });
-      } else {
-        // For new expenses, scroll to the expenses list
-        this.$nextTick(() => {
-          this.$refs.expensesContainer.scrollIntoView({ behavior: 'smooth' });
-        });
-      }
+      
+      this.$nextTick(() => {
+        const target = this.editId ? this.$refs.expenseForm : this.$refs.expensesContainer;
+        target?.scrollIntoView({ behavior: 'smooth' });
+      });
     } else {
-      this.showExpenseSuccessMessage(result.message || 'Operation failed');
+      console.error('Failed to add expense:', result.message);
+      this.showExpenseSuccessMessage(result.message || 'Failed to add expense');
     }
   } catch (error) {
-    console.error('Error in handleSubmit:', error);
+    console.error('Submit error:', error);
     this.showExpenseSuccessMessage(error.message || 'Failed to save expense');
   }
 },
 
 validateExpenseForm() {
-  // Check if required fields are filled
+    if (!this.itemPrice || isNaN(Number(this.itemPrice)) || Number(this.itemPrice) <= 0) {
+    this.showExpenseSuccessMessage('Please enter a valid positive amount');
+    return false;
+  }
+
   if (!this.itemPrice || isNaN(Number(this.itemPrice))) {
     this.showExpenseSuccessMessage('Please enter a valid amount');
     return false;
@@ -1041,7 +1108,6 @@ async deleteExpenseHandler(id) {
      },
      
      showExpenseSuccessMessage(message) {
-  // Clear any existing timeout
   if (this.expenseSuccessTimeout) {
     clearTimeout(this.expenseSuccessTimeout);
     this.expenseSuccessTimeout = null;
@@ -1082,7 +1148,7 @@ async deleteExpenseHandler(id) {
   font-size: 0.9em;
 }
 .text-danger {
-  color: #dc3545; 
+  color: #c62828;
 }
 .budget-form input[type="month"] {
   width: 100%;
@@ -1342,8 +1408,20 @@ async deleteExpenseHandler(id) {
 }
 
 .budget-amount {
-  color: #ffea00; 
-  margin-bottom: 10px;
+  background-color: #ffffff;           /* clean white for contrast */
+  border: 2px solid #6A9C89;           /* soft green border */
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: #388e3c;                      /* dark green for label */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-weight: 650;
+  font-size: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 .budget-form {
@@ -1361,9 +1439,10 @@ async deleteExpenseHandler(id) {
   align-items: center;
 }
 
+
 .amount-value {
-  margin-left: 6px;
-  color: #f3de02;
+  color: #2e7d32;                      /* slightly darker green */
+  font-size: 18px;
 }
 
 .budget-form label {
@@ -1456,18 +1535,35 @@ async deleteExpenseHandler(id) {
   font-size: 1rem;
 }
 
-.budget-amount {
+.expenses-summary {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+
+.expenses-summary1 {
+  background-color: #f5f5f5; ;            
+  border: 2px solid #697565;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  margin-top: 10px;
+}
+
+.expenses-amount,
+.remaining-budget {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  font-size: 1.3rem;
-  color: #264d3b;
-  margin-top: 20px;
+  align-items: center;
+  font-weight: 550;
+  margin-bottom: 8px;
+  color: #444;
 }
 
-.expenses-amount {
-  margin-top: 10px;
-}
+
 .budget-progress {
   margin-top: 2px;
 }
