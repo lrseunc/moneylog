@@ -260,7 +260,7 @@ export default {
         const value = dataset[context.dataIndex];
         const percentage = (value / total) * 100;
 
-        return percentage <= 1 ? 'end' : 'center'; 
+        return percentage <= 2 ? 'end' : 'center'; 
     },
       offset: 0,
       padding: 0
