@@ -54,17 +54,17 @@
           <button @click="filterExpenses('Healthcare')" :class="{ active: filterCategory === 'Healthcare' }">Healthcare</button>
           <button @click="filterExpenses('Shopping')" :class="{ active: filterCategory === 'Shopping' }">Shopping</button>
           <button @click="filterExpenses('Other')" :class="{ active: filterCategory === 'Other' }">Other</button>
-          <button @click="filterExpenses('all')" :class="{ active: filterCategory === 'all' }">View All</button>
+          <button @click="filterExpenses('All')" :class="{ active: filterCategory === 'All' }">View All</button>
         </div>
 
         <!-- Expense Table -->
         <div class="expense-table">
-          <h3 v-if="!showYearFilter">Expenses for  {{ availableMonths.find(m => m.value === selectedMonth)?.label }} {{ selectedYear }}
-          <span class="category-label">&nbsp;({{ filterCategory === 'all' ? 'All Categories' : filterCategory }})</span>
-        </h3>
-          <h3 v-else>Expenses for  {{ yearFilter }}
-            <span class="category-label">&nbsp;({{ filterCategory === 'all' ? 'All Categories' : filterCategory }})</span>
-        </h3>
+          <h3 v-if="!showYearFilter">Expenses for {{ availableMonths.find(m => m.value === selectedMonth)?.label }} {{ selectedYear }}
+  <span class="category-label">&nbsp;({{ filterCategory === 'All' ? 'All Categories' : filterCategory === 'Other' ? 'Other Categories' : filterCategory }})</span>
+</h3>
+<h3 v-else>Expenses for {{ yearFilter }}
+  <span class="category-label">&nbsp;({{ filterCategory === 'All' ? 'All Categories' : filterCategory === 'Other' ? 'Other Categories' : filterCategory }})</span>
+</h3>
           <table>
             <thead>
               <tr>
@@ -130,7 +130,7 @@
     </div>
     
     <div class="summary-item">
-  <span>{{ filterCategory === 'All' ? 'Expenses' : filterCategory + ' Expenses' }}:</span>
+  <span>{{ filterCategory === 'All' ? 'All Expenses' : filterCategory + ' Expenses' }}:</span>
   <span>{{ formatCurrency(yearlyExpensesByCategory) }}</span>
 </div>
     
@@ -156,7 +156,7 @@
     </div>
 
     <div class="summary-item">
-    <span>{{ filterCategory === 'All' ? 'Expenses' : filterCategory + ' Expenses' }}:</span>
+    <span>{{ filterCategory === 'All' ? 'All Expenses' : filterCategory + ' Expenses' }}:</span>
   <span>{{ formatCurrency(totalAmount) }}</span>
 </div>
 
@@ -179,7 +179,7 @@
 </div>
 
 <div v-if="showYearFilter && isYearlyBudgetExceeded" class="exceeded-warning">
-  ⚠️ Annual budget {{ filterCategory !== 'all' ? `(${filterCategory}) ` : '' }}exceeded by {{ formatCurrency(yearlyExpensesByCategory - yearlyBudgetsTotal) }}
+  ⚠️ Annual budget {{ filterCategory !== 'All' ? `(${filterCategory}) ` : '' }}exceeded by {{ formatCurrency(yearlyExpensesByCategory - yearlyBudgetsTotal) }}
 </div>
 </div>
 </template>
@@ -207,54 +207,83 @@ export default {
   data() {
     return {
       currentView: 'view', 
-      filterCategory: 'all', 
+      filterCategory: 'All', 
       filterMonth: '', 
       wasBudgetExceeded: false,
       selectedYear: new Date().getFullYear().toString(), 
       selectedMonth: (new Date().getMonth() + 1).toString().padStart(2, '0'),
-      yearFilter: null, // Add this for year-only filtering
+      yearFilter: new Date().getFullYear().toString(), // Add this for year-only filtering
       showYearFilter: false,
       chartOptions: {
-        responsive: true,
-        plugins: {
-          datalabels: {
-            formatter: (value, context) => {
-              const dataset = context.chart.data.datasets[0].data;
-              const total = dataset.reduce((sum, val) => sum + val, 0);
-              if (value > 0) {
-                return (value / total * 100).toFixed(1) + '%';
-              }
-              return null; // This will hide the label for zero values
-            },
-            color: '#000',
-            font: {
-              weight: 'bold',
-              size: 12
-            },
-            anchor: 'center',
-            align: 'center',
-            offset: 0,
-            padding: 0
-          },
-          legend: {
-            position: 'top',
-          },
-          tooltip: {
-            callbacks: {
-              label: function (tooltipItem) {
-                return tooltipItem.label + ': ₱' + tooltipItem.raw.toFixed(2);
-              },
-            },
-          },
-        },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const month = this.availableMonths[index];
-            this.selectMonth(month.value);
-          }
+  responsive: true,
+  plugins: {
+    datalabels: {
+      formatter: (value, context) => {
+        const dataset = context.chart.data.datasets[0].data;
+        const total = dataset.reduce((sum, val) => sum + val, 0);
+        const percentage = (value / total * 100);
+        
+        if (percentage > 0) {
+          return percentage.toFixed(1) + '%';
         }
+        return null;
       },
+      color: '#000',
+      font: function(context) {
+        const dataset = context.chart.data.datasets[0].data;
+        const total = dataset.reduce((sum, val) => sum + val, 0);
+        const percentage = (dataset[context.dataIndex] / total * 100);
+        
+        
+        let size = 12;
+        if (percentage <= 5) {
+          size = 10;
+        }
+
+        return {
+          weight: 'bold',
+          size: size
+        };
+      },
+      align: function(context) {
+        const dataset = context.chart.data.datasets[0].data;
+        const total = dataset.reduce((sum, val) => sum + val, 0);
+        const value = dataset[context.dataIndex];
+        const percentage = (value / total) * 100;
+
+        // Show label below when small
+        return percentage <= 1 ? 'end' : 'center'; 
+      },
+      anchor: function(context) {
+        const dataset = context.chart.data.datasets[0].data;
+        const total = dataset.reduce((sum, val) => sum + val, 0);
+        const value = dataset[context.dataIndex];
+        const percentage = (value / total) * 100;
+
+        return percentage <= 1 ? 'end' : 'center'; 
+    },
+      offset: 0,
+      padding: 0
+    },
+    legend: {
+      position: 'top',
+    },
+    tooltip: {
+      callbacks: {
+        label: function (tooltipItem) {
+          return tooltipItem.label + ': ₱' + tooltipItem.raw.toFixed(2);
+        },
+      },
+    },
+  },
+  onClick: (event, elements) => {
+    if (elements.length > 0) {
+      const index = elements[0].index;
+      const month = this.availableMonths[index];
+      this.selectMonth(month.value);
+    }
+  }
+},
     };
   },
 
@@ -262,13 +291,33 @@ export default {
     ...mapGetters(['getViewExpenses', 'getPersonalBudgets', 'getViewPageMonthYear']),
     
     yearlyExpensesByCategory() {
-  if (!this.showYearFilter || !this.yearFilter) return 0; 
+  if (!this.showYearFilter || !this.yearFilter) return 0;
+  
   return this.getViewExpenses.reduce((sum, expense) => {
+    // Skip if expense doesn't match the selected year
+    if (!expense.expense_date || new Date(expense.expense_date).getFullYear() != this.yearFilter) {
+      return sum;
+    }
 
-    const matchesCategory = this.filterCategory === 'all' || 
-                          expense.expense_type === this.filterCategory;
+    // Handle "All" filter
+    if (this.filterCategory === 'All') {
+      return sum + (Number(expense.item_price) || 0);
+    }
     
-    return matchesCategory ? sum + (Number(expense.item_price) || 0) : sum;
+    // Handle "Other" filter
+    if (this.filterCategory === 'Other') {
+      const standardCategories = [
+        'Food', 'Bill', 'Transportation', 
+        'Entertainment', 'Healthcare', 'Shopping'
+      ];
+      const isStandardCategory = standardCategories.includes(expense.expense_type);
+      return isStandardCategory ? sum : sum + (Number(expense.item_price) || 0);
+    }
+    
+    // Handle specific category filter
+    return expense.expense_type === this.filterCategory ? 
+      sum + (Number(expense.item_price) || 0) : 
+      sum;
   }, 0);
 },
     
@@ -277,9 +326,9 @@ export default {
   },
 
   yearlyBudgetPercentageByCategory() {
-    if (!this.yearlyBudgetsTotal) return 0;
-    return Math.min(100, (this.yearlyExpensesByCategory / this.yearlyBudgetsTotal) * 100);
-  },
+  if (!this.yearlyBudgetsTotal || this.yearlyBudgetsTotal <= 0) return 0;
+  return Math.min(100, (this.yearlyExpensesByCategory / this.yearlyBudgetsTotal) * 100);
+},
 
     yearlyExpensesTotal() {
     if (!this.showYearFilter || !this.yearFilter) return 0;
@@ -365,7 +414,7 @@ export default {
       };
 
       this.filteredExpenses.forEach(expense => {
-        const category = expense.category === 'HealthCare' ? 'Healthcare' : expense.category; // Normalize category name
+        const category = expense.category === 'HealthCare' ? 'Healthcare' : expense.category; 
         if (category in categoryCounts) {
           categoryCounts[category] += expense.amount;
         } else {
@@ -442,10 +491,24 @@ export default {
     );
   }
 
-  if (this.filterCategory && this.filterCategory !== 'all') {
-    expenses = expenses.filter(expense => 
-      expense.expense_type.toLowerCase() === this.filterCategory.toLowerCase()
-    );
+  if (this.filterCategory && this.filterCategory !== 'All') {
+    expenses = expenses.filter(expense => {
+
+      if (this.filterCategory.toLowerCase() === 'other') {
+        const isStandardCategory = [
+          'food', 'bill', 'transportation', 
+          'entertainment', 'healthcare', 'shopping'
+        ].includes(expense.expense_type?.toLowerCase());
+        
+
+        return !isStandardCategory;
+      } else {
+
+        const expenseCategory = expense.expense_type ? expense.expense_type.trim().toLowerCase() : '';
+        const filterCategory = this.filterCategory ? this.filterCategory.trim().toLowerCase() : '';
+        return expenseCategory === filterCategory;
+      }
+    });
   }
 
   return expenses.map(expense => ({
@@ -460,15 +523,6 @@ export default {
 toggleYearFilter() {
   this.showYearFilter = !this.showYearFilter;
   this.updateExpenseView();
-},
-
-updateExpenseView() {
-  if (this.showYearFilter) {
-    this.$store.dispatch('fetchViewExpenses', { year: this.yearFilter });
-  } else {
-    const monthYear = `${this.selectedYear}-${this.selectedMonth}`;
-    this.$store.dispatch('fetchViewExpenses', { monthYear });
-  }
 },
 
   currentBudget() {
@@ -544,7 +598,7 @@ updateExpenseView() {
 
     selectMonth(month) {
       this.selectedMonth = month;
-      this.filterCategory = 'all';
+      this.filterCategory = 'All';
     },
 
     updateSelectedMonthYear() {
@@ -560,6 +614,15 @@ updateExpenseView() {
     });
 },
     
+updateExpenseView() {
+  if (this.showYearFilter) {
+    this.$store.dispatch('fetchViewExpenses', { year: this.yearFilter });
+  } else {
+    const monthYear = `${this.selectedYear}-${this.selectedMonth}`;
+    this.$store.dispatch('fetchViewExpenses', { monthYear });
+  }
+},
+
     formatCurrency(value) {
       if (value == null || isNaN(value)) return '₱0.00';
       return '₱' + parseFloat(value).toFixed(2);
@@ -599,8 +662,7 @@ updateExpenseView() {
       periodText = `Period: ${monthName} ${this.selectedYear}`;
     }
       
-      // Add category filter info if not 'all'
-      if (this.filterCategory && this.filterCategory !== 'all') {
+      if (this.filterCategory && this.filterCategory !== 'All') {
         periodText += ` (${this.filterCategory} only)`;
       }
       
@@ -724,11 +786,8 @@ updateExpenseView() {
   background-color: #e6f4ea; /* soft green background */
   color: #2e5940; /* darker green text */
   border: 2px solid #2e5940;
-  padding: 10px 18px;
+  padding: 10px 100px;
   border-radius: 8px;
-  width: 100%;
-  max-width: 300px;
-  box-sizing: border-box;
   cursor: pointer;
   font-size: 15px;
   font-weight: 600;
@@ -843,18 +902,16 @@ updateExpenseView() {
 
 
 .summary-box {
-  display: flex;
-  flex-wrap: wrap;
   padding: 2px 16px 6px 16px; 
   background-color: #99da99;
   border: 2px solid #1e3731;
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
+  margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
-  min-width: 200px;
-  margin: 5px;
+  min-width: 280px;
   max-width: 100%;
 }
 
@@ -903,11 +960,11 @@ updateExpenseView() {
   font-weight: 500;
 }
 
-
 .con {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap; /* Optional: stack on small screens */
   gap: 10px;
 }
 
@@ -961,15 +1018,14 @@ button:hover {
 }
 
 .con-container {
-  display: flex;
-  flex-wrap: wrap;
   background: rgb(216, 248, 216);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 100%;
-  min-width: 300px;
-  max-width: 800px;
+  width: 70%; 
+  min-width: 380px;
+  max-width: 900px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  align-items: flex-start;
   margin-bottom: 10px;
   overflow-y: auto; /* Enables vertical scrolling when needed */
   max-height: 105vh; /* Limits height to 80% of viewport height */
@@ -1016,11 +1072,6 @@ button:hover {
 }
 
 /* Expense Table Styling */
-.expense-table {
-  overflow-x: auto;
-  width: 100%;
-}
-
 .expense-table table {
   position: relative;
   width: 90%;
@@ -1058,19 +1109,8 @@ button:hover {
   font-weight: bold;
 }
 
-.chart-summary{
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 400px;
-  justify-content: center;
-}
-
 .chart{
-  display: flex;
-  flex-wrap: wrap;
-  min-width: 200px;
-  width: 100%;
+  width: 380px;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
@@ -1079,7 +1119,6 @@ button:hover {
   border: 2px solid #336333;
   margin-bottom: 10px;
 }
-
 .download {
   display: flex;
   flex-wrap: wrap;
@@ -1115,58 +1154,6 @@ margin-left: 3px;
 
 .download-button:hover {
 background-color: #1e3731;
-}
-
-
-/* Already good mobile responsiveness */
-@media (max-width: 760px) {
-  .con {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .con-container {
-    width: 100%;
-    max-width: 600px;
-    max-height: none; /* allow auto height on small screens */
-  }
-
-  .chart-summary {
-    width: 100%;
-    max-width: 600px;
-  }
-
-  .chart {
-    width: 100%;
-    max-width: 600px;
-  }
-  canvas{
-    height: 500px;
-    }
-
-  .toggle-button {
-    font-size: 14px;
-    padding: 8px 12px;
-  }
-
-  .summary-box {
-    font-size: 12px;
-  }
-
-  .summary-item {
-    font-size: 14px;
-  }
-
-  .download-button,
-  .download select {
-    width: 100%;
-    font-size: 14px;
-  }
-
-  button {
-    font-size: 16px;
-    padding: 10px 14px;
-  }
 }
 
 </style> 
