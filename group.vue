@@ -112,6 +112,8 @@
             <strong class="budget">{{ formatPHP(budgetAmountInput) }}</strong>
           </div>
 
+      <div class="expenses-summary">
+        <div class="expenses-summary1">
           <div class="expenses-amount">
             <span>Total Expenses:</span>
             <strong>{{ formatPHP(totalExpenses) }}</strong>
@@ -121,6 +123,8 @@
             <span>Remaining:</span>
             <strong :class="{ 'text-danger': remainingBudget < 0 }">{{ formatPHP(remainingBudget) }}</strong>
           </div>
+        </div>
+      </div>
 
           <div class="budget-progress">
             <div class="progress-bar">
@@ -1531,11 +1535,44 @@ async handleUpdateExpense() {
     font-size: 1rem;
 }
 
-.budget-amount .budget {
-  color: gold;
+.budget-amount {
+  background-color: #ffffff;           /* clean white for contrast */
+  border: 2px solid #6A9C89;           /* soft green border */
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: #388e3c;                      /* dark green for label */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-weight: 650;
+  font-size: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
-.budget-amount,
+.expenses-summary {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.expenses-summary1 {
+  background-color: #f5f5f5; ;            
+  border: 2px solid #697565;
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  margin-top: 10px;
+}
+
+.expenses-amount {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .expenses-amount,
 .remaining-budget {
   display: flex;
