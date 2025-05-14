@@ -83,62 +83,72 @@
         {{ budgetSuccessMessage }}
       </div>
 
-      <div class="budget-display">
-         <div v-if="showBudgetExceededAlert" class="floating-alert">
-          <div class="alert-content">
-            <i class="fas fa-exclamation-triangle"></i>
-            <span>{{ budgetExceededMessage }}</span>
-            <button @click="closeAlert" class="close-alert-btn">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
+      <div v-if="showBudgetExceededAlert" class="floating-alert">
+        <div class="alert-content">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span>{{ budgetExceededMessage }}</span>
+                  <button @click="closeAlert" class="close-alert-btn">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
 
-        <div class="budget-header">
-          <h3>Allotted Budget</h3>
-          <button v-if="!hasBudget" @click="showAddBudgetForm" class="btn-add">Add</button>
-          <button v-else @click="showEditBudgetForm" class="btn-edit">Edit</button>
-        </div>
+              <div class="budget-display">
+              <div class="budget-header">
+                <h3>Allotted Budget</h3>
+                <button v-if="!hasBudget && isAdmin"  @click="showAddBudgetForm" class="btn-add">Add</button>
+                <button v-else-if="hasBudget && isAdmin" @click="showEditBudgetForm" class="btn-edit">Edit</button>
+              </div>
 
 
-        <div class="budget-details" v-if="!isBudgetLoading">
-          <div class="budget-name">
-            <span>Budget Name:</span>
-            <strong>{{ budgetName }}</strong>
-          </div>
-
-          <div class="budget-amount">
-            <span>Budget:</span>
-            <strong class="budget">{{ formatPHP(budgetAmountInput) }}</strong>
-          </div>
-
-      <div class="expenses-summary">
-        <div class="expenses-summary1">
-          <div class="expenses-amount">
-            <span>Total Expenses:</span>
-            <strong>{{ formatPHP(totalExpenses) }}</strong>
-          </div>
-
-          <div class="remaining-budget">
-            <span>Remaining:</span>
-            <strong :class="{ 'text-danger': remainingBudget < 0 }">{{ formatPHP(remainingBudget) }}</strong>
-          </div>
-        </div>
+              <div v-if="!isBudgetLoading">
+                <div v-if="hasBudget" class="budget-details">
+                  <div class="budget">
+                  <div class="budget-name">
+                    <span>Budget Name:</span>
+                    <strong>{{ groupBudget?.budget_name || 'General Budget' }}</strong>
+                  </div>
+                  
+    
+                  <div class="budget-amount">
+                    <span>Budget Amount:</span>
+                    <strong>{{ formatPHP(groupBudget?.budget_amount || 0) }}</strong>
+                  </div>
+                </div>
+                  
+                <div class="expenses-summary1">
+                <div class="total-expenses">
+        <span>Total Expenses:</span>
+        <strong>{{ formatPHP(totalAmount) }}</strong>
       </div>
 
-          <div class="budget-progress">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: budgetProgress + '%' }"
-                :class="{ exceeded: budgetProgress >= 100 }"
-              ></div>
-            </div>
-            <div class="progress-text">{{ budgetProgress.toFixed(1) }}% used</div>
-          </div>
-        </div>
+                  <div class="remaining-budget">
+                    <span>Remaining Budget:</span>
+                    <strong :class="{ 'text-danger': remainingBudget < 0 }">
+                      {{ formatPHP(remainingBudget) }}
+                    </strong>
+                  </div>
+                  </div>
+    
+                  <div class="budget-progress">
+                    <div class="progress-bar">
+                      <div
+                        class="progress-fill"
+                        :style="{ width: budgetProgress + '%' }"
+                        :class="{ exceeded: budgetProgress >= 100 }"
+                      ></div>
+                    </div>
+                    <div class="progress-text">{{ budgetProgress.toFixed(1) }}% used</div>
+                  </div>
+                </div>
 
-        <div v-else class="loading">Loading budget...</div>
+                <div v-else>
+                  <p>No budget set for this group</p>
+                </div>
+              </div>
+              <div v-else>
+                <div class="loading-spinner"></div>
+              </div>
 
         <!-- Budget Form Modal -->
         <div v-if="isAddingBudget || isEditingBudget" class="budget-form-modal">
@@ -156,14 +166,8 @@
             </div>
 
             <div class="form-group">
-              <label>Budget Amount (₱):</label>
-              <input
-                type="text"
-                v-model="budgetAmountInput"
-                placeholder="Enter budget amount"
-                @input="formatCurrencyInput"
-                required
-              />
+              <label>Amount (₱)</label>
+              <input v-model="budgetAmountInput" type="number" min="0" step="0.01" @input="formatCurrencyInput">
             </div>
 
             <div class="form-actions">
@@ -174,9 +178,9 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
     </div>
-  </div>
 
     <div class="group-wrapper">
     <div class="group-body">
@@ -203,13 +207,8 @@
         <!-- Expenses Tab -->
         <div v-if="activeTab === 'expenses'" class="expenses-tab">
           <div class="expense-controls">
-            <div class="month-selector">
-              <button @click="prevMonth">&lt;</button>
-              <span>{{ currentMonthYear }}</span>
-              <button @click="nextMonth">&gt;</button>
-            </div>
             <button @click="showAddExpenseModal = true" class="add-expense-button">
-              <i class="fas fa-plus"></i> Add Expense
+              <i class="fas fa-plus"></i> Add <br> Expense
             </button>
           </div>
 
@@ -233,7 +232,7 @@
                   
       <div v-else class="expenses-container">
         <div class="expenses-section"> 
-          <h3>Your Expenses</h3> 
+          <h3><i class="fas fa-coins"></i> <span>YOUR <br> EXPENSES</span></h3> 
           <div class="expenses-table"> 
             <table>
               <thead>
@@ -278,13 +277,10 @@
         </div>
         <div class="total-summary">
               <div class="total-amount-card">
-                <div class="total-label">Total Expenses</div>
+                <div class="total-label">TOTAL EXPENSES</div>
                 <div class="amount-display">
                   <span class="currency php">{{ formatPHP(totalAmount) }}</span>
                   <span class="currency usd">≈ {{ formatUsd(convertPhpToUsd(totalAmount)) }}</span>
-                </div>
-                <div class="exchange-rate-display">
-                  <i class="fas fa-sync-alt"></i> 1 PHP = {{ (exchangeRate || 0.018045).toFixed(6) }} USD
                 </div>
               </div>
             </div>
@@ -296,49 +292,62 @@
 
         <!-- Members Tab -->
         <div v-if="activeTab === 'members'" class="members-tab">
-          <div class="members-list">
-            <div v-for="member in members" :key="member.id" class="member-item">
-              <div class="member-info">
-                <span class="member-name">{{ member.username }}</span>
-                <span class="member-email">{{ member.email }}</span>
-              </div>
-              <div class="member-role">
-                <span :class="['role-badge', member.role]">{{ member.role }}</span>
-                <button 
-                  v-if="isAdmin && member.role !== 'admin'"
-                  @click="confirmRemoveMember(member)"
-                  class="remove-button"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <div v-if="isAdmin" class="invite-section">
-            <h3>Invite New Member</h3>
-            <div class="invite-form">
-              <input 
-                v-model="inviteEmail" 
-                type="email" 
-                placeholder="Enter email address"
-                class="email-input"
-              >
-              <button @click="sendInvite" class="invite-button">
-                Send Invite
-              </button>
-            </div>
-            <p v-if="inviteError" class="error-message">{{ inviteError }}</p>
-            <p v-if="inviteSuccess" class="success-message">{{ inviteSuccess }}</p>
-          </div>
+  <div v-if="promoteSuccess" class="promote-success-message">
+    <i class="fas fa-check-circle"></i>
+    {{ promoteSuccess }}
+    <button @click="promoteSuccess = ''" class="close-message">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+
+  <div class="members-list">
+    <div v-for="member in members" :key="member.id" class="member-item">
+      <div class="member-info">
+        <span class="member-name">{{ member.username }}</span>
+        <span class="member-email">{{ member.email }}</span>
+      </div>
+      <div class="member-role">
+        <span :class="['role-badge', member.role]">
+          {{ member.role }}
+          <i v-if="member.role === 'admin'" class="fas fa-crown"></i>
+        </span>
+        <div class="member-actions" v-if="isAdmin && member.role !== 'admin'">
+          <button @click="promoteToAdmin(member)" class="promote-button">
+            Promote to Admin
+          </button>
+          <button @click="confirmRemoveMember(member)" class="remove-button">
+            Remove
+          </button>
         </div>
+      </div>
+    </div>
+  </div>
+  
+  <div v-if="!isAdmin" class="leave-group-section">
+    <h4><i class="fas fa-sign-out-alt"></i> Leave Group</h4>
+    <button @click="leaveGroup" class="leave-group-button">
+      Leave This Group
+    </button>
+    <p class="leave-group-warning">
+      Warning: This action cannot be undone. You'll need to be invited again to rejoin.
+    </p>
+  </div>
+  
+  <div v-else class="admin-leave-notice">
+    <h4><i class="fas fa-info-circle"></i> Admin Notice</h4>
+    <p>
+      As an admin, you cannot leave this group. Please transfer admin rights to another member first.
+    </p>
+  </div>
+</div>
 
         <!-- Settings Tab (Admin Only) -->
         <div v-if="activeTab === 'settings' && isAdmin" class="settings-tab">
           <div class="settings-section">
-            <h3>Group Settings</h3>
+            <h3 class="section-title"><i class="fas fa-cog"></i> Group Settings</h3>
+           
             <div class="setting-item">
-              <label>Group Name</label>
+              <label class="setting-label">Group Name</label>
           <div class="input-group">
             <input 
               v-model="group.group_name" 
@@ -362,9 +371,9 @@
         </div>
           
           <div class="danger-zone">
-            <h3>Danger Zone</h3>
+            <h3 class="danger-title"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
             <div class="danger-item">
-              <p>Delete this group permanently  (including all expenses and members) </p>
+              <p class="danger-text">Delete this group permanently  (including all expenses and members) </p>
               <button 
                 @click="confirmDeleteGroup" 
                 class="delete-button"
@@ -397,10 +406,13 @@
               <label>Category</label>
               <select v-model="newExpense.expense_type" required>
                 <option value="Food">Food</option>
+                <option value="Entertainment">Accomodation</option>
                 <option value="Transportation">Transportation</option>
+                <option value="Entertainment">Bills</option>
+                <option value="Entertainment">Shopping</option>
                 <option value="Entertainment">Entertainment</option>
-                <option value="Utilities">Utilities</option>
-                <option value="Other">Other</option>
+                <option value="Utilities">Essentials</option>
+                <option value="Other">Others</option>
               </select>
             </div>
             <div class="form-group">
@@ -447,10 +459,13 @@
               <label>Category</label>
               <select v-model="editingExpense.expense_type" required>
                 <option value="Food">Food</option>
+                <option value="Entertainment">Accomodation</option>
                 <option value="Transportation">Transportation</option>
+                <option value="Entertainment">Bills</option>
+                <option value="Entertainment">Shopping</option>
                 <option value="Entertainment">Entertainment</option>
-                <option value="Utilities">Utilities</option>
-                <option value="Other">Other</option>
+                <option value="Utilities">Essentials</option>
+                <option value="Other">Others</option>
               </select>
             </div>
             <div class="form-group">
@@ -521,8 +536,6 @@ export default {
       deleteGroupError: '',
       exchangeRate: null,
       lastExchangeRateUpdate: null,
-      budgetAmountValue: 0,
-      totalExpenses: 0,
       remainingBudget: 0,
       budgetProgress: 0,
       budgetName: '',
@@ -531,15 +544,14 @@ export default {
       isAddingBudget: false,
       isEditingBudget: false,
       budgetAmountInput: '',
-      hasBudget: false,
       budgetSuccessMessage: '',
       budgetHideMessage: false,
       showBudgetExceededAlert: false,
       budgetExceededMessage: "Warning: You have exceeded the allotted budget!",
-      // Modals
       showAddExpenseModal: false,
       showEditExpenseModal: false,
       showConfirmationModal: false,
+      promoteSuccess: '',
       
       // Form data
       newExpense: {
@@ -566,8 +578,23 @@ export default {
       expenses: state => state.expenses,
       loading: state => state.loading,
       error: state => state.error,
-      isAdmin: state => state.isAdmin
+      isAdmin: state => state.isAdmin,
+      groupBudget: state => state.groupBudget || {}
     }),
+
+    hasBudget() {
+  return this.groupBudget && this.groupBudget.budget_amount !== undefined && this.groupBudget.budget_amount !== null;
+},
+
+  formattedBudgetAmount() {
+    return this.formatPHP(this.budgetAmountValue);
+  },
+
+  budgetAmountValue() {
+    return this.groupBudget ? parseFloat(this.groupBudget.budget_amount) : 0;
+  },
+
+  
     totalExpenses() {
     return this.totalAmount; // Use totalAmount to dynamically reflect the total of all expenses
   },
@@ -603,12 +630,6 @@ export default {
   }, 0);
 },
 
-  formatPHP() {
-  return (amount) => {
-    return `₱${parseFloat(amount || 0).toFixed(2)}`;
-  };
-},
-
   convertPhpToUsd() {
   return (phpAmount) => {
     const rate = this.exchangeRate || 0.018045;
@@ -631,16 +652,22 @@ export default {
   },
 
   watch: {
-    'groupId': {
-      immediate: true,
-      async handler(newGroupId) {
-        if (newGroupId && newGroupId !== this.localGroupId) {
-          this.localGroupId = newGroupId;
-          await this.initializeGroupData();
-          this.originalName = this.group.group_name || '';
-        }
+  'groupId': {
+    immediate: true,
+    async handler(newGroupId) {
+      if (newGroupId && newGroupId !== this.localGroupId) {
+        this.localGroupId = newGroupId;
+        await this.initializeGroupData();
+        this.originalName = this.group.group_name || '';
       }
-    },
+    }
+  },
+  'groupBudget': {
+    deep: true,
+    handler() {
+      this.calculateRemaining();
+    }
+  },
 
     budgetSuccessMessage(newVal) {
     if (newVal) {
@@ -663,10 +690,8 @@ export default {
     if (this.groupId) {
       this.isBudgetLoading = true;
       try {
-        const res = await this.$axios.get(`/api/groups/${this.groupId}/budget`);
+        const res = await this.$axios.get(`/api/grp_expenses/groups/${this.groupId}/budget`);
         if (res.data && res.data.amount != null) {
-          this.budgetAmountValue = parseFloat(res.data.amount);
-          this.hasBudget = true;
           this.calculateRemaining();
         }
       } catch (error) {
@@ -695,6 +720,8 @@ export default {
   try {
     console.log('Initializing group data...');
     await this.initializeGroupData();
+    console.log('Fetching budget data...');
+    await this.fetchBudgetData();
     console.log('Fetching group data...');
     await this.fetchGroupData();
     console.log('Loading expenses...');
@@ -706,7 +733,7 @@ export default {
     this.originalName = this.group.group_name || '';
 
     await this.fetchUserGroups();
-    await this.fetchAvailableBudgets();
+   // await this.fetchAvailableBudgets();
   } catch (err) {
     console.error('Failed to load group data:', err);
     this.$notify({
@@ -732,118 +759,262 @@ export default {
       'removeMember',
       'deleteGroup',
       'fetchGroupBudget',
-      'fetchAvailableBudgets'
+      'addGroupBudget',   
+      'updateGroupBudget'
+    //  'fetchAvailableBudgets'
     ]),
+
+    leaveGroup() {
+  this.confirmationTitle = 'Leave Group';
+  this.confirmationMessage = 'Are you sure you want to leave this group? You will need to be invited again to rejoin.';
+  this.confirmAction = async () => {
+    try {
+      await this.$store.dispatch('group/leaveGroup', this.localGroupId);
+      
+      // Show success message
+      this.showSuccess('You have left the group successfully');
+      
+      // Redirect to group list after leaving
+      setTimeout(() => {
+        this.$router.push('/GC');
+      }, 1500);
+    } catch (err) {
+      console.error('Failed to leave group:', err);
+      this.showError(err.response?.data?.message || 'Failed to leave group');
+    } finally {
+      this.showConfirmationModal = false;
+    }
+  };
+  this.showConfirmationModal = true;
+},
+
+    promoteToAdmin(member) {
+  this.confirmationTitle = 'Promote to Admin';
+  this.confirmationMessage = `Are you sure you want to promote ${member.username} to admin? They will have full control over this group.`;
+  this.confirmAction = async () => {
+    try {
+      await this.$store.dispatch('group/promoteToAdmin', {
+        groupId: this.localGroupId,
+        memberId: member.id
+      });
+
+      this.promoteSuccess = `${member.username} is now an admin!`;
+
+      setTimeout(() => {
+        this.promoteSuccess = '';
+      }, 5000);
+      
+      await this.fetchGroupData();
+      
+    } catch (err) {
+      console.error('Failed to promote member:', err);
+      this.showError(err.response?.data?.message || 'Failed to promote member');
+    } finally {
+      this.showConfirmationModal = false;
+    }
+  };
+  this.showConfirmationModal = true;
+},
 
     showError(message) {
     console.error(message);
     },
-    showSuccess(message) {
-      console.log(message); 
-    },
+
+  showSuccess(message) {
+    if (this._isMounted) { // Check if component is still mounted
+      this.budgetSuccessMessage = message;
+      setTimeout(() => {
+        if (this._isMounted) {
+          this.budgetSuccessMessage = null;
+        }
+      }, 3000);
+    }
+  },
 
     editExpense(expense) {
     this.editingExpense = { ...expense };  // Create a copy of the expense to edit
     this.showEditExpenseModal = true;     // Set the modal visibility to true
   },
 
-    formatPHP(value) {
-    return '₱' + parseFloat(value).toLocaleString();
+  formatPHP(amount) {
+    return `₱${parseFloat(amount || 0).toFixed(2)}`;
   },
-  showAddBudgetForm() {
-    this.isAddingBudget = true;
-    this.budgetAmountInput = '';
-  },
-  showEditBudgetForm() {
-    this.isEditingBudget = true;
-    this.budgetAmountInput = this.budgetAmountValue;
-  },
+
+ showEditBudgetForm() {
+  if (!this.isAdmin) {
+    this.showError('Only group admins can edit budgets');
+    return;
+  }
+  this.isEditingBudget = true;
+  this.budgetAmountInput = this.groupBudget.budget_amount.toString();
+  this.budgetName = this.groupBudget.budget_name || '';
+},
+
   cancelBudgetForm() {
     this.isAddingBudget = false;
     this.isEditingBudget = false;
   },
+  
+  async showAddBudgetForm() {
+    try {
+    await this.fetchGroupData();
+    console.log('Current admin status:', this.isAdmin); 
+  if (!this.isAdmin) {
+    this.showError('Only group admins can add budgets');
+    return;
+  }
+  this.isAddingBudget = true;
+  this.budgetAmountInput = '';
+} catch (err) {
+    console.error('Failed to verify admin status:', err);
+    this.showError('Failed to verify permissions');
+  }
+},
 
-  async submitAddBudget() {
-  const amount = parseFloat(this.budgetAmountInput); 
+async submitAddBudget() {
+  try {
+    this.isBudgetLoading = true;
 
-  if (isNaN(amount) || amount <= 0) {
-    console.error('Invalid budget amount');
-    return;  
+    const amount = parseFloat(this.budgetAmountInput.replace(/[^0-9.]/g, ''));
+
+    if (isNaN(amount) || amount <= 0) {
+    this.showError('Please enter a valid budget amount');
+    return;
   }
 
-  console.log('Group ID:', this.groupId);
-  console.log('Budget Name:', this.budgetName);
-  console.log('Budget Amount:', amount);
-  console.log('Token:', localStorage.getItem('jsontoken'));
+    
+    await this.$store.dispatch('group/addGroupBudget', {
+      groupId: this.localGroupId,
+      budgetAmount: amount,
+      budgetName: this.budgetName || 'Group Budget',
+    });
 
+    await this.fetchBudgetData();
+
+    this.isAddingBudget = false;
+    this.budgetAmountInput = '';
+    this.budgetName = '';
+    this.showSuccess('Budget added successfully!');
+    //this.calculateRemaining();
+    
+  } catch (err) {
+    console.error('Failed to add budget:', err);
+    this.showError(err.response?.data?.message || 'Failed to add budget. Please try again.');
+  } finally {
+    this.isBudgetLoading = false;
+  }
+},
+
+  async fetchGroupBudget() {
   try {
-    await this.$axios.post(
+    this.isBudgetLoading = true;
+    const res = await this.$axios.get(
       `/api/grp_expenses/groups/${this.groupId}/budget`,
-      {
-        budget_amount: amount,
-        budget_name: this.budgetName
-      },
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
         }
       }
     );
-    this.budgetAmountValue = amount; 
-    this.calculateRemaining();         
-    this.isAddingBudget = false;    
-    this.hasBudget = true;            
-    this.showSuccess('Budget added successfully!');  
+    
+    if (res.data?.success) {
+      if (res.data.data) {
+        // Budget exists
+        this.budgetName = res.data.data.budget_name || '';
+        this.calculateRemaining();
+      } else {
+        // No budget exists yet
+        this.hasBudget = false;
+      }
+    }
   } catch (err) {
-    console.error('Failed to add budget:', err);
-    this.showError('Failed to add budget. Please try again.');
+    if (err.response?.status === 404) {
+      // No budget exists
+      this.hasBudget = false;
+    } else {
+      console.error("Failed to fetch budget:", err);
+      this.showError("Failed to load budget information");
+    }
+  } finally {
+    this.isBudgetLoading = false;
   }
 },
 
-async fetchGroupBudget() {
-    try {
-      const res = await this.$axios.get(`/api/grp_expenses/groups/${this.groupId}/budget`, {
+async fetchBudgetData() {
+  this.isBudgetLoading = true;
+  try {
+    const response = await this.$axios.get(
+      `/api/grp_expenses/groups/${this.localGroupId}/budget`,
+      {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
         }
-      });
-      if (res.data && res.data.success) {
-        this.budgetAmountValue = res.data.data.budget_amount;
-        this.hasBudget = true;
       }
-    } catch (err) {
-      console.error("Failed to fetch budget:", err);
-      this.hasBudget = false;
-    }
-  },
+    );
 
-  async updateBudget() {
-    const amount = parseFloat(this.budgetAmountInput);
+    if (response.data?.success) {
+      this.$store.commit('group/SET_GROUP_BUDGET', response.data.data);
+      this.calculateRemaining();
+    } else {
+      this.$store.commit('group/SET_GROUP_BUDGET', null);
+    }
+  } catch (error) {
+    if (error.response?.status === 404) {
+      this.$store.commit('group/SET_GROUP_BUDGET', null);
+    } else {
+      console.error('Failed to fetch budget:', error);
+      this.showError("Failed to load budget information");
+    }
+  } finally {
+    this.isBudgetLoading = false;
+  }
+},
+
+async updateBudget() {
+    const amount = parseFloat(this.budgetAmountInput.replace(/[^0-9.]/g, ''));
+
+    if (isNaN(amount) || amount <= 0) {
+      this.showError('Please enter a valid budget amount');
+      return;
+    }
+
     try {
-      await this.$axios.put(
-        `/api/grp_expenses/groups/${this.groupId}/budget/${this.groupId}`,
-        {
-          budget_amount: amount,
-          budget_name: this.budgetName
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-          }
-        }
-      );
-      this.budgetAmountValue = amount;
+      this.isBudgetLoading = true;
+      
+      await this.$store.dispatch('group/updateGroupBudget', {
+      groupId: this.localGroupId,
+      budgetAmount: amount,
+      budgetName: this.budgetName || 'Group Budget'
+    });
+
       this.calculateRemaining();
       this.isEditingBudget = false;
       this.showSuccess('Budget updated successfully!');
     } catch (err) {
       console.error('Failed to update budget:', err);
+      this.showError(err.response?.data?.message || 'Failed to update budget');
+    } finally {
+      this.isBudgetLoading = false;
     }
   },
+
   calculateRemaining() {
-    this.remainingBudget = this.budgetAmountValue - this.totalAmount; 
-    this.budgetProgress = (this.totalAmount / this.budgetAmountValue) * 100; 
+    if (!this.hasBudget || isNaN(this.budgetAmountValue)) {
+      this.remainingBudget = 0;
+      this.budgetProgress = 0;
+      return;
+    }
+    
+    this.remainingBudget = this.budgetAmountValue - this.totalAmount;
+    const progress = (this.totalAmount / this.budgetAmountValue) * 100;
+    this.budgetProgress = Math.min(progress, 100);
+    
+    if (this.remainingBudget < 0) {
+      this.showBudgetExceededAlert = true;
+      this.budgetExceededMessage = `Warning: Budget exceeded by ${this.formatPHP(Math.abs(this.remainingBudget))}`;
+    }
   },
+
   updateTotalAmount() {
   this.totalAmount = this.expenses.reduce((total, expense) => total + expense.amount, 0);
   this.calculateRemaining();
@@ -854,9 +1025,12 @@ async fetchGroupBudget() {
     this.budgetHideMessage = false;
     setTimeout(() => this.budgetHideMessage = true, 3000);
   },
+
   formatCurrencyInput() {
-    this.budgetAmountInput = this.budgetAmountInput.replace(/[^\d.]/g, '');
-  },
+  // Convert to string if it's not already
+  const inputStr = String(this.budgetAmountInput || '');
+  this.budgetAmountInput = inputStr.replace(/[^\d.]/g, '');
+},
 
     toggleGroupList() {
       this.showGroupList = !this.showGroupList;
@@ -930,34 +1104,38 @@ async fetchGroupBudget() {
     },
 
     async initializeGroupData() {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const token = localStorage.getItem('jsontoken');
+  const user = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('jsontoken');
 
-      if (!user || !token) {
-        this.$router.push('/login');
-        return;
-      }
+  if (!user || !token) {
+    this.$router.push('/login');
+    return;
+  }
 
-      if (!this.localGroupId) {
+  if (!this.localGroupId) {
     this.$router.push('/GC');
     return;
   }
 
-      try {
-        await Promise.all([
-          this.fetchGroupData(),
-          this.loadExpenses()
-        ]);
-        
-        // Verify access after loading
-        if (!this.hasGroupAccess) {
-          this.$router.replace('/GC');
-        }
-      } catch (err) {
-        console.error('Failed to load group data:', err);
-        this.$router.replace('/GC');
-      }
-    },
+  try {
+    await Promise.all([
+      this.fetchGroupData(),
+      this.loadExpenses(),
+      this.$store.dispatch('group/fetchGroupBudget', this.localGroupId)
+    ]);
+    
+    // Call calculateRemaining after all data is loaded
+    this.calculateRemaining();
+    
+    // Verify access after loading
+    if (!this.hasGroupAccess) {
+      this.$router.replace('/GC');
+    }
+  } catch (err) {
+    console.error('Failed to load group data:', err);
+    this.$router.replace('/GC');
+  }
+},
     
     async fetchGroupData() {
  const user = JSON.parse(localStorage.getItem('user'));
@@ -1184,7 +1362,7 @@ async handleUpdateExpense() {
     });
     this.closeModal();
     await this.loadExpenses();
-    this.updateTotalAmount(); // <-- Add this
+    this.updateTotalAmount(); 
   } catch (err) {
     console.error('Error updating expense:', err);
     this.$notify({
@@ -1193,8 +1371,7 @@ async handleUpdateExpense() {
       type: 'error'
     });
   }
-}
-,
+},
     
     confirmDeleteExpense(expense) {
       this.confirmationTitle = 'Delete Expense';
@@ -1397,6 +1574,147 @@ async handleUpdateExpense() {
 </script>
 
 <style scoped>
+.leave-group-section,
+.admin-leave-notice {
+  margin: 20px auto 0px auto;
+  padding: 0px 100px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  max-width: 400px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.leave-group-section h4,
+.admin-leave-notice h4 {
+  color: #343a40;
+  margin-bottom: 12px;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+}
+
+.leave-group-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  margin: 0 auto;
+}
+
+.leave-group-button:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.leave-group-warning {
+  margin-top: 8px;
+  color: #6c757d;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 320px;
+}
+
+.admin-leave-notice p {
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 10;
+  text-align: center;
+  max-width: 350px;
+}
+
+.fa-sign-out-alt,
+.fa-info-circle {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.fa-sign-out-alt {
+  color: #dc3545;
+}
+
+.fa-info-circle {
+  color: #17a2b8;
+}
+
+.promote-success-message {
+  background-color: #4CAF50;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.promote-success-message i.fa-check-circle {
+  margin-right: 10px;
+}
+
+.close-message {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 15px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.role-badge.admin {
+  background-color: #ffeb3b;
+  color: #000;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fa-crown {
+  color: #ff9800;
+}
+
+.member-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.promote-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.promote-button:hover {
+  background-color: #45a049;
+}
+
 .group-header-decoration {
   height: 4px;
   background: linear-gradient(90deg, #2a4935 0%, #4a8c61 100%);
@@ -1522,6 +1840,20 @@ async handleUpdateExpense() {
   border-radius: 10px;
 }
 
+.budget {
+  background-color: #ffffff;           
+  border: 2px solid #6A9C89;           
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: #388e3c;                      
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-weight: 650;
+  font-size: 18px;
+}
+
 .budget-details {
   color: #1d4d2b;
   display: flex;
@@ -1529,76 +1861,73 @@ async handleUpdateExpense() {
   gap: 15px;
 }
 
-.budget-name {
-    display: flex;
-    justify-content: space-between;
-    font-size: 1rem;
-}
-
+.budget-name,
 .budget-amount {
-  background-color: #ffffff;           /* clean white for contrast */
-  border: 2px solid #6A9C89;           /* soft green border */
-  padding: 12px 16px;
-  border-radius: 10px;
-  color: #388e3c;                      /* dark green for label */
-  display: inline-flex;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  font-weight: 650;
-  font-size: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-}
-
-.expenses-summary {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-}
-
-.expenses-summary1 {
-  background-color: #f5f5f5; ;            
-  border: 2px solid #697565;
-  border-radius: 12px;
-  padding: 10px 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  width: 100%;
-  margin-top: 10px;
-}
-
-.expenses-amount {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.expenses-amount,
-.remaining-budget {
-  display: flex;
-  justify-content: space-between;
   font-size: 1rem;
 }
 
-.remaining-budget .text-danger {
-  color: #f44336;
+.budget-name span,
+.budget-amount span {
+  color: #388e3c;   
 }
 
-.budget-progress {
-  margin-top: 15px;
+.budget-name strong,
+.budget-amount strong {
+  color:  #388e3c;
+  font-weight: bold;
 }
 
+.expenses-summary1 {
+  background-color: #f5f5f5;
+  border: 2px solid #697565;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  width: 88%;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.total-expenses,
+.remaining-budget {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
+  color: #444;
+}
+
+.total-expenses span,
+.remaining-budget span {
+  color: #444;
+}
+
+.total-expenses strong,
+.remaining-budget strong {
+  font-weight: bold;
+  color: #444;
+}
+
+.remaining-budget strong.text-danger {
+  color: #d32f2f;
+}
 .progress-bar {
-  height: 20px;
+  height: 10px !important;
   background-color: #f0f0f0;
-  border-radius: 10px;
+  border-radius: 70px !important;
   overflow: hidden;
 }
 
 .progress-fill {
-  height: 100%;
-  background-color: #4CAF50;
+  height: 100%; /* Matches progress-bar height */
+  background: linear-gradient(to right, #81c784, #66bb6a); 
   transition: width 0.3s;
+  border-radius: 15px 0 0 15px; /* Optional: makes left edge rounded */
 }
 
 .progress-fill.exceeded {
@@ -1608,7 +1937,8 @@ async handleUpdateExpense() {
 .progress-text {
   color: #2a4935;
   text-align: right;
-  font-size: 0.9rem;
+  font-size: 1rem; /* Slightly bigger */
+  margin-top: 6px;  /* Adds spacing below the bar */
 }
 
 .budget-form-modal {
@@ -1708,14 +2038,17 @@ h2 {
   min-width: 68%;
   width: 100%;
   box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 1200px;
 }
 
 .group-body {
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   border: 2px solid #6A9C89;
   padding: 30px;
+  margin-bottom: 20px;
 }
 
 .total-summary {
@@ -1731,8 +2064,8 @@ h2 {
 .total-amount-card {
   background: #d0ebdd;
   border-radius: 10px;
-  height: 100px;
-  padding: 20px;
+  height: 70px;
+  padding: 14px 16px;
   width: 100%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   box-sizing: border-box;
@@ -1740,7 +2073,7 @@ h2 {
 }
 
 .total-label {
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   color: #5a6a7a;
   margin-bottom: 8px;
   margin-top: -7px;
@@ -1770,17 +2103,6 @@ h2 {
   font-size: 1.2rem;
 }
 
-.exchange-rate-display {
-  margin-top: 12px;
-  font-size: 0.8rem;
-  color: #6c757d;
-  display: flex;
-  gap: 5px;
-  justify-content: center; /* centers items horizontally */
-  align-items: center;     /* centers items vertically (optional) */
-  text-align: center; 
-}
-
 .retry-btn {
   background-color: #1976d2;
   color: white;
@@ -1797,6 +2119,24 @@ h2 {
 
 .expenses-section {
   overflow-x: auto;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.expenses-section h3 {
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2a4935;
+  background: linear-gradient(90deg, #d0ebdd, #f0f7f3);
+  padding: 25px 0px 25px 0px;
+  border-radius: 12px;
+  animation: fadeSlideIn 0.6s ease-out;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 0px;
+  width: 100%;
 }
 
 .expenses-table table {
@@ -1821,6 +2161,7 @@ th, td {
   top: 0;
   font-weight: 600;
   padding: 12px 20px; 
+  border-bottom: 2px solid #e0e0e0;
 }
 
 tr {
@@ -1854,6 +2195,7 @@ tr:hover {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+  transition: all 0.2s ease;
 }
 
 .edit-btn {
@@ -1915,7 +2257,7 @@ tr:hover {
 }
 
 .group-header {
-  margin-bottom: 25px;
+  margin-bottom: 10px;
 }
 
 .header-top-row {
@@ -1944,13 +2286,22 @@ tr:hover {
 .group-code-badge {
   display: flex;
   align-items: center;
-  background: #f0f4f8;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  gap: 8px;
-  background-color: #e8f0ee;
-  color: #2a4935;
+  background: #e8f0ee;
+  padding: 10px 16px; 
+  border-radius: 20px; 
+  font-size: 1.0rem; 
+  gap: 10px; 
+  background-color: #d1f0e6; 
+  color: #2a4935; 
+  font-weight: 500; 
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); 
+  transition: all 0.3s ease;
+}
+
+.group-code-badge:hover {
+  background-color: #b9e8d8; 
+  transform: translateY(-2px); 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
 }
 
 .copy-button {
@@ -2030,6 +2381,10 @@ tr:hover {
 
 .meta-item i {
   color: #6c757d;
+}
+
+.meta-item span {
+  font-size: 1.1rem; 
 }
 
 /* Enhanced Group List Container */
@@ -2222,76 +2577,81 @@ tr:hover {
 .group-tabs {
   display: flex;
   flex-wrap: wrap;
-  border-bottom: 1px solid #ddd;
-  margin-bottom: 20px;
+  border-bottom: 2px solid  #f0f0f0;
+  margin-bottom: 30px;
+  gap: 30px;
 }
 
 .group-tabs button {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background: none;
   border: none;
   cursor: pointer;
   font-size: 1rem;
   position: relative;
+  color: #666;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-radius: 6px 6px 0 0;
+}
+
+.group-tabs button:hover {
+  background-color: #f5f5f5;
+  color: #2a4935;
 }
 
 .group-tabs button.active {
   color: #2a4935;
-  font-weight: bold;
+  font-weight: 600;
+  background-color: #f0f7f3;
 }
 
 .group-tabs button.active::after {
   content: '';
   position: absolute;
-  bottom: -1px;
+  bottom: -2px;
   left: 0;
   width: 100%;
-  height: 2px;
-  background-color: #1976d2;
+  height: 3px;
+  background-color: #2a4935;
+  border-radius: 3px;
 }
 
 .expense-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-}
-
-.month-selector {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.month-selector button {
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.month-selector button:hover {
-  background-color: #f0f0f0;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .add-expense-button {
   background-color: #2a4935;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 20px 20px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 8px;
   transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin: 0 auto; /* This centers the button */
+  width: 100%;
 }
 
 .add-expense-button:hover {
   background-color: #1e3a27;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(42, 73, 53, 0.3);
+}
+
+.add-expense-button i {
+  font-size: 1.1rem;
 }
 
 .expenses-list {
@@ -2372,10 +2732,16 @@ tr:hover {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background-color: #ecfdf0;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: linear-gradient(135deg, #ecfdf0, #e6f4ea);
+  border-radius: 10px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
+
+.member-item:hover {
+  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+}
+
 
 .member-info {
   display: flex;
@@ -2383,12 +2749,14 @@ tr:hover {
 }
 
 .member-name {
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #2a4935;
 }
 
 .member-email {
   font-size: 0.8rem;
-  color: #666;
+  color: #7d8c96;
 }
 
 .member-role {
@@ -2398,19 +2766,22 @@ tr:hover {
 }
 
 .role-badge {
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .role-badge.admin {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background-color: #e0f2e9;
+  color: #1b5e20;
 }
 
 .role-badge.member {
   background-color: #e3f2fd;
-  color: #1976d2;
+  color: #0d47a1;
 }
 
 .remove-button {
@@ -2421,35 +2792,69 @@ tr:hover {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
+  transition: background-color 0.3s ease;
+}
+
+.remove-button:hover {
+  background-color: #ffcdd2;
 }
 
 .invite-section {
   margin-top: 30px;
-  padding: 20px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
+  padding: 25px 20px;
+  background: linear-gradient(135deg, #f0fdf4, #e8f5e9);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  border-left: 4px solid #2a4935;
+  transition: all 0.3s ease;
+}
+
+.invite-section:hover {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.invite-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2a4935;
 }
 
 .invite-form {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .email-input {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 10px 14px;
+  border: 1px solid #cfd8dc;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border 0.3s ease;
+}
+
+.email-input:focus {
+  border-color: #2a4935;
+  box-shadow: 0 0 0 2px rgba(42, 73, 53, 0.1);
 }
 
 .invite-button {
-  background-color: #1976d2;
+  background-color: #2a4935;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.invite-button:hover {
+  background-color: #1f3627;
 }
 
 .summary-grid {
@@ -2503,53 +2908,132 @@ tr:hover {
   border-radius: 4px;
 }
 
-.settings-section {
-  margin-bottom: 30px;
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2a4935;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .setting-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 15px;
+}
+
+.setting-label {
+  font-weight: 600;
+  color: #2a4935;
+  font-size: 1.1rem;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+  transition: color 0.3s ease;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .setting-input {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s ease;
+}
+
+.setting-input:focus {
+  border-color: #1976d2;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
 }
 
 .save-button {
-  background-color: #1976d2;
+  background-color: #2a4935;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.save-button:hover:enabled {
+  background-color: #1f3627;
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  margin-top: 5px;
+  color: #d32f2f;
+  font-size: 0.85rem;
 }
 
 .danger-zone {
   padding: 20px;
-  background-color: #ffebee;
-  border-radius: 8px;
+  background-color: #fff5f5;
+  border-left: 4px solid #d32f2f;
+  border-radius: 10px;
+  margin-top: 40px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.danger-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #d32f2f;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .danger-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.danger-text {
+  color: #444;
+  font-size: 0.95rem;
+  max-width: 70%;
 }
 
 .delete-button {
   background-color: #d32f2f;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.delete-button:hover:enabled {
+  background-color: #b71c1c;
+}
+
+.delete-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .modal-overlay {
@@ -2576,16 +3060,24 @@ tr:hover {
 }
 
 .modal-header {
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 25px;
+  padding: 30px;
   border-bottom: 1px solid #2e4e38;
-  background-color: #7dc887; 
-  
+  background-color: #7dc887;  
 }
 
-.close-button {
+.modal-header h3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+}
+.modal-header .close-button {
+  position: absolute;
+  right: 10px;
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -2612,16 +3104,34 @@ tr:hover {
 }
 
 .modal-header2 {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  padding: 20px;
-  justify-content: space-between;
+  padding: 15px 20px;
+  justify-content: center;
   align-items: center;
   background-color: #f56161;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
   border-bottom: 1px solid #a40505;
   color: black;
 }
 
+.modal-header2 h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.close-button {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: black;
+}
 
 .modal-body2 {
   padding: 20px;
@@ -2723,6 +3233,13 @@ button.cancel-button{
   margin-top: 10px;
 }
 
+@media (max-width: 1050px) {
+  .expenses-section h3{
+  padding: 25px 0px 25px 0px;
+  width: 650px;
+  }
+}
+
 @media (max-width: 760px) {
   .group-con {
     flex-wrap: wrap;
@@ -2733,6 +3250,10 @@ button.cancel-button{
   }
   .group-wrapper{
     width: 100%;
+  }
+  .member-item {
+  display: flex;
+  flex-wrap: wrap;
   }
 }
 </style>
