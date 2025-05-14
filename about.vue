@@ -1,9 +1,10 @@
 <template>
   <navigation/>
-
+  
   <div class="container">
-    <div>
+    <div class="hero-graphic">
       <img src="/LOGO.png" alt="Logo Image" class="logo" />
+      <div class="graphic-accent"></div>
     </div>
 
     <div class="content">
