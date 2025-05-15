@@ -412,13 +412,13 @@
      max-width: 600px;
      background: white;
      border-radius: 12px;
-     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+     box-shadow: 0px 10px 30px 10px rgba(0, 0, 0, 0.1);
      overflow: hidden;
    }
    
    .card-header {
      padding: 30px;
-     background: linear-gradient(135deg, #aefadb 0%, #b1f3ab 100%);
+     background: linear-gradient(135deg, #baffec 0%, #afffa7 100%);
      color: white;
      text-align: center;
    }
@@ -454,14 +454,14 @@
      gap: 8px;
    }
    .tab-button.active {
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.386);
   backdrop-filter: blur(6px);
   font-weight: 700;
   box-shadow: inset 0 -2px 0 rgba(255,255,255,0.6);
 }
    
    .tab-button:hover {
-     background: rgba(255, 255, 255, 0.2);
+     background: rgba(122, 122, 122, 0.2);
    }
  
    .tab-button, .submit-button {
