@@ -1340,6 +1340,7 @@ async deleteExpenseHandler(id) {
   flex-wrap: wrap;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 2px;
 }
 
@@ -1365,7 +1366,8 @@ async deleteExpenseHandler(id) {
   font-size: 15px;
   transition: all 0.3s;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  max-width: 72px;
+  max-width: 80px;
+  height: 55px;
   font-size: 14px;
   margin-left: 0;      
   display: inline-block; 
@@ -1514,7 +1516,6 @@ async deleteExpenseHandler(id) {
 
 .month-selector {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 10px;
@@ -1583,7 +1584,7 @@ async deleteExpenseHandler(id) {
 }
 
 .progress-fill.exceeded {
-  background-color: #f44336;
+  background-color: #f31000;
 }
 
 .progress-text {
@@ -1692,7 +1693,7 @@ async deleteExpenseHandler(id) {
   align-content: center;
   flex: 1 1 65%;
   min-width: 280px;
-  background-color: rgb(216, 248, 216);
+  background-color: rgb(224, 249, 224);
   border: 2px solid #365c42;
   padding: 20px;
   border-radius: 15px;
@@ -1701,7 +1702,6 @@ async deleteExpenseHandler(id) {
 }
 
 .expenses-container {
-  max-width: 100%; 
   margin: 0 auto;
   box-sizing: border-box;
   width: 100%;
@@ -1867,8 +1867,9 @@ td, th {
 }
 
 .form-title {
-  color: #02ab3d;
+  color: #036c28;
   background-color: #d8fcdd;
+  border-radius: 5px;
   height: 50px;
   align-content: center;
   text-align: center;
@@ -1980,7 +1981,7 @@ td, th {
 
 @media (max-width: 1200px) {
   .month-selector span{
-    min-width: 50px;
+    min-width: 80px;
     padding: 10px;
     text-align: center;
     font-weight: bold;
@@ -1991,6 +1992,13 @@ td, th {
   .top-row {
     flex-wrap: wrap;
     flex-direction: column;
+  }
+  .month-selector span{
+    min-width: 150px;
+    padding: 10px;
+  }
+  .expenses-container {
+    min-width: 340px;
   }
 }
 
