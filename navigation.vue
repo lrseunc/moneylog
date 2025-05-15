@@ -255,9 +255,9 @@ cursor: pointer;
 display: flex;
 align-items: center;
 position: relative;
-right: -20px; /* Move right */
+right: -20px;
 bottom: 10px;
-text-decoration: none; /* Removes underline */
+text-decoration: none;
 
 &:hover {
   color: black;
