@@ -14,18 +14,20 @@
   </router-link>
 
   </ul>
-  <div class="icon">
-      <i @click="toggleMobileNav" v-show="mobile" class="far fa-bars" :class="{'icon-active': mobileNav }"></i>
-  </div>
+  <div class="icon" @click="toggleMobileNav" v-show="mobile">
+  <i :class="['fas', mobileNav ? 'fa-bars' : 'fa-bars']"></i>
+</div>
   <transition name="mobile-nav">
     <ul v-show="mobileNav" class="dropdown-nav">
+      <div class="drop">
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/GC">GROUP</router-link></li>
     <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
     <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>  
     <router-link to="/profile" class="user" aria-label="Profile">
-      <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
+      <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer; margin: 5px;"></i>
     </router-link>
+    </div>
 
 
   </ul>
@@ -180,6 +182,10 @@ i {
 transform: rotate(180deg);
 }
 
+.drop {
+  margin-top: 20px;
+}
+
 .dropdown-nav {
 display: flex;
 flex-direction: column;
@@ -195,6 +201,7 @@ left: 0;
 li {
   margin-left: 0;
   margin-top: 10px;
+  margin-bottom: 10px;
 }
   .link {
     color: black;
@@ -202,7 +209,7 @@ li {
 
   .user {
     color: black;
-    margin-left: 15px;
+    margin-left: 10px;
     margin-top: 10px;
 }
 }
