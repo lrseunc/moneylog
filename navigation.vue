@@ -9,7 +9,6 @@
     <li><router-link class="link" to="/GC">GROUP</router-link></li>
     <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
     <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>
-    <li><router-link class="link" to="/about">ABOUT</router-link></li>     
     <router-link to="/profile" class="profile-trigger" aria-label="Profile">
       <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
   </router-link>
@@ -23,8 +22,7 @@
     <li><router-link class="link" to="/personal">PERSONAL</router-link></li>
     <li><router-link class="link" to="/GC">GROUP</router-link></li>
     <li><router-link class="link" to="/view">PERSONAL VIEW</router-link></li>
-    <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>
-    <li><router-link class="link" to="/about">ABOUT</router-link></li>   
+    <li><router-link class="link" to="/groupview">GROUP VIEW</router-link></li>  
     <router-link to="/profile" class="user" aria-label="Profile">
       <i class="fas fa-user-circle" style="font-size: 30px; cursor: pointer;"></i>
     </router-link>
