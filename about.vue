@@ -12,7 +12,7 @@
     <span class="highlight">spend with peace!</span></h2>
       <p class="description">
         Money Log is a budget tracker website focused on helping users manage and track their expenses. 
-        This program allows users to record their expenses, categorize transactions, and follow their 
+        This enables individuals to record their expenses, categorize transactions, and follow their 
         financial budget over time.
       </p>
       </div>
@@ -59,7 +59,7 @@
     <div class="register-container">
         <div class="register-card">
           <h3>Ready to take control of your finances?</h3>
-          <p>Join thousands of users who are managing their money smarter</p>
+          <p>Join hundreds of users who are managing their money smarter</p>
           <router-link to="/register" class="register-button">
             Get Started - It's Free
           </router-link>
@@ -116,7 +116,7 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  background-color: #fcffed;
+  background-color: #f8faef;
   overflow-x: hidden;
   overflow-y: auto;
 }
