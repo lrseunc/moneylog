@@ -1326,7 +1326,7 @@ async deleteExpenseHandler(id) {
 .budget-container {
   flex: 1 1 30%;
   min-width: 150px;
-  background-color: #daf9da; 
+  background-color: #ecfcec; 
   padding: 20px;
   border-radius: 15px;
   border: 2px solid #2e4e38;
@@ -1692,7 +1692,7 @@ async deleteExpenseHandler(id) {
   align-content: center;
   flex: 1 1 65%;
   min-width: 280px;
-  background-color: #b8ebc0;
+  background-color: rgb(216, 248, 216);
   border: 2px solid #365c42;
   padding: 20px;
   border-radius: 15px;
@@ -1867,13 +1867,13 @@ td, th {
 }
 
 .form-title {
-  color: #2a4935;
+  color: #02ab3d;
   background-color: #d8fcdd;
   height: 50px;
   align-content: center;
   text-align: center;
   margin-bottom: 20px;
-  font-size: 1.4rem;
+  font-size: 1.7rem;
   font-weight: 600;
 }
 
