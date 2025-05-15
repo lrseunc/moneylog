@@ -1,4 +1,241 @@
-<style scoped>
+<template>
+    <div class="login-bg">
+        <div class="container">
+            <div class="login-container">
+                <div class="login-form">
+                <form @submit.prevent="loginUser">
+                    <div class="login-form-items">
+                        <span class="login-label">LOG IN</span>
+                        <div class="text-input-container">
+                        <label class="form-label">EMAIL</label>
+                        <input v-model="email" type="text" name="email" class="text-style" required>
+                        
+                        <label class="form-label">PASSWORD</label>
+                        <input v-model="password" type="password" name="password" class="text-style" required>  
+                    </div>
+
+                    <p style="color: red; margin-left: 15px;">{{ message }}</p>
+                    
+                        <button type="submit" class="login-btn">SIGN IN</button>
+                        <router-link to="/register" class="login-btn">SIGN UP</router-link>
+                        <a href="#" @click.prevent="showForgotPassword = true" class="forgot-password">
+                        Forgot Password?
+                        </a>
+                    </div>
+                </form>   
+                
+                <div v-if="showForgotPassword" class="forgot-password-modal">
+            <div class="modal-content">
+              <span class="close" @click="showForgotPassword = false">&times;</span>
+              <h2>Reset Password</h2>
+              <div class="input-group">
+                <label>Email Address</label>
+                <input v-model="resetEmail" type="email" placeholder="Enter your email">
+              </div>
+              <button @click="sendResetLink" class="reset-btn">Send Reset Link</button>
+              <p v-if="resetMessage" :class="{ 'success': resetSuccess, 'error': !resetSuccess }">
+                {{ resetMessage }}
+              </p>
+            </div>
+          </div>
+        </div>
+                
+        <div class="login-deco-container">
+        <div class="login-deco">
+        <span class="penny">MONEY <br> LOG</span>
+            <img src="/LOGO.png" alt="Logo Image" class="deco-image">  
+        </div>
+        </div>
+        </div>
+        </div>
+    </div>
+    </template>
+    
+    <script>
+    import { ref } from 'vue';
+    import axios from 'axios';
+    import { useRouter } from 'vue-router';
+    
+    export default {
+      setup() {
+        const router = useRouter();
+        const email = ref('');
+        const password = ref('');
+        const message = ref('');
+        const showForgotPassword = ref(false);
+        const resetEmail = ref('');
+        const resetMessage = ref('');
+        const resetSuccess = ref(false);
+    
+        const loginUser = async () => {
+          message.value = ''; // Reset error message
+    
+          if (!email.value || !password.value) {
+            message.value = 'Email and password are required!';
+            return;
+          };
+    
+          try {
+            const response = await axios.post(
+              'http://localhost:3000/api/users/login',
+              {
+                email: email.value,
+                password: password.value,
+              },
+            );
+    
+            if (response.data.success === 1) {
+              localStorage.setItem('jsontoken', response.data.token);
+
+          localStorage.setItem('user', JSON.stringify({
+            id: response.data.user.id,
+            name: response.data.user.name,
+            email: response.data.user.email,
+          }));
+
+          router.push('/personal');
+    } else {
+      message.value = response.data.message || 'Login failed.';
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    if (error.response && error.response.status === 401) {
+      message.value = 'Invalid email or password.';
+    } else {
+      message.value = 'Login service unavailable. Please try again later.';
+    }
+  }
+};
+
+const sendResetLink = async () => {
+  resetMessage.value = '';
+  resetSuccess.value = false;
+
+  if (!resetEmail.value) {
+    resetMessage.value = 'Email is required';
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/api/users/forgot-password',
+      { email: resetEmail.value }
+    );
+
+    if (response.data.success) {
+      resetSuccess.value = true;
+      resetMessage.value = 'Password reset link sent to your email';
+    } else {
+      resetMessage.value = response.data.message || 'Failed to send reset link';
+    }
+  } catch (error) {
+    console.error('Password reset error:', error);
+    resetMessage.value = 'Error sending reset link. Please try again.';
+  }
+};
+
+return {
+  email,
+  password,
+  message,
+  loginUser,
+  showForgotPassword,
+  resetEmail,
+  resetMessage,
+  resetSuccess,
+  sendResetLink
+};
+      },
+    };
+    </script>
+    
+    
+    <style scoped>
+    .forgot-password {
+  display: block;
+  margin-top: 15px;
+  text-align: center;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.forgot-password:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.forgot-password-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 90%;
+  max-width: 400px;
+}
+
+.close {
+  float: right;
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+h2 {
+  color: #4CAF50;
+}
+
+.input-group {
+  margin: 15px 0;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.input-group input {
+  width: 95%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.reset-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.reset-btn:hover {
+  background-color: #45a049;
+}
+
+.success {
+  color: green;
+  margin-top: 10px;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
    
     .login-bg {
         background-image: url("/circle.png");
