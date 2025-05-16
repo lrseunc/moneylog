@@ -118,9 +118,9 @@
                   
                 <div class="expenses-summary1">
                 <div class="total-expenses">
-        <span>Total Expenses:</span>
-        <strong>{{ formatPHP(totalAmount) }}</strong>
-      </div>
+                  <span>Total Expenses:</span>
+                  <strong>{{ formatPHP(totalAmount) }}</strong>
+                </div>
 
                   <div class="remaining-budget">
                     <span>Remaining Budget:</span>
@@ -142,7 +142,7 @@
                   </div>
                 </div>
 
-                <div v-else>
+                <div v-else class="no-budget">
                   <p>No budget set for this group</p>
                 </div>
               </div>
@@ -180,222 +180,343 @@
         </div>
         </div>
       </div>
+
+      <div class="contribution-wrapper">
+      <div class="contribution-form">
+    <h3><i class="fas fa-edit"></i> Add Your Contribution</h3>
+    <div class="form-wrapper">
+    <div class="form-group">
+    <label>Amount (₱)</label>
+    <input 
+      type="number" 
+      v-model.number="paidAmountInput" 
+      placeholder="Enter amount"
+      min="0"
+      step="0.01"
+      @keyup.enter="saveContribution"
+    >
+    </div>
+  <button 
+    @click="saveContribution" 
+    class="btn-save"
+    :disabled="paidAmountLoading || !paidAmountInput || paidAmountInput <= 0"
+  >
+    <span v-if="paidAmountLoading">
+      <i class="fas fa-spinner fa-spin"></i> Saving...
+    </span>
+    <span v-else>Save <br> Contribution</span>
+  </button>
+  </div>
+  <div v-if="contributionHistory.length > 0" class="contribution-history">
+    <h4><i class="fas fa-history"></i> Your Contribution History</h4>
+    <ul class="contribution-list">
+  <li v-for="(contribution, index) in contributionHistory" :key="index">
+    <div class="contribution-date">
+      {{ formatDate(contribution.date) }}
+    </div>
+    <div class="contribution-amount">
+      {{ formatPHP(contribution.amount) }}
+    </div>
+    <button @click="editContribution(contribution)" class="edit-btn" title="Edit">
+      <i class="fas fa-edit"></i>
+    </button>
+  </li>
+</ul>
+  </div>
+      <div v-else class="no-contributions">
+      <p>No contribution history found for this group</p>
+    </div>
+</div>
+  </div>
+  </div>
+  
+
+
+<div class="group-wrapper">
+  <div class="group-body">
+    <div class="group-tabs">
+      <button 
+        @click="activeTab = 'expenses'" 
+        :class="{ active: activeTab === 'expenses' }"
+      >
+        Expenses
+      </button>
+      <button @click="activeTab = 'members'" :class="{ active: activeTab === 'members' }">
+        Members ({{ members?.length || 0 }})
+      </button>
+      <button 
+        @click="activeTab = 'contribution'" 
+        :class="{ active: activeTab === 'contribution' }"
+      >
+        Group Contribution
+      </button>
+      <button 
+        v-if="isAdmin"
+        @click="activeTab = 'settings'" 
+        :class="{ active: activeTab === 'settings' }"
+      >
+        Settings
+      </button>
     </div>
 
-    <div class="group-wrapper">
-    <div class="group-body">
-      <div class="group-tabs">
-        <button 
-          @click="activeTab = 'expenses'" 
-          :class="{ active: activeTab === 'expenses' }"
-        >
-          Expenses
-        </button>
-        <button @click="activeTab = 'members'" :class="{ active: activeTab === 'members' }">
-        Members ({{ members?.length || 0 }})
-        </button>
-        <button 
-          v-if="isAdmin"
-          @click="activeTab = 'settings'" 
-          :class="{ active: activeTab === 'settings' }"
-        >
-          Settings
-        </button>
+    <div class="tab-content">
+      <!-- Expenses Tab -->
+      <div v-if="activeTab === 'expenses'" class="expenses-tab">
+        <div class="expense-controls">
+          <button 
+  @click="showAddExpenseModal = true" 
+  class="add-expense-button"
+  :disabled="!hasBudget"
+>
+  <i class="fas fa-plus"></i> Add <br> Expense
+  <span v-if="!hasBudget" class="tooltip">Please set a budget first</span>
+</button>
+        </div>
+
+        <div v-if="expensesLoading" class="loading-expenses">
+          <div class="spinner small"></div>
+        </div>
+
+        <div v-else-if="expensesError" class="error-message">
+          Error loading expenses: {{ expensesError }}
+          <button @click="loadExpenses" class="retry-btn">Retry</button>
+        </div>
+
+        <div v-else-if="!expenses">
+          <p>Expenses data not loaded</p>
+          <button @click="loadExpenses" class="retry-btn">Load Expenses</button>
+        </div>
+                
+        <div v-else-if="!filteredExpenses || filteredExpenses.length === 0" class="no-expenses">
+          <p>No expenses recorded for {{ currentMonthYear }}</p>
+        </div>
+                
+        <div v-else class="expenses-container">
+          <h3><i class="fas fa-coins"></i> <span>GROUP <br> EXPENSES</span></h3> 
+          <div class="expenses-section"> 
+            <div class="expenses-table"> 
+              <table>
+                <thead>
+                  <tr>
+                    <th>Expense Type</th>
+                    <th>Item Name</th>
+                    <th>Item Price</th>
+                    <th>Date</th>
+                    <th>Added By</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="expense in filteredExpenses" :key="expense.id">
+                    <td>{{ expense.expense_type || 'N/A' }}</td>
+                    <td>{{ expense.item_name || 'N/A' }}</td>
+                    <td>{{ formatPHP(expense.item_price) }}</td>
+                    <td>{{ formatDate(expense.expense_date) }}</td>
+                    <td>{{ expense.username }}</td>
+                    <td class="actions">
+                      <div class="action-buttons">
+                        <button 
+                          @click="editExpense(expense)" 
+                          class="button-edit"
+                          :disabled="!canEditExpense(expense)"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          @click="confirmDeleteExpense(expense)" 
+                          class="button-delete"
+                          :disabled="!canEditExpense(expense)"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="total-summary">
+                <div class="total-amount-card">
+                  <div class="total-label">TOTAL EXPENSES</div>
+                  <div class="amount-display">
+                    <span class="currency php">{{ formatPHP(totalAmount) }}</span>
+                    <span class="currency usd">≈ {{ formatUsd(convertPhpToUsd(totalAmount)) }}</span>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
       </div>
 
-      <div class="tab-content">
-        <!-- Expenses Tab -->
-        <div v-if="activeTab === 'expenses'" class="expenses-tab">
-          <div class="expense-controls">
-            <button @click="showAddExpenseModal = true" class="add-expense-button">
-              <i class="fas fa-plus"></i> Add <br> Expense
-            </button>
-          </div>
+      <!-- Members Tab -->
+      <div v-if="activeTab === 'members'" class="members-tab">
+        <div v-if="promoteSuccess" class="promote-success-message">
+          <i class="fas fa-check-circle"></i>
+          {{ promoteSuccess }}
+          <button @click="promoteSuccess = ''" class="close-message">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
 
-          <div v-if="expensesLoading" class="loading-expenses">
-            <div class="spinner small"></div>
+        <div class="members-list">
+          <div v-for="member in members" :key="member.id" class="member-item">
+            <div class="member-info">
+              <span class="member-name">{{ member.username }}</span>
+              <span class="member-email">{{ member.email }}</span>
+            </div>
+            <div class="member-role">
+              <span :class="['role-badge', member.role]">
+                {{ member.role }}
+                <i v-if="member.role === 'admin'" class="fas fa-crown"></i>
+              </span>
+              <div class="member-actions" v-if="isAdmin && member.role !== 'admin'">
+                <button @click="promoteToAdmin(member)" class="promote-button">
+                  Promote to Admin
+                </button>
+                <button @click="confirmRemoveMember(member)" class="remove-button">
+                  Remove
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+        
+        <div v-if="!isAdmin" class="leave-group-section">
+          <h4><i class="fas fa-sign-out-alt"></i> Leave Group</h4>
+          <button @click="leaveGroup" class="leave-group-button">
+            Leave This Group
+          </button>
+          <p class="leave-group-warning">
+            Warning: This action cannot be undone. You'll need to be invited again to rejoin.
+          </p>
+        </div>
+        
+        <div v-else class="admin-leave-notice">
+          <h4><i class="fas fa-info-circle"></i> Admin Notice</h4>
+          <p>
+            As an admin, you cannot leave this group. 
+          </p>
+        </div>
+      </div>
 
-          <div v-else-if="expensesError" class="error-message">
-            Error loading expenses: {{ expensesError }}
-            <button @click="loadExpenses" class="retry-btn">Retry</button>
+      <!-- Contribution Tab -->
+      <div v-if="activeTab === 'contribution'" class="contribution-tab">
+        <div class="contribution-header">
+          <h2><i class="fas fa-hand-holding-usd"></i> Group Contributions</h2>
+          <p>Track and manage contributions and balances for this group</p>
+        </div>
+
+        <div class="contribution-summary">
+          <div class="summary-card">
+            <div class="summary-label">Total Expenses</div>
+            <div class="summary-amount">{{ formatPHP(totalAmount) }}</div>
           </div>
-  
-          <div v-else-if="!expenses">
-            <p>Expenses data not loaded</p>
-            <button @click="loadExpenses" class="retry-btn">Load Expenses</button>
+          <div class="summary-card">
+            <div class="summary-label">Total Contributed</div>
+            <div class="summary-amount">{{ formatPHP(totalContributions) }}</div>
           </div>
-                  
-                  <div v-else-if="!filteredExpenses || filteredExpenses.length === 0" class="no-expenses">
-            <p>No expenses recorded for {{ currentMonthYear }}</p>
+          <div class="summary-card">
+            <div class="summary-label">Your Share</div>
+            <div class="summary-amount">{{ formatPHP(yourShare) }}</div>
           </div>
-                  
-      <div v-else class="expenses-container">
-        <div class="expenses-section"> 
-          <h3><i class="fas fa-coins"></i> <span>YOUR <br> EXPENSES</span></h3> 
-          <div class="expenses-table"> 
+          <div class="summary-card">
+            <div class="summary-label">Your Balance</div>
+            <div class="summary-amount" :class="{ 'text-danger': yourBalance < 0, 'text-success': yourBalance >= 0 }">
+              {{ formatPHP(Math.abs(yourBalance)) }}
+              <span v-if="yourBalance < 0">(You owe)</span>
+              <span v-else>(You're owed)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="contribution-section">
+          <div class="member-contributions-table">
             <table>
               <thead>
                 <tr>
-                  <th>Expense Type</th>
-                  <th>Item Name</th>
-                  <th>Item Price</th>
-                  <th>Date</th>
-                  <th>Added By</th>
-                  <th>Actions</th>
+                  <th>Member</th>
+                  <th>Contributed</th>
+                  <th>Share</th>
+                  <th>Balance</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="expense in filteredExpenses" :key="expense.id">
-                  <td>{{ expense.expense_type || 'N/A' }}</td>
-                  <td>{{ expense.item_name || 'N/A' }}</td>
-                  <td>{{ formatPHP(expense.item_price) }}</td>
-                  <td>{{ formatDate(expense.expense_date) }}</td>
-                  <td>{{ expense.username }}</td>
-                  <td class="actions">
-                    <div class="action-buttons">
-                      <button 
-                        @click="editExpense(expense)" 
-                        class="edit-btn"
-                        :disabled="!canEditExpense(expense)"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        @click="confirmDeleteExpense(expense)" 
-                        class="delete-btn"
-                        :disabled="!canEditExpense(expense)"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                <tr v-for="member in memberContributions" :key="member.id">
+        <td>{{ member.username }}</td>
+        <td>{{ formatPHP(member.contributed) }}</td>
+        <td>{{ formatPHP(member.share) }}</td>
+        <td :class="{ 'text-danger': member.balance < 0, 'text-success': member.balance >= 0 }">
+          {{ formatPHP(Math.abs(member.balance)) }}
+          <span v-if="member.balance < 0">(Owes)</span>
+          <span v-else>(Owed)</span>
+        </td>
+        <td>
+          <span :class="['status-badge', member.status]">
+            {{ member.status }}
+          </span>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div class="total-summary">
-              <div class="total-amount-card">
-                <div class="total-label">TOTAL EXPENSES</div>
-                <div class="amount-display">
-                  <span class="currency php">{{ formatPHP(totalAmount) }}</span>
-                  <span class="currency usd">≈ {{ formatUsd(convertPhpToUsd(totalAmount)) }}</span>
-                </div>
-              </div>
-            </div>
-        </div>
       </div>
-    </div>
-  
-  
 
-        <!-- Members Tab -->
-        <div v-if="activeTab === 'members'" class="members-tab">
-  <div v-if="promoteSuccess" class="promote-success-message">
-    <i class="fas fa-check-circle"></i>
-    {{ promoteSuccess }}
-    <button @click="promoteSuccess = ''" class="close-message">
-      <i class="fas fa-times"></i>
-    </button>
-  </div>
-
-  <div class="members-list">
-    <div v-for="member in members" :key="member.id" class="member-item">
-      <div class="member-info">
-        <span class="member-name">{{ member.username }}</span>
-        <span class="member-email">{{ member.email }}</span>
-      </div>
-      <div class="member-role">
-        <span :class="['role-badge', member.role]">
-          {{ member.role }}
-          <i v-if="member.role === 'admin'" class="fas fa-crown"></i>
-        </span>
-        <div class="member-actions" v-if="isAdmin && member.role !== 'admin'">
-          <button @click="promoteToAdmin(member)" class="promote-button">
-            Promote to Admin
-          </button>
-          <button @click="confirmRemoveMember(member)" class="remove-button">
-            Remove
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div v-if="!isAdmin" class="leave-group-section">
-    <h4><i class="fas fa-sign-out-alt"></i> Leave Group</h4>
-    <button @click="leaveGroup" class="leave-group-button">
-      Leave This Group
-    </button>
-    <p class="leave-group-warning">
-      Warning: This action cannot be undone. You'll need to be invited again to rejoin.
-    </p>
-  </div>
-  
-  <div v-else class="admin-leave-notice">
-    <h4><i class="fas fa-info-circle"></i> Admin Notice</h4>
-    <p>
-      As an admin, you cannot leave this group. Please transfer admin rights to another member first.
-    </p>
-  </div>
-</div>
-
-        <!-- Settings Tab (Admin Only) -->
-        <div v-if="activeTab === 'settings' && isAdmin" class="settings-tab">
-          <div class="settings-section">
-            <h3 class="section-title"><i class="fas fa-cog"></i> Group Settings</h3>
-           
-            <div class="setting-item">
-              <label class="setting-label">Group Name</label>
-          <div class="input-group">
-            <input 
-              v-model="group.group_name" 
-              @blur="handleNameUpdate"
-              @keyup.enter="handleNameUpdate"
-              type="text" 
-              class="setting-input"
-              :disabled="updatingName"
-            >
-            <button 
-              @click="handleNameUpdate" 
-              class="save-button"
-              :disabled="!nameChanged || updatingName"
-            >
-              <span v-if="updatingName">Saving...</span>
-              <span v-else>Save</span>
-            </button>
-          </div>
-          <p v-if="nameError" class="error-message">{{ nameError }}</p>
-          </div>
-        </div>
-          
-          <div class="danger-zone">
-            <h3 class="danger-title"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
-            <div class="danger-item">
-              <p class="danger-text">Delete this group permanently  (including all expenses and members) </p>
-              <button 
-                @click="confirmDeleteGroup" 
-                class="delete-button"
-                :disabled="deletingGroup"
+      <!-- Settings Tab (Admin Only) -->
+      <div v-if="activeTab === 'settings' && isAdmin" class="settings-tab">
+        <div class="settings-section">
+          <h3 class="section-title"><i class="fas fa-cog"></i> Group Settings</h3>
+         
+          <div class="setting-item">
+            <label class="setting-label">Group Name</label>
+            <div class="input-group">
+              <input 
+                v-model="group.group_name" 
+                @blur="handleNameUpdate"
+                @keyup.enter="handleNameUpdate"
+                type="text" 
+                class="setting-input"
+                :disabled="updatingName"
               >
-                <span v-if="deletingGroup">
-                  <i class="fas fa-spinner fa-spin"></i> Deleting...
-                </span>
-                <span v-else>Delete Group</span>
+              <button 
+                @click="handleNameUpdate" 
+                class="save-button"
+                :disabled="!nameChanged || updatingName"
+              >
+                <span v-if="updatingName">Saving...</span>
+                <span v-else>Save</span>
               </button>
-              <p v-if="deleteGroupError" class="error-message">{{ deleteGroupError }}</p>
             </div>
+            <p v-if="nameError" class="error-message">{{ nameError }}</p>
+          </div>
+        </div>
+        
+        <div class="danger-zone">
+          <h3 class="danger-title"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+          <div class="danger-item">
+            <p class="danger-text">Delete this group permanently (including all expenses and members)</p>
+            <button 
+              @click="confirmDeleteGroup" 
+              class="delete-button"
+              :disabled="deletingGroup"
+            >
+              <span v-if="deletingGroup">
+                <i class="fas fa-spinner fa-spin"></i> Deleting...
+              </span>
+              <span v-else>Delete Group</span>
+            </button>
+            <p v-if="deleteGroupError" class="error-message">{{ deleteGroupError }}</p>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 
     <!-- Add Expense Modal -->
     <div v-if="showAddExpenseModal" class="modal-overlay">
-      <div class="modal-content">
+      <div class="modal-content2">
         <div class="modal-header">
           <h3>Add New Expense</h3>
           <button @click="closeModal" class="close-button">&times;</button>
@@ -405,13 +526,13 @@
             <div class="form-group">
               <label>Category</label>
               <select v-model="newExpense.expense_type" required>
+                <option value="">Select a category</option> 
                 <option value="Food">Food</option>
-                <option value="Entertainment">Accomodation</option>
+                <option value="Bill">Bill</option>
                 <option value="Transportation">Transportation</option>
-                <option value="Entertainment">Bills</option>
-                <option value="Entertainment">Shopping</option>
                 <option value="Entertainment">Entertainment</option>
-                <option value="Utilities">Essentials</option>
+                <option value="Accomodation">Accomodation</option>
+                <option value="Shopping">Shopping</option>
                 <option value="Other">Others</option>
               </select>
             </div>
@@ -446,9 +567,38 @@
       </div>
     </div>
 
+      <!-- Edit Contribution Modal -->
+      <div v-if="showEditContributionModal" class="modal-overlay">
+  <div class="con-contribution">
+    <h3>Edit Contribution</h3>
+    
+    <div class="form-group">
+      <label>Amount (₱)</label>
+      <input 
+        type="number" 
+        v-model.number="editingContribution.amount" 
+        placeholder="Enter amount"
+        min="0"
+        step="0.01"
+        class="form-control"
+        @keyup.enter="updateContribution"
+      >
+    </div>
+    
+    <div class="modal-actions">
+      <button @click="updateContribution" class="btn-save" :disabled="!editingContribution.amount || editingContribution.amount <= 0">
+        Save Changes
+      </button>
+      <button @click="cancelEditContribution" class="btn-cancel">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
     <!-- Edit Expense Modal -->
     <div v-if="showEditExpenseModal" class="modal-overlay">
-      <div class="modal-content">
+      <div class="modal-content1">
         <div class="modal-header">
           <h3>Edit Expense</h3>
           <button @click="closeModal" class="close-button">&times;</button>
@@ -504,6 +654,7 @@
     </div>
   </div>
   </div>
+  </div>
 </template>
 
 <script>
@@ -522,6 +673,11 @@ export default {
   },
   data() {
     return {
+      memberContributions: [],
+      contributions: [],
+      paidAmountInput: 0,
+      contributionHistory: [],
+      paidAmountLoading: false,
       localGroupId: this.groupId,
       showGroupList: false,
       userGroups: [],
@@ -552,6 +708,14 @@ export default {
       showEditExpenseModal: false,
       showConfirmationModal: false,
       promoteSuccess: '',
+      showEditContributionModal: false,
+      editingContribution: {
+      id: null,
+      amount: 0,
+      date: '',
+      status: '',
+      originalAmount: 0
+    },
       
       // Form data
       newExpense: {
@@ -582,6 +746,23 @@ export default {
       groupBudget: state => state.groupBudget || {}
     }),
 
+    totalContributions() {
+    if (!this.contributions) return 0;
+    return this.contributions.reduce((total, contribution) => {
+      return total + parseFloat(contribution.amount || 0);
+    }, 0);
+  },
+  
+  yourShare() {
+    return this.totalAmount / (this.members?.length || 1);
+  },
+  
+  yourBalance() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const yourContribution = this.memberContributions?.find(m => m.id === user?.id)?.contributed || 0;
+    return yourContribution - this.yourShare;
+  },
+  
     hasBudget() {
   return this.groupBudget && this.groupBudget.budget_amount !== undefined && this.groupBudget.budget_amount !== null;
 },
@@ -657,6 +838,7 @@ export default {
     async handler(newGroupId) {
       if (newGroupId && newGroupId !== this.localGroupId) {
         this.localGroupId = newGroupId;
+        await this.fetchContributionHistory();
         await this.initializeGroupData();
         this.originalName = this.group.group_name || '';
       }
@@ -666,6 +848,12 @@ export default {
     deep: true,
     handler() {
       this.calculateRemaining();
+    }
+  },
+  'contributions': {
+    deep: true,
+    handler() {
+      this.updateMemberContributions();
     }
   },
 
@@ -720,6 +908,10 @@ export default {
   try {
     console.log('Initializing group data...');
     await this.initializeGroupData();
+    console.log('Fetching contributions...');
+    await this.fetchContributions();
+    console.log('Fetching contribution history...');
+    await this.fetchContributionHistory();
     console.log('Fetching budget data...');
     await this.fetchBudgetData();
     console.log('Fetching group data...');
@@ -732,7 +924,14 @@ export default {
     
     this.originalName = this.group.group_name || '';
 
-    await this.fetchUserGroups();
+    await this.initializeGroupData();
+     await this.fetchUserGroups(),
+     await this.fetchContributions();
+     await this.fetchContributionHistory();
+
+    this.contributions = this.contributions || [];
+    this.memberContributions = this.memberContributions || [];
+    
    // await this.fetchAvailableBudgets();
   } catch (err) {
     console.error('Failed to load group data:', err);
@@ -763,6 +962,77 @@ export default {
       'updateGroupBudget'
     //  'fetchAvailableBudgets'
     ]),
+
+    formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  },
+
+    showContributionDetails(userId) {
+  const userContributions = this.contributions.filter(c => c.user_id === userId);
+  const userName = this.members.find(m => m.id === userId)?.username || 'Member';
+  
+  this.$notify({
+    title: `${userName}'s Contributions`,
+    message: `
+      <div class="contribution-details">
+        ${userContributions.map(c => `
+          <div class="contribution-item">
+            <span class="amount">${this.formatPHP(c.amount)}</span>
+            <span class="date">${new Date(c.created_at).toLocaleDateString()}</span>
+          </div>
+        `).join('')}
+        <div class="contribution-total">
+          Total: ${this.formatPHP(userContributions.reduce((sum, c) => sum + parseFloat(c.amount), 0))}
+        </div>
+      </div>
+    `,
+    duration: 5000,
+    dangerouslyUseHTMLString: true
+  });
+},
+
+    updateMemberContributions() {
+  if (!this.members || !this.contributions) {
+    this.memberContributions = [];
+    return;
+  }
+  
+  // Calculate total group expenses
+  const totalExpenses = this.totalAmount;
+  
+  // Calculate equal share for each member
+
+  const sharePerMember = totalExpenses / (this.members.length || 1);
+  //const sharePerMember = this.totalAmount / (this.members.length || 1);
+  // Create member contributions array
+  this.memberContributions = this.members.map(member => {
+    // Calculate total contributed by this member
+    const contributed = this.contributions
+      .filter(c => c.user_id === member.id)
+      .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
+    
+    // Calculate balance (contributed - share)
+    const balance = contributed - sharePerMember;
+    
+    
+    return {
+      id: member.id,
+      username: member.username,
+      contributed,       // Total amount this member has contributed
+      share: sharePerMember,  // Equal share of expenses
+      balance,          // Difference between contributed and share
+      status: balance >= 0 ? 'completed' : 'pending'
+    };
+  });
+  console.log('Updated member contributions:', this.memberContributions);
+},
+  
 
     leaveGroup() {
   this.confirmationTitle = 'Leave Group';
@@ -816,9 +1086,14 @@ export default {
   this.showConfirmationModal = true;
 },
 
-    showError(message) {
-    console.error(message);
-    },
+showError(message) {
+    this.$notify({
+      title: 'Error',
+      message: message,
+      type: 'error',
+      duration: 5000
+    });
+  },
 
   showSuccess(message) {
     if (this._isMounted) { // Check if component is still mounted
@@ -853,6 +1128,154 @@ export default {
   cancelBudgetForm() {
     this.isAddingBudget = false;
     this.isEditingBudget = false;
+  },
+
+  async editContribution(contribution) {
+    const plainContribution = JSON.parse(JSON.stringify(contribution));
+  console.log('Editing contribution:', plainContribution);
+
+  if (!plainContribution.id) {
+    this.showError('Contribution ID is missing');
+    return;
+  }
+  
+  this.editingContribution = {
+    id: plainContribution.id,
+    amount: parseFloat(plainContribution.amount),
+    date: plainContribution.date,
+    status: plainContribution.status,
+    originalAmount: parseFloat(plainContribution.amount)
+  };
+  this.showEditContributionModal = true;
+},
+
+async updateContribution() {
+  if (!this.editingContribution?.id) {
+    this.showError('Invalid contribution ID');
+    return;
+  }
+
+  try {
+    const response = await this.$axios.put(
+      `/api/grp_expenses/groups/${this.localGroupId}/contributions/${this.editingContribution.id}`,
+      { amount: this.editingContribution.amount },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      this.showSuccess('Contribution updated successfully!');
+      await Promise.all([
+        this.fetchContributionHistory(),
+        this.fetchContributions()
+      ]);
+      this.showEditContributionModal = false;
+    }
+  } catch (error) {
+    console.error('Failed to update contribution:', error);
+    this.showError(error.response?.data?.message || 'Failed to update contribution');
+  }
+},
+  
+  cancelEditContribution() {
+    if (this.editingContribution.originalAmount) {
+      this.editingContribution.amount = this.editingContribution.originalAmount;
+    }
+    this.showEditContributionModal = false;
+  },
+
+  async fetchContributionHistory() {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const response = await this.$axios.get(
+        `/api/grp_expenses/groups/${this.localGroupId}/contribution-history`,
+        {
+          params: { user_id: user.id },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        this.contributionHistory = response.data.history || [];
+      console.log('Fetched contribution history:', this.contributionHistory);
+      }
+    } catch (error) {
+      console.error('Failed to fetch contribution history:', error);
+    }
+  },
+
+  async fetchContributions() {
+    try {
+      const response = await this.$axios.get(
+        `/api/grp_expenses/groups/${this.localGroupId}/contributions`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        this.contributions = response.data.contributions || [];
+      console.log('Fetched contributions:', this.contributions);
+        this.updateMemberContributions();
+      }
+    } catch (error) {
+      console.error('Failed to fetch contributions:', error);
+      this.showError('Failed to load contributions');
+    }
+  },
+
+  async saveContribution() {
+    if (this.paidAmountLoading) return;
+    
+    try {
+      this.paidAmountLoading = true;
+      const amount = parseFloat(this.paidAmountInput);
+      
+      if (isNaN(amount) || amount <= 0) {
+        this.showError('Please enter a valid amount');
+        return;
+      }
+      
+      const user = JSON.parse(localStorage.getItem('user'));
+      const response = await this.$axios.post(
+        `/api/grp_expenses/groups/${this.localGroupId}/contributions`,
+        { 
+          amount,
+          user_id: user.id,
+          group_id: this.localGroupId 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        this.showSuccess('Contribution saved successfully!');
+        this.paidAmountInput = 0;
+
+        await Promise.all([
+          this.fetchContributions(),
+          this.fetchContributionHistory(),
+          this.fetchGroupData()
+        ]);
+
+      this.$forceUpdate();
+    }
+    } catch (error) {
+      console.error('Failed to save contribution:', error);
+      this.showError(error.response?.data?.message || 'Failed to save contribution');
+    } finally {
+      this.paidAmountLoading = false;
+    }
   },
   
   async showAddBudgetForm() {
@@ -1153,12 +1576,18 @@ async updateBudget() {
   try {
     console.log('Fetching group data for groupId:', this.localGroupId);
     await this.fetchGroup(this.localGroupId);
-    console.log('Group data fetched successfully');
+
+    await this.fetchContributions();
     
+    // Update member contributions
+    this.updateMemberContributions();
+
     if (!this.currentGroup?.id) {
       this.$router.replace('/GC');
       return;
     }
+
+   // this.updateMemberContributions();
 
   } catch (err) {
     console.error('Error fetching group:', err, {
@@ -1203,35 +1632,11 @@ async updateBudget() {
   }
 },
     
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    },
-    
     formatMonthYear(monthYearString) {
       const date = new Date(monthYearString);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       return `${year}-${month}`;
-    },
-    
-    prevMonth() {
-      const date = new Date(this.currentMonthYear);
-      date.setMonth(date.getMonth() - 1);
-      this.currentMonthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-      this.loadExpenses();  
-    },
-    
-    nextMonth() {
-      const date = new Date(this.currentMonthYear);
-      date.setMonth(date.getMonth() + 1);
-      this.currentMonthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-      this.loadExpenses(); 
     },
     
     copyGroupCode() {
@@ -1244,6 +1649,11 @@ async updateBudget() {
     },
     
     async submitExpense() {
+      if (!this.hasBudget) {
+    this.showError('Please set a group budget before adding expenses');
+    return;
+  }
+
       try {
         const user = JSON.parse(localStorage.getItem('user'));
 
@@ -1528,9 +1938,9 @@ async handleUpdateExpense() {
     },
     
     canEditExpense(expense) {
-      const userId = JSON.parse(localStorage.getItem('user')).id;
-      return this.isAdmin || expense.user_id === userId;
-    },
+  const userId = JSON.parse(localStorage.getItem('user')).id;
+  return expense.user_id === userId; 
+  },
     
     closeModal() {
       this.showAddExpenseModal = false;
@@ -1560,34 +1970,485 @@ async handleUpdateExpense() {
   },
 
   beforeRouteUpdate(to, from, next) {
-    if (!to.params.groupId) {
-      this.$router.replace('/GC');
-      return;
-    }
-    
-    this.localGroupId = to.params.groupId; 
-    this.initializeGroupData()
-      .finally(() => next());
+  if (!to.params.groupId) {
+    this.$router.replace('/GC');
+    return;
   }
+  
+  // Clear existing data
+  this.contributionHistory = [];
+  this.contributions = [];
+  this.memberContributions = [];
+  this.paidAmountInput = 0;
+  
+  this.localGroupId = to.params.groupId; 
+  this.initializeGroupData()
+    .finally(() => next());
+}
 }
 };
 </script>
 
 <style scoped>
+.no-budget {
+  background-color: #f4f8f6;
+  border: 1px dashed #b6cfc5;
+  padding: 16px 24px;
+  border-radius: 8px;
+  text-align: center;
+  color: #4e7e6a;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  margin-top: 20px;
+}
+
+.no-budget p {
+  margin: 0;
+  font-size: 1rem;
+}
+.no-contributions {
+  background-color: #f0f7f4;
+  border: 1px solid #c8e3d5;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 500px;
+  text-align: center;
+  color: #2a4935;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+.button-edit, .button-delete {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.2s;
+  min-width: 70px;
+}
+
+/* Edit button - your greenish color */
+.button-edit {
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: white;
+  box-shadow: 0 2px 5px rgba(106, 156, 137, 0.4);
+}
+
+.button-edit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
+  box-shadow: 0 4px 10px rgba(74, 109, 92, 0.6);
+}
+
+/* Delete button - complementary red */
+.button-delete {
+  background: linear-gradient(135deg, #e57373, #d32f2f, #b71c1c);
+  color: white;
+  box-shadow: 0 2px 5px rgba(211, 47, 47, 0.4);
+}
+
+.button-delete:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c, #7f0000);
+  box-shadow: 0 4px 10px rgba(123, 0, 0, 0.6);
+}
+
+/* Disabled state for both buttons */
+.button-edit:disabled,
+.button-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  box-shadow: none;
+  background: #ccc;
+  color: #666;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+.form-control {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.con-contribution {
+  background: linear-gradient(135deg, #f5fbf8, #e8f7ef);
+  border: 2px solid #a8e0ce;
+  border-radius: 16px;
+  padding: 30px 40px;
+  width: 100%;
+  max-width: 450px;
+  margin: 100px auto;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 10px 28px rgba(44, 88, 73, 0.08);
+  text-align: left;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.con-contribution h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #2a4935;
+  margin-bottom: 20px;
+  margin-top: 0px;
+}
+.btn-save {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: #fff;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 4px 6px rgba(106, 156, 137, 0.4);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  min-width: 140px;
+}
+
+.btn-save:hover {
+  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
+  box-shadow: 0 6px 12px rgba(74, 109, 92, 0.5);
+}
+
+
+.btn-save:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.btn-cancel {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 10px;
+}
+
+.contribution-form {
+  background: #fff;
+  border: 2px solid #2e4e38;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.form-wrapper .form-group input {
+  max-width: 150px;
+  min-width: 150px;
+}
+
+.contribution-form .form-group {
+  margin-bottom: 15px;
+  justify-content: space-between;
+}
+
+.contribution-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.contribution-form input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.contribution-history {
+  margin-top: 10px;
+  border-top: 1px solid #dcdcdc;
+  padding-top: 15px;
+  background-color: #fafafa;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.contribution-history h4 {
+  margin-bottom: 10px;
+  margin-top: 2px;
+  color: #2c3e50;
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.contribution-list {
+  list-style: none;
+  padding: 0 10px;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
+}
+
+.contribution-list li {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: center;
+  padding: 10px 8px;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 0.95rem;
+  color: #2c3e50;
+  transition: background-color 0.2s;
+}
+
+.contribution-list li:hover {
+  background-color: #f3f9ff;
+}
+
+.contribution-date,
+.contribution-amount {
+  text-align: left;
+}
+
+.status-badge {
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.completed {
+  background-color: #e6f7ee;
+  color: #10b981;
+}
+
+.status-badge.pending {
+  background-color: #fff3e6;
+  color: #f59e0b;
+}
+
+.contribution-tab {
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.contribution-header {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.contribution-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.contribution-header p {
+  font-size: 1rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+.contribution-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* slightly smaller min */
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+  .summary-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 10px 15px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  border-bottom: 4px solid #c4c4c4;
+}
+
+.summary-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* hover lift effect */
+}
+
+.summary-label {
+  font-size: 1.0rem;
+  color: #6c757d;
+  margin-bottom: 10px;
+}
+
+.summary-amount {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+
+}
+
+.text-danger {
+  color: #e74c3c;
+}
+
+.text-success {
+  color: #27ae60;
+}
+
+.contribution-wrapper {
+  width: 100%;
+  max-width: 500px;
+}
+
+.contribution-form {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 auto 40px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.contribution-form h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  text-align: center;
+}
+.member-contributions-table {
+  overflow-x: auto;
+  margin-bottom: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(106, 156, 137, 0.15);
+  background-color: #ffffff;
+  padding: 8px; /* slightly less padding */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.member-contributions-table table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px; /* less vertical spacing */
+  font-size: 0.95rem; /* smaller font */
+}
+
+.member-contributions-table th,
+.member-contributions-table td {
+  padding: 10px 14px; /* reduced padding */
+  text-align: center;
+  border-bottom: 1px solid #d7e2dc;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.member-contributions-table th {
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem; /* slightly smaller */
+  text-transform: uppercase;
+  border-bottom: 2px solid #4f7a6b;
+  box-shadow: 0 2px 6px rgba(74, 109, 92, 0.3);
+  border-radius: 8px 8px 0 0;
+}
+
+.member-contributions-table tbody tr {
+  background-color: #ecfdf5;
+  box-shadow: 0 1px 3px rgba(106, 156, 137, 0.1);
+  border-radius: 6px;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.member-contributions-table tbody tr:nth-child(even) {
+  background-color: #daf0de;
+}
+
+.member-contributions-table tbody tr:hover {
+  background-color: #c7e6cb;
+  box-shadow: 0 4px 10px rgba(74, 109, 92, 0.2);
+  transform: translateY(-2px);
+  transition: all 0.25s ease;
+}
+
+
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.completed {
+  background-color: #d4f4dd;
+  color: #219653;
+}
+
+.status-badge.pending {
+  background-color: #ffe8cc;
+  color: #e67e22;
+}
+
+
+
 .leave-group-section,
 .admin-leave-notice {
   margin: 20px auto 0px auto;
-  padding: 0px 100px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  padding: 2px 20px;
   max-width: 400px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+
+  background-color: #f4fdf9;
+  background-image: linear-gradient(145deg, #ffffff, #ecf5f0);
+  border: 1px solid #cdd8d2;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(106, 156, 137, 0.08);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
+
+.leave-group-section:hover,
+.admin-leave-notice:hover {
+  box-shadow: 0 6px 16px rgba(106, 156, 137, 0.15);
+  transform: translateY(-2px);
+}
+
+
+
 .leave-group-section h4,
 .admin-leave-notice h4 {
   color: #343a40;
@@ -1598,26 +2459,27 @@ async handleUpdateExpense() {
 }
 
 .leave-group-button {
-  background-color: #dc3545;
+  background: linear-gradient(135deg, #dc3545, #b52a37);
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.9rem;
-  transition: all 0.2s ease;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: auto;
-  margin: 0 auto;
+  margin: 10px auto;
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
 }
 
 .leave-group-button:hover {
-  background-color: #c82333;
+  background: linear-gradient(135deg, #b52a37, #a51e2e);
   transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.4);
 }
 
 .leave-group-warning {
@@ -1702,17 +2564,23 @@ async handleUpdateExpense() {
 }
 
 .promote-button {
-  background-color: #4CAF50;
-  color: white;
+  background: linear-gradient(135deg, #6a9c89, #4f7a6b); /* using your chosen green gradient */
+  color: #ffffff;
   border: none;
   padding: 5px 10px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   margin-right: 5px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 5px rgba(106, 156, 137, 0.25);
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
 }
 
 .promote-button:hover {
-  background-color: #45a049;
+  background: linear-gradient(135deg, #4f7a6b, #3f6659);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(79, 122, 107, 0.4);
 }
 
 .group-header-decoration {
@@ -1795,7 +2663,7 @@ async handleUpdateExpense() {
   box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   color: white;
   min-height: 250px;
-  max-height: 500px;
+  max-height: 600px;
   margin-bottom: 10px;
 }
 
@@ -1864,6 +2732,7 @@ async handleUpdateExpense() {
 .budget-name,
 .budget-amount {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   font-size: 1rem;
@@ -1886,7 +2755,6 @@ async handleUpdateExpense() {
   border-radius: 12px;
   padding: 12px 16px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  width: 88%;
   margin-top: 12px;
   display: flex;
   flex-direction: column;
@@ -1896,6 +2764,8 @@ async handleUpdateExpense() {
 .total-expenses,
 .remaining-budget {
   display: flex;
+  flex-wrap: wrap;
+  width: 100%;
   justify-content: space-between;
   align-items: center;
   font-size: 1.1rem;
@@ -1989,20 +2859,6 @@ h2 {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
-}
-
-.btn-save {
-  background-color: #2a4935;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.btn-save:hover {
-  background: #dcdcdc;
-  color: #333;
 }
 
 .btn-cancel {
@@ -2123,8 +2979,9 @@ h2 {
   margin-bottom: 30px;
 }
 
-.expenses-section h3 {
+.expenses-container h3 {
   display: inline-block;
+  text-align: center;
   font-size: 1.5rem;
   font-weight: 600;
   color: #2a4935;
@@ -2141,41 +2998,62 @@ h2 {
 
 .expenses-table table {
   width: 100%;
-  border-collapse: separate; 
-  border-spacing: 0 10px; 
+  border-collapse: separate;
+  border-spacing: 0 12px;
   margin-bottom: 30px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(42, 73, 53, 0.1); /* subtle shadow around table */
 }
 
-th, td {
-  padding: 6px 20px; 
+.expenses-table th,
+.expenses-table td {
+  padding: 6px 20px;
   text-align: center;
-  border-bottom: 2px solid #e0e0e0;
-  color: #444;
   font-size: 0.95rem;
+  color: #444;
+  border-bottom: 2px solid #d3d3d3;
+  vertical-align: middle;
+  user-select: none;
 }
 
 .expenses-table th {
-  background-color: #2a4935;
+  background-color: #6A9C89;              /* your base green */
   color: white;
   position: sticky;
   top: 0;
   font-weight: 600;
-  padding: 12px 20px; 
-  border-bottom: 2px solid #e0e0e0;
+  padding: 12px 20px;
+  border-bottom: 3px solid #4f7a6b;      /* darker shade from earlier gradient */
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(74, 109, 92, 0.2);  /* subtle green tinted shadow */
 }
-
-tr {
+Z
+.expenses-table tbody tr {
   background-color: #ecfdf5;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-  margin-bottom: 15px; 
-  transition: all 0.2s ease;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  cursor: default;
 }
 
-tr:hover {
-  background-color: #f9f9f9;
-  transform: translateY(-2px); 
-  box-shadow: 0 6px 12px rgba(0,0,0,0.08); 
-  transition: all 0.2s ease;
+.expenses-table tbody tr:hover {
+  background-color: #f1fbf7;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.12);
+}
+
+.expenses-table tbody tr td:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.expenses-table tbody tr td:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 .actions {
@@ -2199,13 +3077,19 @@ tr:hover {
 }
 
 .edit-btn {
-  background-color: #4CAF50;
-  color: white;
+  background: none;
+  border: none;
+  color: #6A9C89;        /* base color */
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  transition: color 0.2s;
 }
 
 .edit-btn:hover {
-  background-color: #45a049;
+  color: #8bbcae;        /* lighter shade for hover */
 }
+
 
 .delete-btn {
   background-color: #f44336;
@@ -2238,6 +3122,7 @@ tr:hover {
 }
 .input-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -2642,6 +3527,7 @@ tr:hover {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   margin: 0 auto; /* This centers the button */
   width: 100%;
+  position: relative;
 }
 
 .add-expense-button:hover {
@@ -2654,6 +3540,23 @@ tr:hover {
   font-size: 1.1rem;
 }
 
+.add-expense-button .tooltip {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  display: none;
+}
+
+.add-expense-button:disabled:hover .tooltip {
+  display: block;
+}
 .expenses-list {
   display: flex;
   flex-direction: column;
@@ -2724,7 +3627,7 @@ tr:hover {
 .members-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px; /* slight increase for breathing room */
 }
 
 .member-item {
@@ -2732,16 +3635,16 @@ tr:hover {
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: linear-gradient(135deg, #ecfdf0, #e6f4ea);
-  border-radius: 10px;
+  background: linear-gradient(135deg, #e6f4ea, #cfe8d8); /* softer, greener gradient */
+  border-radius: 12px; /* slightly rounder */
+  box-shadow: 0 1px 4px rgba(106, 156, 137, 0.15);
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .member-item:hover {
-  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(106, 156, 137, 0.3);
+  transform: translateY(-3px);
 }
-
 
 .member-info {
   display: flex;
@@ -2751,12 +3654,14 @@ tr:hover {
 .member-name {
   font-weight: 600;
   font-size: 1rem;
-  color: #2a4935;
+  color: #4f7a6b; /* darker green for better contrast */
 }
 
 .member-email {
   font-size: 0.8rem;
   color: #7d8c96;
+  font-style: italic;
+  letter-spacing: 0.03em;
 }
 
 .member-role {
@@ -2766,38 +3671,45 @@ tr:hover {
 }
 
 .role-badge {
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 5px 12px; /* slightly bigger padding for better pill shape */
+  border-radius: 14px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(74, 109, 92, 0.2);
+  user-select: none;
 }
 
 .role-badge.admin {
-  background-color: #e0f2e9;
+  background-color: #c7e6cb;
   color: #1b5e20;
 }
 
 .role-badge.member {
-  background-color: #e3f2fd;
+  background-color: #a6c8ff;
   color: #0d47a1;
+  margin-left: auto;
 }
 
 .remove-button {
-  background-color: #ffebee;
+  background-color: #ffd6d6;
   color: #d32f2f;
   border: none;
-  padding: 5px 10px;
-  border-radius: 4px;
+  padding: 5px 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
-  transition: background-color 0.3s ease;
+  font-weight: 600;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 1px 4px rgba(211, 47, 47, 0.2);
 }
 
 .remove-button:hover {
-  background-color: #ffcdd2;
+  background-color: #ff8a80;
+  box-shadow: 0 3px 8px rgba(211, 47, 47, 0.4);
 }
+
 
 .invite-section {
   margin-top: 30px;
@@ -2908,72 +3820,99 @@ tr:hover {
   border-radius: 4px;
 }
 
+.settings-section {
+  background: linear-gradient(135deg, #f7fcfa, #effaf4);
+  border: 1px solid #cfe2db;
+  border-radius: 16px;
+  padding: 30px 40px;
+  max-width: 800px;
+  margin: 40px auto;
+  box-shadow: 0 8px 20px rgba(106, 156, 137, 0.06);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.settings-section:hover {
+  box-shadow: 0 12px 28px rgba(106, 156, 137, 0.12);
+  border-color: #bad7cc;
+}
+
+
 .section-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2a4935;
-  margin-bottom: 15px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f3b2c;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.section-title i {
+  font-size: 1.2rem;
+  color: #3c6e58;
 }
 
 .setting-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .setting-label {
   font-weight: 600;
   color: #2a4935;
-  font-size: 1.1rem;
-  letter-spacing: 0.3px;
-  margin-bottom: 4px;
+  font-size: 1.05rem;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
   transition: color 0.3s ease;
 }
 
 .input-group {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
 .setting-input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  transition: border-color 0.3s ease;
+  min-width: 100px;
+  padding: 10px 14px;
+  border: 1px solid #c8d8d0;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #fff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
+
 
 .setting-input:focus {
-  border-color: #1976d2;
+  border-color: #3c9d81;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+  box-shadow: 0 0 0 3px rgba(60, 157, 129, 0.15);
 }
-
 .save-button {
-  background-color: #2a4935;
+  padding: 10px 16px;
+  background-image: linear-gradient(135deg, #3c9d81, #2e7c68);
   color: white;
   border: none;
-  padding: 9px 16px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-image 0.3s ease, transform 0.2s ease;
 }
 
 .save-button:hover:enabled {
-  background-color: #1f3627;
+  background-image: linear-gradient(135deg, #338b71, #246b5c);
+  transform: translateY(-1px);
 }
 
 .save-button:disabled {
-  opacity: 0.6;
+  background-image: none;
+  background-color: #aaccc0;
   cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .error-message {
@@ -3049,16 +3988,30 @@ tr:hover {
   z-index: 1000;
 }
 
-.modal-content {
-  background-color: white;
-  border-radius: 18px;
-  width: 90%;
+
+.modal-content1 {
+  background-color: #f9fefc;
+  border-radius: 16px;
   max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  border: 1px solid #2a4935;
+  width: 100%;
+  margin: 100px auto;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
+.modal-content2 {
+  background-color: #f9fefc;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  margin: 100px auto;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
 .modal-header {
   position: relative;
   display: flex;
@@ -3144,8 +4097,9 @@ tr:hover {
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   font-weight: bold;
+  color: #4f7a6b;
 }
 
 .form-group input {
@@ -3174,27 +4128,42 @@ small {
   margin-top: 20px;
 }
 
-.cancel-button {
-  background-color: #f5f5f5;
-  color: #333;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 button.cancel-button{
   border: 1px solid #2e4e38;
 }
 
 .submit-button {
-  background-color: #2a4935;
-  color: white;
+  background: linear-gradient(135deg, #3f6b55, #2a4935);
+  color: #fff;
   border: none;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #4d8167, #2f5740);
+  transform: scale(1.03);
+}
+
+.cancel-button {
+  background-color: #f0f2f1;
+  color: #2a2a2a;
+  border: 1px solid #d6dcd9;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.cancel-button:hover {
+  background-color: #e2e7e5;
+  transform: scale(1.02);
+}
+
 
 .confirmation-modal {
   text-align: center;
@@ -3250,6 +4219,25 @@ button.cancel-button{
   }
   .group-wrapper{
     width: 100%;
+  }
+  .contribution-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 720px;
+}
+  .contribution-form {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-bottom: 0;
+  }
+  .form-wrapper {
+    justify-content: space-around;
+  }
+  .form-wrapper .form-group input{
+    max-width: 300px;
+    min-width: 150px;
   }
   .member-item {
   display: flex;
