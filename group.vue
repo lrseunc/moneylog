@@ -5,14 +5,15 @@
   <div class="group-container">
 
     <!-- Add this container for the group list -->
-    <div v-if="showGroupList" class="group-list-container">
-      <div class="group-list-header">
+    <div v-if="showGroupList" class="group-modal-overlay">
+      <div class="group-modal">
+        <div class="group-modal-header">
         <h3>Your Groups</h3>
-        <button @click="toggleGroupList" class="close-group-list">
+        <button @click="toggleGroupList" class="close-modal">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="group-list">
+      <div class="groups-list">
         <div 
           v-for="group in userGroups" 
           :key="group.id" 
@@ -20,15 +21,19 @@
           @click="navigateToGroup(group.id)"
           :class="{ active: group.id === $route.params.groupId }"
         >
-          <div class="group-info">
-            <h4>{{ group.group_name }}</h4>
-            <p>Members: {{ group.member_count }}</p>
-          </div>
+        <div class="group-info">
+      <h4>{{ group.group_name }}</h4>
+      <div class="group-meta">
+        <span><i class="fas fa-user-friends"></i> {{ group.member_count }} members</span>
+        <span><i class="fas fa-calendar-alt"></i> {{ formatDate(group.created_at) }}</span>
+      </div>
+      </div>
           <div class="group-actions">
             <i class="fas fa-chevron-right"></i>
           </div>
         </div>
       </div>
+    </div>
     </div>
     
     <div v-if="loading" class="loading-container">
@@ -118,9 +123,9 @@
                   
                 <div class="expenses-summary1">
                 <div class="total-expenses">
-                  <span>Total Expenses:</span>
-                  <strong>{{ formatPHP(totalAmount) }}</strong>
-                </div>
+        <span>Total Expenses:</span>
+        <strong>{{ formatPHP(totalAmount) }}</strong>
+      </div>
 
                   <div class="remaining-budget">
                     <span>Remaining Budget:</span>
@@ -181,10 +186,8 @@
         </div>
       </div>
 
-      <div class="contribution-wrapper">
       <div class="contribution-form">
     <h3><i class="fas fa-edit"></i> Add Your Contribution</h3>
-    <div class="form-wrapper">
     <div class="form-group">
     <label>Amount (₱)</label>
     <input 
@@ -195,7 +198,8 @@
       step="0.01"
       @keyup.enter="saveContribution"
     >
-    </div>
+  </div>
+  <div class="btn-save-wrapper">
   <button 
     @click="saveContribution" 
     class="btn-save"
@@ -204,7 +208,7 @@
     <span v-if="paidAmountLoading">
       <i class="fas fa-spinner fa-spin"></i> Saving...
     </span>
-    <span v-else>Save <br> Contribution</span>
+    <span v-else>Save Contribution</span>
   </button>
   </div>
   <div v-if="contributionHistory.length > 0" class="contribution-history">
@@ -227,7 +231,6 @@
       <p>No contribution history found for this group</p>
     </div>
 </div>
-  </div>
   </div>
   
 
@@ -292,7 +295,7 @@
         </div>
                 
         <div v-else class="expenses-container">
-          <h3><i class="fas fa-coins"></i> <span>GROUP <br> EXPENSES</span></h3> 
+          <h3><i class="fas fa-coins"></i> <span>YOUR <br> EXPENSES</span></h3> 
           <div class="expenses-section"> 
             <div class="expenses-table"> 
               <table>
@@ -382,6 +385,23 @@
           </div>
         </div>
         
+        <div v-if="isAdmin" class="invite-section">
+            <h3>Invite New Member</h3>
+            <div class="invite-form">
+              <input 
+                v-model="inviteEmail" 
+                type="email" 
+                placeholder="Enter email address"
+                class="email-input"
+              >
+              <button @click="sendInvite" class="invite-button">
+                Send Invite
+              </button>
+            </div>
+            <p v-if="inviteError" class="error-message">{{ inviteError }}</p>
+            <p v-if="inviteSuccess" class="success-message">{{ inviteSuccess }}</p>
+          </div>
+
         <div v-if="!isAdmin" class="leave-group-section">
           <h4><i class="fas fa-sign-out-alt"></i> Leave Group</h4>
           <button @click="leaveGroup" class="leave-group-button">
@@ -398,7 +418,7 @@
             As an admin, you cannot leave this group. 
           </p>
         </div>
-      </div>
+        </div>
 
       <!-- Contribution Tab -->
       <div v-if="activeTab === 'contribution'" class="contribution-tab">
@@ -586,7 +606,7 @@
     </div>
     
     <div class="modal-actions">
-      <button @click="updateContribution" class="btn-save" :disabled="!editingContribution.amount || editingContribution.amount <= 0">
+      <button @click="updateContribution" class="btn-save1" :disabled="!editingContribution.amount || editingContribution.amount <= 0">
         Save Changes
       </button>
       <button @click="cancelEditContribution" class="btn-cancel">
@@ -2115,6 +2135,13 @@ async handleUpdateExpense() {
   margin-bottom: 20px;
   margin-top: 0px;
 }
+
+.btn-save-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
 .btn-save {
   display: flex;
   justify-content: center;
@@ -2130,7 +2157,7 @@ async handleUpdateExpense() {
   box-shadow: 0 4px 6px rgba(106, 156, 137, 0.4);
   transition: background 0.3s ease, box-shadow 0.3s ease;
   user-select: none;
-  min-width: 140px;
+  min-width: 160px;
 }
 
 .btn-save:hover {
@@ -2143,6 +2170,30 @@ async handleUpdateExpense() {
   background-color: #cccccc;
   cursor: not-allowed;
 }
+
+.btn-save1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: #fff;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: 0 4px 6px rgba(106, 156, 137, 0.4);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+  min-width: 160px;
+}
+
+.btn-save1:hover {
+  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
+  box-shadow: 0 6px 12px rgba(74, 109, 92, 0.5);
+}
+
 
 .btn-cancel {
   background-color: #f44336;
@@ -2157,27 +2208,14 @@ async handleUpdateExpense() {
 
 .contribution-form {
   background: #fff;
-  border: 2px solid #2e4e38;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.form-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-}
-
-.form-wrapper .form-group input {
-  max-width: 150px;
-  min-width: 150px;
+  margin-bottom: 20px;
 }
 
 .contribution-form .form-group {
   margin-bottom: 15px;
-  justify-content: space-between;
 }
 
 .contribution-form label {
@@ -2216,7 +2254,7 @@ async handleUpdateExpense() {
   list-style: none;
   padding: 0 10px;
   margin: 0;
-  max-height: 200px;
+  max-height: 100px;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #ccc transparent;
@@ -2327,18 +2365,12 @@ async handleUpdateExpense() {
 .text-success {
   color: #27ae60;
 }
-
-.contribution-wrapper {
-  width: 100%;
-  max-width: 500px;
-}
-
 .contribution-form {
-  display: flex;
-  flex-wrap: wrap;
+  max-width: 500px;
   margin: 0 auto 40px;
   padding: 20px;
   background: #f8f9fa;
+  border: 2px solid #2e4e38;
   border-radius: 8px;
 }
 
@@ -2681,7 +2713,6 @@ async handleUpdateExpense() {
   color: #2a4935;
   margin: 0;
 }
-
 .btn-add, .btn-edit {
   background: #2a4935;
   color: white;
@@ -2787,17 +2818,17 @@ async handleUpdateExpense() {
   color: #d32f2f;
 }
 .progress-bar {
-  height: 10px !important;
-  background-color: #f0f0f0;
+  width: 100%;
+  height: 12px !important;
+  background-color: #e0e0e0;
   border-radius: 70px !important;
   overflow: hidden;
 }
 
 .progress-fill {
-  height: 100%; /* Matches progress-bar height */
-  background: linear-gradient(to right, #81c784, #66bb6a); 
+  height: 100%; 
+  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
   transition: width 0.3s;
-  border-radius: 15px 0 0 15px; /* Optional: makes left edge rounded */
 }
 
 .progress-fill.exceeded {
@@ -2981,7 +3012,6 @@ h2 {
 
 .expenses-container h3 {
   display: inline-block;
-  text-align: center;
   font-size: 1.5rem;
   font-weight: 600;
   color: #2a4935;
@@ -2991,6 +3021,7 @@ h2 {
   animation: fadeSlideIn 0.6s ease-out;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   text-transform: uppercase;
+  text-align: center;
   letter-spacing: 1px;
   margin-bottom: 0px;
   width: 100%;
@@ -2999,7 +3030,7 @@ h2 {
 .expenses-table table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 12px;
+  border-spacing: 0 12px; /* slightly increased spacing for breathing room */
   margin-bottom: 30px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #fff;
@@ -3122,7 +3153,6 @@ Z
 }
 .input-group {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -3272,120 +3302,147 @@ Z
   font-size: 1.1rem; 
 }
 
-/* Enhanced Group List Container */
-.group-list-container {
+.group-modal-overlay {
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 500px;
-  max-height: 80vh;
-  background: white;
-  z-index: 1000;
-  box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-.group-list-header {
-  padding: 18px 20px;
+.group-modal {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 85%;
+  max-width: 480px;
+  max-height: 60vh; /* Slightly smaller height */
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  animation: modalFadeIn 0.3s ease-out;
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #BBD8A3 transparent; /* Firefox */
+}
+
+/* Custom Scrollbar for Webkit */
+.group-modal::-webkit-scrollbar {
+  width: 6px;
+}
+.group-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+.group-modal::-webkit-scrollbar-thumb {
+  background-color: #537D5D;
+  border-radius: 8px;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.group-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #4a6fa5;
-  color: white;
+  padding: 16px 20px;
+  border-bottom: 1px solid #d3d3d3;
+  background-color: #BBD8A3;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  
 }
 
-.group-list-header h3 {
+.group-modal-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  color: #5c5c5c;
 }
 
-.close-group-list {
+.close-modal {
   background: none;
   border: none;
-  color: white;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  color: #5c5c5c;
   cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.2s;
+  padding: 5px 8px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.close-group-list:hover {
-  opacity: 1;
+.close-modal:hover {
+  background-color: #d0f0c0;
+  transform: scale(1.1);
 }
 
-.group-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 15px;
+.groups-list {
+  padding: 10px;
+  background-color: #f9f9f9;
 }
 
 .group-item {
+  cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
+  padding: 10px 14px;
   margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .group-item:hover {
-  background: #f8f9fa;
-  border-color: #dee2e6;
-  transform: translateX(3px);
-}
-
-.group-item.active {
-  background: #e6f0ff;
-  border-left: 4px solid #4a6fa5;
+  background-color: #e0f7e5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .group-info h4 {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
-  color: #2c3e50;
-  font-weight: 500;
-}
-
-.group-info p {
   margin: 0;
-  font-size: 0.8rem;
-  color: #6c757d;
+  font-size: 1.1rem;
+  color: #2f6f45;
 }
 
-.group-actions {
-  color: #adb5bd;
+.group-meta {
+  margin-top: 4px;
   font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.group-list-toggle {
-  position: fixed;
-  top: 80px;
-  left: 20px;
-  background: #4a6fa5;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  z-index: 100;
+.group-meta i {
+  margin-right: 6px;
+  color: #537D5D;
+}
+.group-actions {
+  font-size: 1.2rem;
+  color: #537D5D;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+.group-item:hover .group-actions {
+  transform: translateX(4px);
 }
 
-.group-list-toggle:hover {
-  background: #3a5a8f;
+.group-modal-content {
+  padding: 18px;
+  background-color: #fafafa;
 }
-
 .group-container {
   display: flex;
   flex-wrap: wrap;
@@ -3734,11 +3791,13 @@ Z
 
 .invite-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 12px;
 }
 
 .email-input {
+  min-width: 150px;
   flex: 1;
   padding: 10px 14px;
   border: 1px solid #cfd8dc;
@@ -3806,20 +3865,6 @@ Z
   margin-bottom: 15px;
 }
 
-.progress-bar {
-  height: 8px;
-  background-color: #eee;
-  border-radius: 4px;
-  margin-top: 5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: #1976d2;
-  border-radius: 4px;
-}
-
 .settings-section {
   background: linear-gradient(135deg, #f7fcfa, #effaf4);
   border: 1px solid #cfe2db;
@@ -3870,13 +3915,14 @@ Z
 
 .input-group {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
 .setting-input {
+  min-width: 150px;
   flex: 1;
-  min-width: 100px;
   padding: 10px 14px;
   border: 1px solid #c8d8d0;
   border-radius: 8px;
@@ -4220,28 +4266,13 @@ button.cancel-button{
   .group-wrapper{
     width: 100%;
   }
-  .contribution-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  max-width: 720px;
-}
-  .contribution-form {
-  display: flex;
-  flex-wrap: wrap;
-  width: 100%;
-  margin-bottom: 0;
-  }
-  .form-wrapper {
-    justify-content: space-around;
-  }
-  .form-wrapper .form-group input{
-    max-width: 300px;
-    min-width: 150px;
-  }
   .member-item {
   display: flex;
   flex-wrap: wrap;
+  }
+  .contribution-form {
+    max-width: 700px;
+    margin-bottom: 0;
   }
 }
 </style>
