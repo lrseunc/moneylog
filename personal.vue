@@ -1767,7 +1767,7 @@ th, td {
 } 
 
 th {
-  background-color: #2a4935;
+  background-color: #6A9C89;
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
