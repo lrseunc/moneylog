@@ -51,7 +51,7 @@
     </div>
     </template>
     
-    <script>
+<script>
     import { ref } from 'vue';
     import axios from 'axios';
     import { useRouter } from 'vue-router';
@@ -76,36 +76,35 @@
           };
     
           try {
-            const response = await axios.post(
-              'http://localhost:3000/api/users/login',
-              {
-                email: email.value,
-                password: password.value,
-              },
-            );
-    
-            if (response.data.success === 1) {
-              localStorage.setItem('jsontoken', response.data.token);
+            const response = await axios.post('http://localhost:3000/api/users/login', {
+              email: email.value,
+              password: password.value,
+            });
 
-          localStorage.setItem('user', JSON.stringify({
-            id: response.data.user.id,
-            name: response.data.user.name,
-            email: response.data.user.email,
-          }));
+            if (response.data.success === 1) {
+              const token = response.data.token;
+
+              // Save user token and basic info
+              localStorage.setItem('jsontoken', token);
+              localStorage.setItem('user', JSON.stringify({
+                id: response.data.user.id,
+                name: response.data.user.username,
+                email: response.data.user.email,
+              }));
 
           router.push('/personal');
-    } else {
-      message.value = response.data.message || 'Login failed.';
-    }
-  } catch (error) {
-    console.error('Login error:', error);
-    if (error.response && error.response.status === 401) {
-      message.value = 'Invalid email or password.';
-    } else {
-      message.value = 'Login service unavailable. Please try again later.';
-    }
-  }
-};
+          } else {
+            message.value = response.data.message || 'Login failed.';
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          if (error.response && error.response.status === 401) {
+            message.value = 'Invalid email or password.';
+          } else {
+            message.value = 'Login service unavailable. Please try again later.';
+          }
+        }
+      };
 
 const sendResetLink = async () => {
   resetMessage.value = '';
@@ -500,3 +499,4 @@ h2 {
         }
     }
     </style>
+    
