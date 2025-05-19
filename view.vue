@@ -2,6 +2,7 @@
   <navigation/>
 
   <div class="con">
+    <div class="wrapper">
     <div class="nav-con">
           <h1>Personal Expenses</h1>
     </div>
@@ -106,7 +107,7 @@
         <div class="chart">
           <pie-chart :data="chartData" 
           :options="chartOptions" 
-          style="height: 200px;"/>
+          style="height: 320px;"/>
         
           <!-- Year and Month Picker for PDF generation -->
           <div class="download">
@@ -180,6 +181,7 @@
 
 <div v-if="showYearFilter && isYearlyBudgetExceeded" class="exceeded-warning">
   ⚠️ Annual budget {{ filterCategory !== 'All' ? `(${filterCategory}) ` : '' }}exceeded by {{ formatCurrency(yearlyExpensesByCategory - yearlyBudgetsTotal) }}
+</div>
 </div>
 </div>
 </template>
@@ -783,9 +785,9 @@ updateExpenseView() {
 }
 
 .toggle-button {
-  background-color: #e6f4ea; /* soft green background */
-  color: #2e5940; /* darker green text */
-  border: 2px solid #2e5940;
+  background-color: #eefff9;
+  color: #2e5940;
+  border: 2px solid #385248;
   padding: 10px 100px;
   border-radius: 8px;
   cursor: pointer;
@@ -796,8 +798,9 @@ updateExpenseView() {
 }
 
 .toggle-button:hover {
-  background-color: #2e5940;
+  background-color: #4f7a6b;
   color: white;
+  border: 2px solid #385248;
   transform: translateY(-1px);
 }
 
@@ -868,9 +871,9 @@ updateExpenseView() {
 }
 
 .month-buttons button.active {
-  background-color: #2a4935;
+  background-color: #598272;
   color: white;
-  border-color: #2a4935;
+  border-color: #385248;
 }
 
 .text-danger {
@@ -903,16 +906,18 @@ updateExpenseView() {
 
 .summary-box {
   padding: 2px 16px 6px 16px; 
-  background-color: #99da99;
-  border: 2px solid #1e3731;
+  background-color: rgb(216, 251, 238);
+  border: 2px solid #6A9C89;
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
   margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
-  min-width: 280px;
-  max-width: 100%;
+  min-width: 200px;
+  width: 100%;
+  min-height: 190px;
+  max-height: 400px;
 }
 
 .progress-bar {
@@ -968,6 +973,14 @@ updateExpenseView() {
   gap: 10px;
 }
 
+.wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
 .nav-con {
 font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 font-size: 20px;
@@ -1018,19 +1031,19 @@ button:hover {
 }
 
 .con-container {
-  background: rgb(216, 248, 216);
+  display: flex;
+  flex-wrap: wrap;
+  background: rgb(225, 251, 234);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 70%; 
-  min-width: 380px;
-  max-width: 900px;
+  width: 60%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
   margin-bottom: 10px;
   overflow-y: auto; /* Enables vertical scrolling when needed */
-  max-height: 105vh; /* Limits height to 80% of viewport height */
+  max-height: 100vh; /* Limits height to 80% of viewport height */
   scrollbar-width: thin; /* For Firefox */
-  scrollbar-color: #2a4935 #ecfcec; /* For Firefox */
+  scrollbar-color: #2a4935 #ecfcec; 
 }
 
 /* For Chrome/Edge/Safari */
@@ -1062,13 +1075,15 @@ button:hover {
 }
 
 .filter-buttons button.active {
-  background-color: #2a4935;
+  background-color: #598272;
   color: white;
-  border-color: #2a4935;
+  border-color: #385248;
 }
 
 .filter-buttons button:hover {
-  background-color: #2a4935;
+  background-color: #598272;
+  color: white;
+  border-color: #385248;
 }
 
 /* Expense Table Styling */
@@ -1090,7 +1105,7 @@ button:hover {
 }
 
 .expense-table th {
-  background-color: #2a4935;
+  background-color: #6A9C89;
   color: white;
 }
 
@@ -1098,26 +1113,33 @@ button:hover {
   background-color: white;
 }
 
-/* Alternate Row Color */
 .expense-table tr.alternate-row {
-  background-color: #fffef5;
+  background-color: #eefff9;
 }
 
-/* Total Amount Styling */
 .total-amount {
   margin-top: 20px;
   font-weight: bold;
 }
 
+.chart-summary {
+  max-height: 65%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 30%;
+  justify-content: center;
+}
+
 .chart{
-  width: 380px;
+  width: 100%;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
   border-radius: 20px;
-  max-height: 600px;
+  max-height: 550px;
+  min-height: 400px;
   border: 2px solid #336333;
-  margin-bottom: 10px;
 }
 .download {
   display: flex;
@@ -1143,7 +1165,7 @@ display: flex;
 flex-wrap: wrap;
 padding: 10px 20px;
 font-size: 16px;
-background-color: #2a4935;
+background-color: #598272;
 color: white;
 border: none;
 cursor: pointer;
@@ -1156,4 +1178,59 @@ margin-left: 3px;
 background-color: #1e3731;
 }
 
+@media (max-width: 900px) {
+  .wrapper {
+    flex-direction: column;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+  }
+  .con-container {
+    width: 90%;
+    max-height: 90vh; 
+  }
+  .chart-summary {
+    width: 93%;
+    max-height: 700px;
+    gap: 10px;
+  }
+  .chart {
+    width: 60%;
+    height: 550px;
+  }
+  .summary-box {
+    width: 30%;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: center;
+    height: 350px;
+  }
+}
+
+@media (max-width: 700px) {
+  .wrapper {
+    gap: 10px;
+  }
+  .con-container {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 80%;
+    min-width: 60%;
+    max-height: 90vh; 
+  }
+  .chart-summary {
+    width: 90%;
+    max-height: 820px;
+    flex-direction: row;
+  }
+  .chart {
+    width: 75%;
+    max-height: 520px;
+  }
+  .summary-box {
+    min-width: 30%;
+    width: 55%;
+    max-height: 260px;
+  }
+}
 </style> 
