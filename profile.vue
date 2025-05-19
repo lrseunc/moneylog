@@ -208,7 +208,6 @@ export default {
             );
             const groupRemaining = groupBudgetAmount - groupTotalExpense;
 
-            // Instead of localStorage, save in reactive state:
             this.groupBudgets = {
               ...this.groupBudgets,
               [groupId]: groupBudgetAmount,
@@ -341,7 +340,7 @@ export default {
     margin-top: 1rem;
     padding: 10px;
     width: 100%;
-    box-shadow: 0 0 8px 0 rgba(21, 90, 3, 0.6);
+    box-shadow: 0 0 8px 0 #6A9C89;
     border-radius: 10px;
     flex: 1;
     margin-bottom: 20px;
@@ -349,7 +348,7 @@ export default {
 
   .column {
     border-radius: 10px;
-    box-shadow: 0 0 8px 0 rgba(21, 90, 3, 0.6);
+    box-shadow: 0 0 8px 0 #6A9C89;
     flex: 1;
     height: 250px;
     margin-top: 1rem;
@@ -433,8 +432,8 @@ export default {
   }
 
   .month-card {
-    background: #e9f9e7a8;
-    border-bottom: 3px solid rgb(21, 90, 3);
+    background: linear-gradient(135deg, #acfcdd7f, #a0eccff0);
+    border-bottom: 3px solid #6A9C89;
     border-radius: 5px;
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
     padding: 8px 10px;
