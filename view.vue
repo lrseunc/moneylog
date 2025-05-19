@@ -742,6 +742,13 @@ updateExpenseView() {
     } catch (chartError) {
       console.error('Error adding chart:', chartError);
     }
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
+    }
     
     doc.save(`expense-report-${this.selectedYear}-${this.selectedMonth}.pdf`);
   } catch (error) {
@@ -889,7 +896,7 @@ updateExpenseView() {
   border-left: 6px solid #b71c1c;
   border-right: 6px solid #b71c1c;
   padding: 14px 20px;
-  margin: 20px auto; /* vertically space + center horizontally */
+  margin: 20px auto; 
   margin-inline: 30px; 
   border-radius: 8px;
   display: flex;
@@ -902,8 +909,6 @@ updateExpenseView() {
   width: 100%; 
   box-sizing: border-box;
 }
-
-
 
 .summary-box {
   padding: 0px 16px 6px 16px; 
@@ -938,7 +943,7 @@ updateExpenseView() {
 
 .percentage {
   text-align: right;
-  font-size: 13px; /* Reduced font size */
+  font-size: 13px; 
   margin-top: 4px;
   color: #555;
   font-weight: bold;
@@ -948,7 +953,7 @@ updateExpenseView() {
   display: flex;
   justify-content: space-between;
   margin: 10px 0;
-  font-size: 16px; /* Smaller font */
+  font-size: 16px;
   font-weight: bold;
 }
 
@@ -967,7 +972,7 @@ updateExpenseView() {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  flex-wrap: wrap; /* Optional: stack on small screens */
+  flex-wrap: wrap; 
   gap: 10px;
 }
 
@@ -1058,7 +1063,6 @@ button:hover {
   border-radius: 20px;
 }
 
-/* Filter Buttons Styling */
 .filter-buttons button {
   position: relative;
   padding: 8px;
@@ -1083,7 +1087,6 @@ button:hover {
   border-color: #385248;
 }
 
-/* Expense Table Styling */
 .expense-table table {
   position: relative;
   width: 90%;
@@ -1141,7 +1144,7 @@ button:hover {
 }
 
 .download select {
-  width: 100px; /* Smaller width */
+  width: 100px; 
   padding: 6px 8px;
   font-size: 14px;
   border: 1px solid #ccc;
