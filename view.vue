@@ -915,7 +915,8 @@ updateExpenseView() {
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
-  margin: 2px 0 0; 
+  margin: 2px 0; 
+  margin-bottom: 10px;
   text-align: center;
   color: #000000;
   min-width: 280px;
