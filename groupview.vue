@@ -145,7 +145,7 @@
       <div class="chart">
         <pie-chart :data="chartData" 
                   :options="chartOptions" 
-                  style="height: 320px;"/>
+                  style="height: 290px;"/>
         
         <!-- Download button -->
         <div class="download">
@@ -183,7 +183,6 @@
   </div>
   </div>
   </div>
-
   <div class="contribution-section">
     <h3>
     <i class="fas fa-hand-holding-usd"></i> 
@@ -992,14 +991,14 @@ offset: function(context) {
 
 <style scoped>
 .contribution-section {
-  width: calc(100% - 80px);
-  margin: 0px auto 20px auto;
+  width: 95%;
+  margin: 10px auto 20px auto;
   height: 250px;
   padding: 10px;
   box-sizing: border-box;
   overflow-y: auto;
   background: linear-gradient(145deg, #f9fbfa, #e8f0ed);
-  border: 2px solid #6A9C89;
+  border: 2px solid #2ca58d;
   border-radius: 18px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1044,6 +1043,7 @@ offset: function(context) {
   border-radius: 8px;
 }
 
+/* Data cells */
 .member-contributions-table td {
   background: #ffffff;
   color: #374151;
@@ -1053,10 +1053,12 @@ offset: function(context) {
   transition: background 0.2s ease;
 }
 
+/* Zebra striping */
 .member-contributions-table tr:nth-child(odd) td {
   background: #f3f7f6;
 }
 
+/* Hover row */
 .member-contributions-table tr:hover td {
   background: #e4f3ef;
 }
@@ -1142,7 +1144,7 @@ offset: function(context) {
   border-left: 6px solid #b71c1c;
   border-right: 6px solid #b71c1c;
   padding: 14px 20px;
-  margin: 20px auto;
+  margin: 20px auto; /* vertically space + center horizontally */
   margin-inline: 30px; 
   border-radius: 8px;
   display: flex;
@@ -1210,7 +1212,7 @@ offset: function(context) {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
   letter-spacing: 0.5px;
-  background-size: 200% 200%; 
+  background-size: 200% 200%; /* For smoother animated transition */
   background-position: left;
 }
 
@@ -1221,9 +1223,10 @@ offset: function(context) {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
 }
 
+
 .show-groups-button i {
   margin-right: 12px; 
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease; 
 }
 
 .show-groups-button:hover i {
@@ -1255,6 +1258,7 @@ offset: function(context) {
   scrollbar-color: #6a9c89 transparent;
 }
 
+/* Webkit scrollbar */
 .group-modal::-webkit-scrollbar {
   width: 6px;
 }
@@ -1409,7 +1413,7 @@ offset: function(context) {
   border-left: 6px solid #b71c1c;
   border-right: 6px solid #b71c1c;
   padding: 14px 20px;
-  margin: 20px auto; /* vertically space + center horizontally */
+  margin: 20px auto;
   margin-inline: 30px; 
   border-radius: 8px;
   display: flex;
@@ -1424,7 +1428,6 @@ offset: function(context) {
 }
 
 
-
 .summary-box {
   padding: 2px 16px 6px 16px; 
   background-color: rgb(216, 251, 238);
@@ -1432,8 +1435,7 @@ offset: function(context) {
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
-  margin: 2px 0; 
-  margin-bottom: 10px;
+  margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
   min-width: 280px;
@@ -1442,10 +1444,9 @@ offset: function(context) {
 
 .summary-item {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   margin: 16px 0;
-  font-size: 18px; /* Smaller font */
+  font-size: 18px; 
   font-weight: bold;
 }
 
@@ -1479,7 +1480,7 @@ offset: function(context) {
 
 .percentage {
   text-align: right;
-  font-size: 13px; /* Reduced font size */
+  font-size: 13px; 
   margin-top: 4px;
   color: #555;
   font-weight: bold;
@@ -1494,16 +1495,8 @@ offset: function(context) {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  flex-wrap: wrap; /* Optional: stack on small screens */
-  gap: 10px;
-}
-
-.wrapper {
-  display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 10px;
-  width: 100%;
 }
 
 .nav-con {
@@ -1556,16 +1549,17 @@ button:hover {
 }
 
 .con-container {
-  display: flex;
-  flex-wrap: wrap;
   background: rgb(225, 251, 234);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 55%;
+  width: 70%; 
+  min-width: 380px;
+  max-width: 900px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
+  margin-bottom: 10px;
   overflow-y: auto; /* Enables vertical scrolling when needed */
-  max-height: 100vh; /* Limits height to 80% of viewport height */
+  max-height: 105vh; /* Limits height to 80% of viewport height */
   scrollbar-width: thin; /* For Firefox */
   scrollbar-color: #2a4935 #ecfcec; /* For Firefox */
 }
@@ -1585,7 +1579,6 @@ button:hover {
   border-radius: 20px;
 }
 
-/* Filter Buttons Styling */
 .filter-buttons button {
   position: relative;
   padding: 8px;
@@ -1605,10 +1598,9 @@ button:hover {
 }
 
 .filter-buttons button:hover {
-  background-color: #598272;
+  background-color: #2a4935;
 }
 
-/* Expense Table Styling */
 .expense-table table {
   position: relative;
   width: 90%;
@@ -1645,20 +1637,18 @@ button:hover {
 }
 
 .chart-summary {
-  max-height: 650px;
+  max-height: 700px;
 }
 
 .chart{
-  display: flex;
-  flex-wrap: wrap;
   width: 380px;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
   border-radius: 20px;
   max-height:600px;
-  margin-bottom: 10px;
   border: 2px solid #336333;
+  margin-bottom: 10px;
 }
 
 .download {
@@ -1667,12 +1657,11 @@ button:hover {
   justify-content: center; 
   align-items: center; 
   margin-top: 10px;
-  width: 100%;
   gap: 10px;
 }
 
 .download select {
-  width: 100px; /* Smaller width */
+  width: 100px; 
   padding: 6px 8px;
   font-size: 14px;
   border: 1px solid #ccc;
@@ -1700,18 +1689,4 @@ margin-top: 10px;
 background-color: #1e3731;
 }
 
-@media (max-width: 1000px) {
-  .con-container {
-    display: flex;
-    flex-wrap: wrap;
-    width: 90%;
-  }
-  .chart {
-    max-width: 355px;
-  }
-  .contribution-section {
-    width: 90%;
-    margin: 0 0 20px;
-  }
-}
 </style> 
