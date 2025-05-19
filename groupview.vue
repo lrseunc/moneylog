@@ -2,7 +2,6 @@
   <navigation/>
 
   <div class="con">
-    <div class="wrapper">
     <div class="nav-con">
       <h1><i class="fa fa-coins"></i>  Group Expenses</h1>
     </div>
@@ -225,7 +224,6 @@
         </div>
   <div v-if="isBudgetExceeded" class="exceeded-warning">
     ⚠️ {{ currentBudget.budget_name }} exceeded by {{ formatCurrency(exceededAmount) }}
-</div>
 </div>
 </div>
 </template>
@@ -994,8 +992,8 @@ offset: function(context) {
 
 <style scoped>
 .contribution-section {
-  width: calc(99% - 80px);
-  margin: 10px auto 20px auto;
+  width: calc(100% - 80px);
+  margin: 0px auto 20px auto;
   height: 250px;
   padding: 10px;
   box-sizing: border-box;
@@ -1015,7 +1013,6 @@ offset: function(context) {
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
 }
 
-/* Optional title */
 .contribution-section h3 {
   margin: 10px 0 14px;
   font-size: 1.3rem;
@@ -1024,21 +1021,18 @@ offset: function(context) {
   text-align: center;
 }
 
-/* Table wrapper */
 .member-contributions-table {
   width: 100%;
   overflow-x: auto;
   margin-top: 10px;
 }
 
-/* Table style */
 .member-contributions-table table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 4px;
 }
 
-/* Header cells */
 .member-contributions-table th {
   background-color: #dff0ea;
   font-weight: 700;
@@ -1050,7 +1044,6 @@ offset: function(context) {
   border-radius: 8px;
 }
 
-/* Data cells */
 .member-contributions-table td {
   background: #ffffff;
   color: #374151;
@@ -1060,16 +1053,13 @@ offset: function(context) {
   transition: background 0.2s ease;
 }
 
-/* Zebra striping */
 .member-contributions-table tr:nth-child(odd) td {
   background: #f3f7f6;
 }
 
-/* Hover row */
 .member-contributions-table tr:hover td {
   background: #e4f3ef;
 }
-
 
 .status-badge {
   display: inline-block;
@@ -1090,7 +1080,6 @@ offset: function(context) {
   color: #92400e;
 }
 
-/* Utility text colors */
 .text-danger {
   color: #dc2626 !important;
   font-weight: 600;
@@ -1102,7 +1091,6 @@ offset: function(context) {
   font-weight: 600;
 }
 
-/*newwww*/
 .member-filter {
   position: relative;
   display: inline-block;
@@ -1154,7 +1142,7 @@ offset: function(context) {
   border-left: 6px solid #b71c1c;
   border-right: 6px solid #b71c1c;
   padding: 14px 20px;
-  margin: 20px auto; /* vertically space + center horizontally */
+  margin: 20px auto;
   margin-inline: 30px; 
   border-radius: 8px;
   display: flex;
@@ -1222,7 +1210,7 @@ offset: function(context) {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   text-align: center;
   letter-spacing: 0.5px;
-  background-size: 200% 200%; /* For smoother animated transition */
+  background-size: 200% 200%; 
   background-position: left;
 }
 
@@ -1233,14 +1221,13 @@ offset: function(context) {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
 }
 
-
 .show-groups-button i {
-  margin-right: 12px; /* Increased space between icon and text */
-  transition: transform 0.3s ease; /* Smooth icon transition */
+  margin-right: 12px; 
+  transition: transform 0.3s ease;
 }
 
 .show-groups-button:hover i {
-  transform: rotate(15deg); /* Slight rotation effect on hover for the icon */
+  transform: rotate(15deg); 
 }
 
 /* Modal Styles */
@@ -1268,7 +1255,6 @@ offset: function(context) {
   scrollbar-color: #6a9c89 transparent;
 }
 
-/* Webkit scrollbar */
 .group-modal::-webkit-scrollbar {
   width: 6px;
 }
@@ -1449,10 +1435,8 @@ offset: function(context) {
   margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
-  min-width: 200px;
-  width: 100%;
-  min-height: 190px;
-  max-height: 400px;
+  min-width: 280px;
+  max-width: 100%;
 }
 
 .summary-item {
@@ -1576,10 +1560,9 @@ button:hover {
   background: rgb(225, 251, 234);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 60%;
+  width: 55%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
-  margin-bottom: 10px;
   overflow-y: auto; /* Enables vertical scrolling when needed */
   max-height: 100vh; /* Limits height to 80% of viewport height */
   scrollbar-width: thin; /* For Firefox */
@@ -1662,21 +1645,18 @@ button:hover {
 
 .chart-summary {
   max-height: 650px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 30%;
-  justify-content: center;
 }
 
 .chart{
-  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  width: 380px;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
   border-radius: 20px;
-  max-height: 550px;
-  min-height: 400px;
+  max-height:600px;
+  margin-bottom: 10px;
   border: 2px solid #336333;
 }
 
@@ -1718,57 +1698,18 @@ margin-top: 10px;
 background-color: #1e3731;
 }
 
-@media (max-width: 900px) {
-  .wrapper {
-    flex-direction: column;
-    align-items: center;
-  }
-  .con-container {
-    width: 90%;
-    max-height: 90vh; 
-  }
-  .chart-summary {
-    width: 93%;
-    max-height: 700px;
-    gap: 10px;
-  }
-  .chart {
-    width: 60%;
-    height: 550px;
-  }
-  .summary-box {
-    width: 30%;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: center;
-    height: 350px;
-  }
-}
-
-@media (max-width: 700px) {
-  .wrapper {
-    gap: 10px;
-  }
+@media (max-width: 1000px) {
   .con-container {
     display: flex;
     flex-wrap: wrap;
-    max-width: 80%;
-    min-width: 60%;
-    max-height: 90vh; 
-  }
-  .chart-summary {
     width: 90%;
-    max-height: 820px;
-    flex-direction: row;
   }
   .chart {
-    width: 75%;
-    max-height: 520px;
+    max-width: 355px;
   }
-  .summary-box {
-    min-width: 30%;
-    width: 55%;
-    max-height: 260px;
+  .contribution-section {
+    width: 90%;
+    margin: 0 0 20px;
   }
 }
 </style> 
