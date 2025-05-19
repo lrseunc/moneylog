@@ -103,6 +103,7 @@
       </div>
     </div>
   </div>
+
   <div class="chart-summary">
         <div class="chart">
           <pie-chart :data="chartData" 
@@ -149,7 +150,7 @@
 </div>
 
       <!--MONTHLY-->
-      <div v-else class="summary-box">
+  <div v-else class="summary-box">
     <h3>Budget Summary</h3>
     <div class="summary-item">
       <span>Budget:</span>
@@ -905,17 +906,16 @@ updateExpenseView() {
 
 
 .summary-box {
-  padding: 2px 16px 6px 16px; 
+  padding: 0px 16px 6px 16px; 
   background-color: rgb(216, 251, 238);
   border: 2px solid #6A9C89;
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
+  margin: 2px 0 0; 
   text-align: center;
   color: #000000;
-  width: 100%;
-  min-height: 190px;
-  max-height: 400px;
+  min-width: 280px;
 }
 
 .progress-bar {
@@ -1034,7 +1034,7 @@ button:hover {
   background: rgb(225, 251, 234);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 60%;
+  width: 55%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
   overflow-y: auto; /* Enables vertical scrolling when needed */
@@ -1119,23 +1119,17 @@ button:hover {
   font-weight: bold;
 }
 
-.chart-summary {
-  max-height: 100vh;
+.chart{
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  width: 30%;
-}
-
-.chart{
-  width: 100%;
+  width: 380px;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
   border-radius: 20px;
-  max-height: 550px;
-  min-height: 400px;
+  max-height: 650px;
   border: 2px solid #336333;
+  margin-bottom: 8px;
 }
 .download {
   display: flex;
@@ -1183,19 +1177,8 @@ background-color: #1e3731;
     flex-wrap: wrap;
     width: 90%;
   }
-  .chart-summary {
-    width: 90%;
-    max-height: 900px;
-    flex-direction: row;
-    justify-content: center;
-  }
   .chart {
-    width: 70%;
-    max-height: 700px;
-  }
-  .summary-box {
-    max-width: 62%;
-    max-height: 260px;
+    max-width: 355px;
   }
 }
 </style> 
