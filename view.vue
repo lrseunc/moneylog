@@ -107,7 +107,7 @@
         <div class="chart">
           <pie-chart :data="chartData" 
           :options="chartOptions" 
-          style="height: 320px;"/>
+          style="height: 280px;"/>
         
           <!-- Year and Month Picker for PDF generation -->
           <div class="download">
@@ -911,10 +911,8 @@ updateExpenseView() {
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
-  margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
-  min-width: 200px;
   width: 100%;
   min-height: 190px;
   max-height: 400px;
@@ -1039,7 +1037,6 @@ button:hover {
   width: 60%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
-  margin-bottom: 10px;
   overflow-y: auto; /* Enables vertical scrolling when needed */
   max-height: 100vh; /* Limits height to 80% of viewport height */
   scrollbar-width: thin; /* For Firefox */
@@ -1123,12 +1120,11 @@ button:hover {
 }
 
 .chart-summary {
-  max-height: 65%;
+  max-height: 100vh;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   width: 30%;
-  justify-content: center;
 }
 
 .chart{
@@ -1178,58 +1174,27 @@ margin-left: 3px;
 background-color: #1e3731;
 }
 
-@media (max-width: 900px) {
-  .wrapper {
-    flex-direction: column;
-    justify-content: center;
-    align-content: center;
-    align-items: center;
-  }
-  .con-container {
-    width: 90%;
-    max-height: 90vh; 
-  }
-  .chart-summary {
-    width: 93%;
-    max-height: 700px;
-    gap: 10px;
-  }
-  .chart {
-    width: 60%;
-    height: 550px;
-  }
-  .summary-box {
-    width: 30%;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: center;
-    height: 350px;
-  }
-}
-
-@media (max-width: 700px) {
+@media (max-width: 1000px) {
   .wrapper {
     gap: 10px;
   }
   .con-container {
     display: flex;
     flex-wrap: wrap;
-    max-width: 80%;
-    min-width: 60%;
-    max-height: 90vh; 
+    width: 90%;
   }
   .chart-summary {
     width: 90%;
-    max-height: 820px;
+    max-height: 900px;
     flex-direction: row;
+    justify-content: center;
   }
   .chart {
-    width: 75%;
-    max-height: 520px;
+    width: 70%;
+    max-height: 700px;
   }
   .summary-box {
-    min-width: 30%;
-    width: 55%;
+    max-width: 62%;
     max-height: 260px;
   }
 }
