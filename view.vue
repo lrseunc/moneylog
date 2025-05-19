@@ -3,7 +3,7 @@
 
   <div class="con">
     <div class="nav-con">
-          <h1>Personal Expenses</h1>
+          <h1><i class="fa fa-coins"></i>  Personal Expenses</h1>
     </div>
     <div class="con-container">
 
@@ -102,12 +102,11 @@
       </div>
     </div>
   </div>
-
   <div class="chart-summary">
         <div class="chart">
           <pie-chart :data="chartData" 
           :options="chartOptions" 
-          style="height: 280px;"/>
+          style="height: 200px;"/>
         
           <!-- Year and Month Picker for PDF generation -->
           <div class="download">
@@ -143,13 +142,19 @@
   </div>
 
   <div class="progress-bar">
-    <div class="progress" :style="{ width: yearlyBudgetPercentageByCategory + '%' }"></div>
-  </div>
-  <div class="percentage">{{ yearlyBudgetPercentageByCategory.toFixed(0) }}%</div>
+    <div
+    class="progress"
+    :class="{ 'exceeded': isYearlyBudgetExceeded }"
+    :style="{ width: yearlyBudgetPercentageByCategory + '%' }"
+  ></div>
+</div>
+<div class="percentage" :class="{ 'exceeded-text': isYearlyBudgetExceeded }">
+  {{ yearlyBudgetPercentageByCategory.toFixed(0) }}%
+</div>
 </div>
 
       <!--MONTHLY-->
-  <div v-else class="summary-box">
+      <div v-else class="summary-box">
     <h3>Budget Summary</h3>
     <div class="summary-item">
       <span>Budget:</span>
@@ -169,10 +174,16 @@
     </div>
 
     <div class="progress-bar">
-      <div class="progress" :style="{ width: budgetPercentage + '%' }"></div>
-    </div>
-    <div class="percentage">{{ budgetPercentage.toFixed(0) }}%</div>
-  </div>
+      <div 
+    class="progress" 
+    :class="{ 'exceeded': isBudgetExceeded }"
+    :style="{ width: budgetPercentage + '%' }"
+  ></div>
+</div>
+<div class="percentage" :class="{ 'exceeded-text': isBudgetExceeded }">
+  {{ budgetPercentage.toFixed(0) }}%
+</div>
+</div>
   </div>
 
 <div v-if="isBudgetExceeded && !showYearFilter" class="exceeded-warning">
@@ -224,10 +235,7 @@ export default {
         const total = dataset.reduce((sum, val) => sum + val, 0);
         const percentage = (value / total * 100);
         
-        if (percentage > 0) {
-          return percentage.toFixed(1) + '%';
-        }
-        return null;
+        return percentage >= 0.5 ? percentage.toFixed(1) + '%' : null;
       },
       color: '#000',
       font: function(context) {
@@ -247,23 +255,30 @@ export default {
         };
       },
       align: function(context) {
-        const dataset = context.chart.data.datasets[0].data;
-        const total = dataset.reduce((sum, val) => sum + val, 0);
-        const value = dataset[context.dataIndex];
-        const percentage = (value / total) * 100;
+  const dataset = context.chart.data.datasets[0].data;
+  const total = dataset.reduce((sum, val) => sum + val, 0);
+  const value = dataset[context.dataIndex];
+  const percentage = (value / total) * 100;
 
-        // Show label below when small
-        return percentage <= 1 ? 'end' : 'center'; 
-      },
-      anchor: function(context) {
-        const dataset = context.chart.data.datasets[0].data;
-        const total = dataset.reduce((sum, val) => sum + val, 0);
-        const value = dataset[context.dataIndex];
-        const percentage = (value / total) * 100;
+  // Move small labels outside
+  return percentage <= 1 ? 'end' : 'center';
+},
+anchor: function(context) {
+  const dataset = context.chart.data.datasets[0].data;
+  const total = dataset.reduce((sum, val) => sum + val, 0);
+  const value = dataset[context.dataIndex];
+  const percentage = (value / total) * 100;
 
-        return percentage <= 2 ? 'end' : 'center'; 
-    },
-      offset: 0,
+  return percentage <= 1 ? 'end' : 'center';
+},
+offset: function(context) {
+  const dataset = context.chart.data.datasets[0].data;
+  const total = dataset.reduce((sum, val) => sum + val, 0);
+  const value = dataset[context.dataIndex];
+  const percentage = (value / total) * 100;
+
+  return percentage <= 1 ? 10 : 0; // Add space for small slices
+},
       padding: 0
     },
     legend: {
@@ -287,7 +302,6 @@ export default {
 },
     };
   },
-
   computed: {
     ...mapGetters(['getViewExpenses', 'getPersonalBudgets', 'getViewPageMonthYear']),
     
@@ -349,7 +363,6 @@ export default {
     }, 0);
   },
 
-  // Calculate remaining budget for the year
   yearlyRemainingBudget() {
     return this.yearlyBudgetsTotal - this.yearlyExpensesTotal;
   },
@@ -647,8 +660,7 @@ updateExpenseView() {
     async generatePDF() {
   try {
     const doc = new jsPDF();
-    this.formatCurrency = value => `PHP ${parseFloat(value||0).toFixed(2)}`;
-    
+    const formatCurrencyForPDF = value => `PHP ${parseFloat(value||0).toFixed(2)}`;
     // Title 
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
@@ -669,20 +681,68 @@ updateExpenseView() {
       
       doc.text(periodText, 105, 30, { align: 'center' });
     
-    // Budget summary
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    if (this.showYearFilter) {
-      // Year view summary
-      doc.text(`Total Budget: ${this.formatCurrency(this.yearlyBudgetsTotal)}`, 20, 45);
-      doc.text(`Total Expenses: ${this.formatCurrency(this.yearlyExpensesTotal)}`, 165, 45, { align: 'center' });
-      doc.text(`Remaining: ${this.formatCurrency(this.yearlyRemainingBudget)}`, 128, 55, { align: 'right' });
-    } else {
-      // Month view summary
-      doc.text(`Budget: ${this.formatCurrency(this.currentBudget?.budget_amount || 0)}`, 20, 45);
-      doc.text(`Total Expenses: ${this.formatCurrency(this.totalAmount)}`, 165, 45, { align: 'center' });
-      doc.text(`Remaining: ${this.formatCurrency(this.remainingBudget)}`, 128, 55, { align: 'right' });
+    // Budget summary table
+    const remainingBudget = this.showYearFilter ? this.yearlyRemainingBudget : this.remainingBudget;
+    if (remainingBudget < 0) {
+      const exceededAmount = Math.abs(remainingBudget);
+      doc.setFontSize(12);
+      doc.setTextColor(255, 0, 0); // Red color for warning
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Budget Exceeded by ${formatCurrencyForPDF(exceededAmount)}`, 105, 40, { align: 'center' });
+      doc.setTextColor(0, 0, 0); // Reset to black
     }
+    
+    // Budget Summary Section
+    doc.setFontSize(14);
+    doc.text('Budget Summary', doc.internal.pageSize.getWidth() / 2, 45 + (remainingBudget < 0 ? 10 : 0), { 
+      align: 'center' 
+    });
+    
+    // Get budget data based on view mode
+    const totalBudget = this.showYearFilter ? this.yearlyBudgetsTotal : (this.currentBudget?.budget_amount || 0);
+    const totalExpenses = this.showYearFilter ? this.yearlyExpensesTotal : this.totalAmount;
+    
+    // Budget Summary Table
+    autoTable(doc, {
+      startY: 50 + (remainingBudget < 0 ? 10 : 0),
+      head: [['Metric', 'Amount']],
+      body: [
+        ['Total Budget', formatCurrencyForPDF(totalBudget)],
+        ['Total Expenses', formatCurrencyForPDF(totalExpenses)],
+        ['Remaining Budget', formatCurrencyForPDF(remainingBudget)]
+      ],
+      margin: { left: 10, right: 10, bottom: 20, top: 20 },
+      tableWidth: 'wrap',
+      horizontalAlign: 'center',
+      styles: {
+        cellPadding: 4,
+        fontSize: 10,
+        halign: 'center',
+        lineColor: [73, 125, 116],
+        valign: 'middle'
+      },
+      columnStyles: {
+        0: { cellWidth: 95, fontStyle: 'bold' },
+        1: { cellWidth: 95 }
+      },
+      headStyles: {
+        fillColor: [73, 125, 116],
+        textColor: 255,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+
+      didDrawCell: (data) => {
+        if (data.section === 'body' && data.row.index === 2 && remainingBudget < 0) {
+          doc.setFillColor(255, 200, 200); // Light red background
+          doc.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height, 'F');
+          doc.setTextColor(255, 0, 0); // Red text
+          doc.text(data.cell.text, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 2, {
+            align: 'center'
+          });
+        }
+      }
+    });
     
     const pdfExpenses = this.filteredExpenses;
     
@@ -691,21 +751,22 @@ updateExpenseView() {
       expense.date,
       expense.category,
       expense.name,
-      this.formatCurrency(expense.amount)
+      formatCurrencyForPDF(expense.amount)
     ]);
     
     // Add expense table
     autoTable(doc, {
-  head: [['Date', 'Category', 'Description', 'Amount']],
+  head: [['Date', 'Category', 'Item Name', 'Amount']],
   body: tableData,
-  startY: 70, 
+  startY: 120, 
   margin: { left: 10, right: 10 },
   styles: {
     cellPadding: 4, 
     fontSize: 9,
     halign: 'left',
     valign: 'middle',
-    overflow: 'linebreak'
+    overflow: 'linebreak',
+    lineColor: 	[159, 82, 85]
   },
   columnStyles: {
     0: { cellWidth: 60 }, // Date
@@ -719,7 +780,7 @@ updateExpenseView() {
     }
   },
   headStyles: {
-    fillColor: [76, 175, 80],
+    fillColor: [159, 82, 85],
     textColor: 255,
     fontStyle: 'bold'
   }
@@ -908,18 +969,20 @@ updateExpenseView() {
   box-sizing: border-box;
 }
 
+
+
 .summary-box {
-  padding: 0px 16px 6px 16px; 
+  padding: 2px 16px 6px 16px; 
   background-color: rgb(216, 251, 238);
   border: 2px solid #6A9C89;
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
-  margin: 2px 0; 
-  margin-bottom: 10px;
+  margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
   min-width: 280px;
+  max-width: 100%;
 }
 
 .progress-bar {
@@ -932,12 +995,15 @@ updateExpenseView() {
 }
 .progress {
   height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
   transition: width 0.3s ease;
 }
 
+.progress-bar .progress.exceeded {
+  background: #bb2318 !important;
+}
+
 .progress-bar .progress {
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
 }
 
 .percentage {
@@ -952,7 +1018,7 @@ updateExpenseView() {
   display: flex;
   justify-content: space-between;
   margin: 10px 0;
-  font-size: 16px;
+  font-size: 16px; 
   font-weight: bold;
 }
 
@@ -1025,17 +1091,18 @@ button:hover {
 }
 
 .con-container {
-  display: flex;
-  flex-wrap: wrap;
   background: rgb(225, 251, 234);
   border: 2px solid #336333;
   border-radius: 20px;
-  width: 55%;
+  width: 70%; 
+  min-width: 380px;
+  max-width: 900px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   align-items: flex-start;
-  overflow-y: auto; /* Enables vertical scrolling when needed */
-  max-height: 100vh; /* Limits height to 80% of viewport height */
-  scrollbar-width: thin; /* For Firefox */
+  margin-bottom: 10px;
+  overflow-y: auto;
+  max-height: 105vh; 
+  scrollbar-width: thin; 
   scrollbar-color: #2a4935 #ecfcec; 
 }
 
@@ -1074,8 +1141,6 @@ button:hover {
 
 .filter-buttons button:hover {
   background-color: #598272;
-  color: white;
-  border-color: #385248;
 }
 
 .expense-table table {
@@ -1114,16 +1179,14 @@ button:hover {
 }
 
 .chart{
-  display: flex;
-  flex-wrap: wrap;
   width: 380px;
   padding: 20px;
   box-sizing: border-box;
   background: #ecfcec;
   border-radius: 20px;
-  max-height: 650px;
+  max-height: 600px;
   border: 2px solid #336333;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 .download {
   display: flex;
@@ -1162,14 +1225,4 @@ margin-left: 3px;
 background-color: #1e3731;
 }
 
-@media (max-width: 1000px) {
-  .con-container {
-    display: flex;
-    flex-wrap: wrap;
-    width: 90%;
-  }
-  .chart {
-    max-width: 355px;
-  }
-}
 </style> 
