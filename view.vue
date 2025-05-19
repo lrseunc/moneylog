@@ -2,7 +2,6 @@
   <navigation/>
 
   <div class="con">
-    <div class="wrapper">
     <div class="nav-con">
           <h1>Personal Expenses</h1>
     </div>
@@ -182,7 +181,6 @@
 
 <div v-if="showYearFilter && isYearlyBudgetExceeded" class="exceeded-warning">
   ⚠️ Annual budget {{ filterCategory !== 'All' ? `(${filterCategory}) ` : '' }}exceeded by {{ formatCurrency(yearlyExpensesByCategory - yearlyBudgetsTotal) }}
-</div>
 </div>
 </div>
 </template>
@@ -976,14 +974,6 @@ updateExpenseView() {
   gap: 10px;
 }
 
-.wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-}
-
 .nav-con {
 font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 font-size: 20px;
@@ -1172,9 +1162,6 @@ background-color: #1e3731;
 }
 
 @media (max-width: 1000px) {
-  .wrapper {
-    gap: 10px;
-  }
   .con-container {
     display: flex;
     flex-wrap: wrap;
