@@ -995,7 +995,7 @@ offset: function(context) {
 <style scoped>
 .contribution-section {
   width: calc(99% - 80px);
-  margin: 0px auto 20px auto;
+  margin: 10px auto 20px auto;
   height: 250px;
   padding: 10px;
   box-sizing: border-box;
@@ -1452,6 +1452,7 @@ offset: function(context) {
   min-width: 200px;
   width: 100%;
   min-height: 190px;
+  max-height: 400px;
 }
 
 .summary-item {
@@ -1674,7 +1675,7 @@ button:hover {
   box-sizing: border-box;
   background: #ecfcec;
   border-radius: 20px;
-  height: 450px;
+  max-height: 550px;
   min-height: 400px;
   border: 2px solid #336333;
 }
