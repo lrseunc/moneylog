@@ -561,6 +561,10 @@ export default {
     .profile-container p {
       font-size: 14px;
     }
+    .logout-icon {
+      width:30px;
+      height: 30px;
+    }
   }
   
   @media screen and (max-width: 480px) {
@@ -588,6 +592,10 @@ export default {
 
     .infos strong {
       font-size: 13px;
+    }
+    .logout-icon {
+      width:30px;
+      height: 20px;
     }
   }
   </style>
