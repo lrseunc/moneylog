@@ -251,7 +251,7 @@
         @click="activeTab = 'contribution'" 
         :class="{ active: activeTab === 'contribution' }"
       >
-        Group Contribution
+        Contribution
       </button>
       <button 
         v-if="isAdmin"
@@ -464,20 +464,22 @@
               </thead>
               <tbody>
                 <tr v-for="member in memberContributions" :key="member.id">
-        <td>{{ member.username }}</td>
-        <td>{{ formatPHP(member.contributed) }}</td>
-        <td>{{ formatPHP(member.share) }}</td>
-        <td :class="{ 'text-danger': member.balance < 0, 'text-success': member.balance >= 0 }">
-          {{ formatPHP(Math.abs(member.balance)) }}
-          <span v-if="member.balance < 0">(Owes)</span>
-          <span v-else>(Owed)</span>
-        </td>
-        <td>
-          <span :class="['status-badge', member.status]">
-            {{ member.status }}
-          </span>
-                  </td>
-                </tr>
+  <td>{{ member.username }}</td>
+  <td>{{ formatPHP(member.contributed) }}</td>
+  <td>{{ formatPHP(member.share) }}</td>
+  <td :class="{ 'text-danger': member.balance < 0, 'text-success': member.balance >= 0 }">
+    {{ formatPHP(Math.abs(member.balance)) }}
+    <span v-if="member.balance < 0">(Owes)</span>
+    <span v-else>(Owed)</span>
+  </td>
+  <td>
+    <span :class="['status-badge', member.status]">
+      {{ member.status }}
+      <span v-if="member.status === 'pending'" class="text-danger"> 
+      </span>
+    </span>
+  </td>
+</tr>
               </tbody>
             </table>
           </div>
@@ -536,56 +538,141 @@
 
     <!-- Add Expense Modal -->
     <div v-if="showAddExpenseModal" class="modal-overlay">
-      <div class="modal-content2">
-        <div class="modal-header">
-          <h3>Add New Expense</h3>
-          <button @click="closeModal" class="close-button">&times;</button>
+  <div class="modal-content2">
+    <div class="modal-header">
+      <h3>Add New Expense</h3>
+      <button @click="closeModal" class="close-button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <button 
+        @click="showVoiceHelp()" 
+        class="voice-help-btn" 
+        title="Voice commands help"
+      >
+        <i class="fas fa-question-circle"></i> Voice Help
+      </button>
+
+      <form @submit.prevent="submitExpense">
+        <div class="form-group">
+          <label>Category</label>
+          <div class="input-with-voice">
+            <select 
+              v-model="newExpense.expense_type" 
+              required 
+              @change="handleCategoryChange"
+            >
+              <option value="">Select a category</option>
+              <option value="Food">Food</option>
+              <option value="Bill">Bill</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Other">Other</option>
+            </select>
+            <button 
+      @click="startVoiceInput('category')" 
+      class="voice-btn" 
+      :class="{ active: isListening && voiceInputActiveField === 'category' }"
+      title="Set category by voice"
+    >
+      <i class="fas fa-microphone"></i>
+    </button>
+          </div>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="submitExpense">
-            <div class="form-group">
-              <label>Category</label>
-              <select v-model="newExpense.expense_type" required>
-                <option value="">Select a category</option> 
-                <option value="Food">Food</option>
-                <option value="Bill">Bill</option>
-                <option value="Transportation">Transportation</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Accomodation">Accomodation</option>
-                <option value="Shopping">Shopping</option>
-                <option value="Other">Others</option>
-              </select>
-            </div>
-            <div class="form-group">
-            <label>Item Name</label>
-              <input 
-                v-model="newExpense.item_name" 
-                type="text" 
-                required
-                minlength="2"
-                maxlength="255"
-              >
-              <small v-if="!newExpense.item_name" class="error">Item name is required</small>
-            </div>
-            <div class="form-group">
-              <label>Amount</label>
-              <input 
-                v-model="newExpense.item_price" 
-                type="number" 
-                step="0.01" 
-                min="0" 
-                required
-              >
-              <small v-if="!newExpense.item_price" class="error">Amount is required</small>
-            </div>
-            <div class="form-actions">
-              <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
-              <button type="submit" class="submit-button">Add Expense</button>
-            </div>
-          </form>
+
+        <!-- Custom Category Field with Voice Input -->
+        <div v-if="newExpense.expense_type === 'Other'" class="form-group">
+          <label>Custom Category</label>
+          <div class="input-with-voice">
+            <input 
+              v-model="customExpenseType" 
+              type="text" 
+              placeholder="Enter custom category name"
+              required
+            />
+            <button 
+              @click="startVoiceInput('customType')" 
+              class="voice-btn"
+              :class="{ active: isListening && voiceInputActiveField === 'customType' }"
+              title="Set custom category by voice"
+            >
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Item Name</label>
+          <div class="input-with-voice">
+            <input 
+              v-model="newExpense.item_name" 
+              type="text" 
+              required
+              minlength="2"
+              maxlength="255"
+            />
+            <button 
+      @click="startVoiceInput('item')" 
+      class="voice-btn" 
+      :class="{ active: isListening && voiceInputActiveField === 'item' }"
+      title="Set item name by voice"
+    >
+      <i class="fas fa-microphone"></i>
+    </button>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label>Amount</label>
+          <div class="input-with-voice">
+            <input 
+              v-model="newExpense.item_price" 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              required
+            />
+            <button 
+      @click="startVoiceInput('amount')" 
+      class="voice-btn" 
+      :class="{ active: isListening && voiceInputActiveField === 'amount' }"
+      title="Set amount by voice"
+    >
+      <i class="fas fa-microphone"></i>
+    </button>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
+          <button type="submit" class="submit-button">Add Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Voice Help Modal -->
+<div v-if="showVoiceHelpModal" class="voice-help-modal">
+  <div class="voice-help-content">
+    <div class="voice-help-header">
+      <h3><i class="fas fa-microphone"></i> Voice Commands Help</h3>
+    </div>
+    <div class="voice-help-body">
+      <div class="voice-command" v-for="(command, index) in voiceCommandsHelp" :key="index">
+        <div class="command-prefix">•</div>
+        <div class="command-details">
+          <span class="command-example">{{ command.example }}</span>
+          <span class="command-description">- {{ command.description }}</span>
         </div>
       </div>
     </div>
+    <div class="voice-help-footer">
+      <button @click="showVoiceHelpModal = false" class="btn-ok">Got it!</button>
+    </div>
+  </div>
+</div>
 
       <!-- Edit Contribution Modal -->
       <div v-if="showEditContributionModal" class="modal-overlay">
@@ -638,6 +725,15 @@
                 <option value="Other">Others</option>
               </select>
             </div>
+            <div v-if="editingExpense.expense_type === 'Other'" class="form-group">
+          <label>Custom Category</label>
+          <input 
+            v-model="customExpenseType" 
+            type="text" 
+            placeholder="Enter custom category name"
+            required
+          >
+        </div>
             <div class="form-group">
               <label>Item Name</label>
               <input v-model="editingExpense.item_name" type="text" required>
@@ -741,8 +837,14 @@ export default {
       newExpense: {
         item_name: '',
         item_price: 0,
-        expense_type: 'Food',
+        expense_type: '',
       },
+      customExpenseType: '', 
+      editingExpense: {
+      expense_type: '',
+      item_name: '',
+      item_price: null
+    },
       
       editingExpense: {},
       confirmationTitle: '',
@@ -752,7 +854,44 @@ export default {
       // Invite member
       inviteEmail: '',
       inviteError: '',
-      inviteSuccess: ''
+      inviteSuccess: '',
+      isListening: false,
+      showVoiceHelpModal: false,
+      isListening: false,
+      voiceInput: '',
+      voiceCommands: [],
+      recognition: null,
+      voiceInputActiveField: null,
+      voiceCommandsHelp: [
+      {
+        example: "'Set category [category name]'",
+        description: "Select expense category (Food, Bill, Transportation, etc.)"
+      },
+      {
+    example: "'Set custom type [description]'",
+    description: "Enter a custom expense category description"
+  },
+      {
+        example: "'Add item [item name]'",
+        description: "Enter item name (e.g., 'taxi fare', 'dinner')"
+      },
+      {
+        example: "'Set amount [amount]'",
+        description: "Enter amount (e.g., 'fifty', 'one hundred twenty pesos')"
+      },
+      {
+        example: "'Submit'",
+        description: "Save the expense"
+      },
+      {
+        example: "'Stop'",
+        description: "Stop voice input"
+      },
+      {
+        example: "'Help'",
+        description: "Show this help dialog"
+      }
+    ]
     };
   },
   computed: {
@@ -876,6 +1015,18 @@ export default {
       this.updateMemberContributions();
     }
   },
+  'expenses': {
+    deep: true,
+    handler() {
+      this.updateMemberContributions();
+    }
+  },
+  'filteredExpenses': {
+    deep: true,
+    handler() {
+      this.updateMemberContributions();
+    }
+  },
 
     budgetSuccessMessage(newVal) {
     if (newVal) {
@@ -895,6 +1046,8 @@ export default {
   async created() {
   console.log('Group component created');
   
+  this.setupVoiceRecognition();
+
     if (this.groupId) {
       this.isBudgetLoading = true;
       try {
@@ -944,6 +1097,7 @@ export default {
     
     this.originalName = this.group.group_name || '';
 
+
     await this.initializeGroupData();
      await this.fetchUserGroups(),
      await this.fetchContributions();
@@ -982,6 +1136,321 @@ export default {
       'updateGroupBudget'
     //  'fetchAvailableBudgets'
     ]),
+    closeAlert() {
+    this.showBudgetExceededAlert = false;
+  },
+  
+    showVoiceHelp() {
+    this.showVoiceHelpModal = true;
+  },
+
+  setupVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('Speech recognition not supported in this browser');
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.maxAlternatives = 1;
+
+    this.recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
+      
+      this.voiceInput = transcript;
+      this.processVoiceCommand(transcript);
+    };
+
+    this.recognition.onerror = (event) => {
+      console.error('Speech recognition error', event.error);
+      this.isListening = false;
+    };
+
+    this.recognition.onend = () => {
+      if (this.isListening) {
+        this.recognition.start();
+      }
+    };
+
+    // Define voice commands
+    this.voiceCommands = [
+      {
+        pattern: /^(set|select|choose) category (.*)/i,
+        action: (match) => this.setCategoryFromVoice(match[2])
+      },
+      {
+        pattern: /^(add|enter|set) item (.*)/i,
+        action: (match) => this.setItemNameFromVoice(match[2])
+      },
+      {
+        pattern: /^(set|enter) amount (.*)/i,
+        action: (match) => this.setAmountFromVoice(match[2])
+      },
+      {
+        pattern: /^submit|save|add expense/i,
+        action: () => this.handleSubmit()
+      },
+      {
+        pattern: /^help|what can i say/i,
+        action: () => this.showVoiceHelp()
+      }
+    ];
+  },
+
+  startVoiceInput(field = null) {
+    if (!this.recognition) {
+      alert('Voice recognition is not supported in your browser');
+      return;
+    }
+
+    this.stopVoiceInput();
+
+    this.voiceInputActiveField = field;
+    this.isListening = true;
+    this.voiceInput = ''; 
+    try {
+      this.recognition.start();
+      this.$toast.info("Listening... Speak now");
+    } catch (err) {
+      console.error('Speech recognition error:', err);
+      this.$toast.error("Error starting voice recognition");
+      this.isListening = false;
+    }
+  },
+
+  stopVoiceInput() {
+    if (this.isListening) {
+      this.isListening = false;
+      this.voiceInputActiveField = null;
+      try {
+        if (this.recognition) {
+          this.recognition.stop();
+        }
+      } catch (err) {
+        console.error('Error stopping recognition:', err);
+      }
+      this.$toast.info("Stopped listening");
+    }
+  },
+
+  processVoiceCommand(transcript) {
+    if (!this.isListening) return;
+
+    // Clean the transcript
+    transcript = transcript.trim().toLowerCase();
+    this.voiceInput = transcript;
+
+    // Handle field-specific input
+    if (this.voiceInputActiveField) {
+      switch (this.voiceInputActiveField) {
+        case 'category':
+          this.handleCategoryInput(transcript);
+          break;
+        case 'item':
+          this.handleItemInput(transcript);
+          break;
+        case 'amount':
+          this.handleAmountInput(transcript);
+          break;
+          case 'customType': 
+    this.handleCustomTypeInput(transcript);
+    break;
+      }
+      this.stopVoiceInput(); // Auto-stop after field input
+      return;
+    }
+
+ this.handleGeneralCommands(transcript);
+  },
+
+  handleCategoryInput(transcript) {
+    const category = this.matchCategory(transcript);
+    this.newExpense.expense_type = category;
+    this.$toast.success(`Category set to: ${category}`);
+  },
+
+  handleCustomTypeInput(transcript) {
+  this.customExpenseType = transcript;
+  this.$toast.success(`Custom type set to: ${transcript}`);
+},
+
+  handleItemInput(transcript) {
+    this.newExpense.item_name = transcript;
+    this.$toast.success(`Item set to: ${transcript}`);
+  },
+
+  handleAmountInput(transcript) {
+    const amount = this.extractNumber(transcript);
+    if (amount !== null) {
+      this.newExpense.item_price = amount;
+      this.$toast.success(`Amount set to: ${this.formatPHP(amount)}`);
+    } else {
+      this.$toast.error("Couldn't understand the amount. Please try again.");
+    }
+  },
+
+  handleGeneralCommands(transcript) {
+    if (transcript.startsWith('set category ') || transcript.startsWith('select category ')) {
+      const category = transcript.replace(/^(set|select) category /i, '').trim();
+      this.handleCategoryInput(category);
+      return;
+    }
+
+    if (transcript.startsWith('set custom type ') || 
+    transcript.startsWith('enter custom type ')) {
+  const customType = transcript.replace(/^(set|enter) custom type /i, '').trim();
+  this.handleCustomTypeInput(customType);
+  return;
+}
+    
+    // Command: Add item
+    if (transcript.startsWith('add item ') || transcript.startsWith('set item ')) {
+      const item = transcript.replace(/^(add|set) item /i, '').trim();
+      this.handleItemInput(item);
+      return;
+    }
+    
+    // Command: Set amount
+    if (transcript.startsWith('set amount ') || transcript.startsWith('enter amount ')) {
+      const amount = transcript.replace(/^(set|enter) amount /i, '').trim();
+      this.handleAmountInput(amount);
+      return;
+    }
+    
+    // Command: Submit
+    if (transcript.includes('submit') || transcript.includes('save')) {
+      this.handleSubmit();
+      return;
+    }
+    
+    // Command: Stop
+    if (transcript.includes('stop') || transcript.includes('cancel')) {
+      this.stopVoiceInput();
+      return;
+    }
+    
+    // Command: Help
+    if (transcript.includes('help')) {
+      this.showVoiceHelp();
+      return;
+    }
+    
+    // Fallback - if we don't recognize the command
+    this.$toast.info("Command not recognized. Say 'help' for available commands.");
+  },
+
+  matchCategory(spokenCategory) {
+  const categories = ['Food', 'Bill', 'Transportation', 'Entertainment', 'Accomodation', 'Shopping', 'Other'];
+  const lowerSpoken = spokenCategory.toLowerCase().trim();
+  
+  // 1. First check for exact match
+  const exactMatch = categories.find(cat => cat.toLowerCase() === lowerSpoken);
+  if (exactMatch) return exactMatch;
+  
+  // 2. Fuzzy matching for each category
+  if (['food', 'eat', 'meal', 'restaurant', 'groceries', 'dining', 'lunch', 'dinner', 'breakfast', 'snack'].some(term => lowerSpoken.includes(term))) {
+    return 'Food';
+  }
+  
+  if (['bill', 'payment', 'rent', 'electric', 'water', 'internet', 'phone', 'utility', 'subscription', 'mortgage'].some(term => lowerSpoken.includes(term))) {
+    return 'Bill';
+  }
+  
+  if (['transport', 'bus', 'train', 'taxi', 'gas', 'fuel', 'parking', 'metro', 'subway', 'uber', 'lyft', 'car', 'maintenance'].some(term => lowerSpoken.includes(term))) {
+    return 'Transportation';
+  }
+  
+  if (['entertain', 'movie', 'game', 'concert', 'hobby', 'sport', 'netflix', 'spotify', 'music', 'party', 'bar', 'alcohol'].some(term => lowerSpoken.includes(term))) {
+    return 'Entertainment';
+  }
+  
+  if (['Hotel', 'Dorm', 'Rent', 'pharmacy', 'medicine', 'drug', 'insurance', 'dental', 'optical', 'checkup', 'clinic'].some(term => lowerSpoken.includes(term))) {
+    return 'Healthcare';
+  }
+  
+  if (['shop', 'clothes', 'gift', 'mall', 'store', 'amazon', 'online', 'purchase', 'buy', 'market'].some(term => lowerSpoken.includes(term))) {
+    return 'Shopping';
+  }
+  
+  // 3. Amount detection patterns (optional)
+  if (/\d/.test(lowerSpoken)) {
+    // If the spoken text contains numbers but no category was matched
+    return 'Other';
+  }
+  
+  // 4. Default fallback
+  return 'Other';
+},
+
+  extractNumber(spokenAmount) {
+    // Extract numbers like "twenty five pesos" -> 25
+    const wordsToNumbers = {
+      'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+      'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+      'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13,
+      'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17,
+      'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30,
+      'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70,
+      'eighty': 80, 'ninety': 90
+    };
+
+    // Try to extract direct number
+    const directNumberMatch = spokenAmount.match(/(\d+(\.\d+)?)/);
+    if (directNumberMatch) {
+      return parseFloat(directNumberMatch[1]);
+    }
+
+    // Try to convert words to number
+    const words = spokenAmount.toLowerCase().split(/\s+/);
+    let total = 0;
+    let current = 0;
+    
+    for (const word of words) {
+      const num = wordsToNumbers[word];
+      if (num !== undefined) {
+        if (num >= 20) {
+          current = num;
+        } else {
+          current += num;
+        }
+      } else if (word === 'hundred') {
+        current *= 100;
+      } else if (word === 'thousand') {
+        current *= 1000;
+        total += current;
+        current = 0;
+      }
+    }
+    
+    total += current;
+    return total > 0 ? total : null;
+  },
+
+  setCategoryFromVoice(category) {
+    const matchedCategory = this.matchCategory(category);
+    this.customExpenseType = matchedCategory;
+    this.$toast.success(`Category set to: ${matchedCategory}`);
+  },
+
+  setItemNameFromVoice(itemName) {
+    this.newExpense.item_name = itemName;
+    this.$toast.success(`Item name set to: ${itemName}`);
+  },
+
+  setAmountFromVoice(amount) {
+    const numericAmount = this.extractNumber(amount);
+    if (numericAmount) {
+      this.newExpense.item_price = numericAmount;
+      this.$toast.success(`Amount set to: ${this.formatPHP(numericAmount)}`);
+    } else {
+      this.$toast.error("Couldn't understand the amount");
+    }
+  },
 
     formatDate(dateString) {
     if (!dateString) return '';
@@ -1017,42 +1486,50 @@ export default {
   });
 },
 
-    updateMemberContributions() {
+async updateMemberContributions() {
   if (!this.members || !this.contributions) {
     this.memberContributions = [];
     return;
   }
   
-  // Calculate total group expenses
   const totalExpenses = this.totalAmount;
-  
-  // Calculate equal share for each member
-
   const sharePerMember = totalExpenses / (this.members.length || 1);
-  //const sharePerMember = this.totalAmount / (this.members.length || 1);
-  // Create member contributions array
+  
   this.memberContributions = this.members.map(member => {
-    // Calculate total contributed by this member
-    const contributed = this.contributions
-      .filter(c => c.user_id === member.id)
-      .reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
-    
-    // Calculate balance (contributed - share)
+    const userContributions = this.contributions.filter(c => c.user_id === member.id);
+    const contributed = userContributions.reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
     const balance = contributed - sharePerMember;
-    
-    
+    const newStatus = balance >= 0 ? 'completed' : 'pending';
+
+    // Update backend if status changed
+    userContributions.forEach(async (contribution) => {
+      if (contribution.status !== newStatus) {
+        try {
+          await this.$axios.put(
+            `/api/grp_expenses/groups/${this.localGroupId}/contributions/${contribution.id}/status`,
+            { status: newStatus },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+              }
+            }
+          );
+        } catch (error) {
+          console.error('Failed to update contribution status:', error);
+        }
+      }
+    });
+
     return {
       id: member.id,
       username: member.username,
-      contributed,       // Total amount this member has contributed
-      share: sharePerMember,  // Equal share of expenses
-      balance,          // Difference between contributed and share
-      status: balance >= 0 ? 'completed' : 'pending'
+      contributed,
+      share: sharePerMember,
+      balance,
+      status: newStatus
     };
   });
-  console.log('Updated member contributions:', this.memberContributions);
 },
-  
 
     leaveGroup() {
   this.confirmationTitle = 'Leave Group';
@@ -1126,9 +1603,25 @@ showError(message) {
     }
   },
 
-    editExpense(expense) {
-    this.editingExpense = { ...expense };  // Create a copy of the expense to edit
-    this.showEditExpenseModal = true;     // Set the modal visibility to true
+  editExpense(expense) {
+    this.editingExpense = { ...expense };
+    
+    // Check if this is a custom category (not in our standard list)
+    const standardCategories = ['Food', 'Bill', 'Transportation', 'Entertainment', 'Healthcare', 'Shopping'];
+    if (!standardCategories.includes(expense.expense_type)) {
+      this.editingExpense.expense_type = 'Other';
+      this.customExpenseType = expense.expense_type;
+    } else {
+      this.customExpenseType = '';
+    }
+    
+    this.showEditExpenseModal = true;
+  },
+
+  handleEditCategoryChange() {
+    if (this.editingExpense.expense_type !== 'Other') {
+      this.customExpenseType = '';
+    }
   },
 
   formatPHP(amount) {
@@ -1669,61 +2162,77 @@ async updateBudget() {
     },
     
     async submitExpense() {
-      if (!this.hasBudget) {
+  // Check if budget exists
+  if (!this.hasBudget) {
     this.showError('Please set a group budget before adding expenses');
     return;
   }
 
-      try {
-        const user = JSON.parse(localStorage.getItem('user'));
+  // Validate custom category if "Other" is selected
+  if (this.newExpense.expense_type === 'Other' && !this.customExpenseType) {
+    this.showError('Please enter a custom category');
+    return;
+  }
 
-        const expenseData = {
-          item_name: this.newExpense.item_name,
-          item_price: parseFloat(this.newExpense.item_price),
-          expense_type: this.newExpense.expense_type,
-          group_id: this.localGroupId,
-          user_id: user.id   
-        };
+  try {
+    const user = JSON.parse(localStorage.getItem('user'));
 
-        console.log('Submitting expense:', expenseData);
+    // Prepare expense data with custom category handling
+    const expenseData = {
+      item_name: this.newExpense.item_name,
+      item_price: parseFloat(this.newExpense.item_price),
+      expense_type: this.newExpense.expense_type === 'Other' 
+        ? this.customExpenseType 
+        : this.newExpense.expense_type,
+      group_id: this.localGroupId,
+      user_id: user.id   
+    };
 
-        // Add the expense
-        await this.addExpense(expenseData);
+    console.log('Submitting expense:', expenseData);
 
-        // Show success notification
-        this.$notify({
-          title: 'Success',
-          message: 'Expense added successfully',
-          type: 'success'
-        });
+    // Add the expense
+    await this.addExpense(expenseData);
 
-        // Close the modal and reset form
-        this.closeModal();
-        this.resetNewExpense();
+    // Show success notification
+    this.$notify({
+      title: 'Success',
+      message: 'Expense added successfully',
+      type: 'success'
+    });
 
-        // Reload the expenses
-        await this.loadExpenses();
+    // Close the modal and reset form
+    this.closeModal();
+    this.resetNewExpense();
+    this.customExpenseType = ''; // Reset custom category field
 
-        // Recalculate the remaining budget
-        this.calculateRemaining();
+    // Reload the expenses
+    await this.loadExpenses();
 
-        // If the remaining budget is less than zero, show the alert
-        if (this.remainingBudget < 0) {
-          this.showBudgetExceededAlert = true; // Show alert without auto hiding
-        }
-      } catch (err) {
-        console.error('Error adding expense:', err);
-        this.$notify({
-          title: 'Error',
-          message: err.response?.data?.message || 'Failed to add expense',
-          type: 'error'
-        });
-      }
-    },
+    // Recalculate the remaining budget
+    this.calculateRemaining();
 
-    closeAlert() {
-    this.showBudgetExceededAlert = false;
-  },
+    // If the remaining budget is less than zero, show the alert
+    if (this.remainingBudget < 0) {
+      this.showBudgetExceededAlert = true;
+    }
+  } catch (err) {
+    console.error('Error adding expense:', err);
+    this.$notify({
+      title: 'Error',
+      message: err.response?.data?.message || 'Failed to add expense',
+      type: 'error'
+    });
+  }
+},
+
+// Add this method to your component if you don't have it already
+showError(message) {
+  this.$notify({
+    title: 'Error',
+    message: message,
+    type: 'error'
+  });
+},
     
     async submitEditExpense() {
       try {
@@ -1782,17 +2291,31 @@ async updateBudget() {
     }
   },
     
-async handleUpdateExpense() {
+  async handleUpdateExpense() {
   try {
-    await this.updateExpense(this.editingExpense);
+    // Prepare the expense data with custom category handling
+    const expenseData = {
+      ...this.editingExpense,
+      expense_type: this.editingExpense.expense_type === 'Other' 
+        ? this.customExpenseType 
+        : this.editingExpense.expense_type
+    };
+
+    // Call your existing updateExpense method with the modified data
+    await this.updateExpense(expenseData);
+    
+    // Show success notification
     this.$notify({
       title: 'Success',
       message: 'Expense updated successfully',
       type: 'success'
     });
+    
+    // Close modal and refresh data
     this.closeModal();
     await this.loadExpenses();
-    this.updateTotalAmount(); 
+    this.updateTotalAmount();
+    
   } catch (err) {
     console.error('Error updating expense:', err);
     this.$notify({
@@ -2010,6 +2533,259 @@ async handleUpdateExpense() {
 </script>
 
 <style scoped>
+/* Voice Input Styles */
+.voice-help-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.voice-help-content {
+  background-color: #fefefe;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 440px;
+  max-height: 70vh; 
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease-out;
+  font-family: "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.voice-help-header {
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: white;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.voice-help-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s;
+}
+
+.close-btn:hover {
+  transform: scale(1.2);
+}
+
+.voice-help-body {
+  padding: 18px 20px;
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.voice-command {
+  display: flex;
+  margin-bottom: 15px;
+  align-items: flex-start;
+}
+
+.command-prefix {
+  font-size: 1.4rem;
+  color: #6a9c89;
+  margin-right: 12px;
+}
+
+.command-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.command-example {
+  font-weight: 600;
+  color: #4f7a6b;
+  font-family: 'Courier New', monospace;
+  font-size: 0.93rem;
+}
+
+.command-description {
+  color: #555;
+  font-size: 0.88rem;
+}
+
+.voice-help-footer {
+  padding: 14px 20px;
+  background-color: #f0f2f1;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #ddd;
+}
+
+.btn-ok {
+  background-color: #6a9c89;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn-ok:hover {
+  background-color: #4f7a6b;
+  transform: translateY(-2px);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.voice-help-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  font-size: 0.9rem;
+}
+
+.voice-help-btn:hover {
+  background: #8bbcae;
+}
+
+/* Animation */
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .voice-help-content {
+    width: 95%;
+  }
+  
+  .command-details {
+    flex-direction: column;
+  }
+}
+.input-with-voice {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.voice-btn {
+  background: #f0f0f0;
+  border: 1px solid  #6a9c89;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  margin-left: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.voice-btn:hover {
+  color: #42b983;
+}
+
+.voice-btn.active {
+  background: #ff4444;
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+.voice-controls {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.voice-control-btn {
+  padding: 10px 15px;
+  background: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-control-btn.active {
+  background: #ff4444;
+}
+
+.voice-feedback {
+  margin-top: 10px;
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.voice-input-preview {
+  font-style: italic;
+  color: #666;
+}
+
+.voice-help-text {
+  font-size: 0.8em;
+  color: #999;
+  margin-top: 5px;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
 .no-budget {
   background-color: #f4f8f6;
   border: 1px dashed #b6cfc5;
@@ -2146,7 +2922,7 @@ async handleUpdateExpense() {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #82b1a3, #699b88, #476e60);
   color: #fff;
   padding: 10px 18px;
   font-size: 0.9rem;
@@ -2208,10 +2984,11 @@ async handleUpdateExpense() {
 
 .contribution-form {
   background: #fff;
-  padding: 20px;
-  border-radius: 8px;
+  padding: 100px;
+  border-radius: 20;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin-bottom: 20px;
+  border: 2px solid #021526;
 }
 
 .contribution-form .form-group {
@@ -2238,7 +3015,7 @@ async handleUpdateExpense() {
   padding-top: 15px;
   background-color: #fafafa;
   border-radius: 6px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow: inset 0 1px 4px #93b9a9a8;
 }
 
 .contribution-history h4 {
@@ -2301,7 +3078,7 @@ async handleUpdateExpense() {
   padding: 20px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px #93b9a9;
 }
 
 .contribution-header {
@@ -2312,6 +3089,8 @@ async handleUpdateExpense() {
 .contribution-header h2 {
   font-size: 1.5rem;
   font-weight: 700;
+  box-shadow: none;
+  background: none;
   color: #2c3e50;
   margin-bottom: 10px;
 }
@@ -2369,7 +3148,7 @@ async handleUpdateExpense() {
   max-width: 500px;
   margin: 0 auto 40px;
   padding: 20px;
-  background: #f8f9fa;
+  background: #f4f9fa;
   border: 2px solid #2e4e38;
   border-radius: 8px;
 }
@@ -2383,17 +3162,17 @@ async handleUpdateExpense() {
   overflow-x: auto;
   margin-bottom: 30px;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(106, 156, 137, 0.15);
+  box-shadow: 0 2px 5px #93b9a9a8;
   background-color: #ffffff;
-  padding: 8px; /* slightly less padding */
+  padding: 8px; 
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .member-contributions-table table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 6px; /* less vertical spacing */
-  font-size: 0.95rem; /* smaller font */
+  border-spacing: 0 6px; 
+  font-size: 0.95rem;
 }
 
 .member-contributions-table th,
@@ -2464,12 +3243,11 @@ async handleUpdateExpense() {
   display: flex;
   flex-direction: column;
   align-items: center;
-
   background-color: #f4fdf9;
   background-image: linear-gradient(145deg, #ffffff, #ecf5f0);
   border: 1px solid #cdd8d2;
   border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(106, 156, 137, 0.08);
+  box-shadow: 0 2px 8px rgba(106, 156, 137, 0.344);
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
@@ -2688,7 +3466,7 @@ async handleUpdateExpense() {
 }
 
 .budget-container {
-  background-color: #daf9da;
+  background-color: #e8f8f1;
   padding: 20px;
   border-radius: 15px;
   border: 2px solid #2e4e38;
@@ -2714,7 +3492,7 @@ async handleUpdateExpense() {
   margin: 0;
 }
 .btn-add, .btn-edit {
-  background: #2a4935;
+      background: linear-gradient(135deg, #739c90, #5d8978, #476e60);
   color: white;
   border: none;
   padding: 8px 12px;
@@ -2832,7 +3610,7 @@ async handleUpdateExpense() {
 }
 
 .progress-fill.exceeded {
-  background-color: #f44336;
+  background: #f44336 !important;
 }
 
 .progress-text {
@@ -2853,12 +3631,20 @@ async handleUpdateExpense() {
 }
 
 h2 {
-  margin-bottom: 40px;
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 10px;
   text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.5px;
+  background: linear-gradient(to right, #8bbcae, #6a9c89);
 }
 
 .budget-form {
-  background-color: #e4f7e4;
+  background-color: #eefbf5;
   border: 1px solid #2a4935;
   color: #333;
   padding: 25px;
@@ -2947,14 +3733,13 @@ h2 {
   margin-top: 10px;
 }
 
-/* Total amount card responsiveness */
 .total-amount-card {
   background: #d0ebdd;
   border-radius: 10px;
   height: 70px;
   padding: 14px 16px;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 10px #93b9a9e1;
   box-sizing: border-box;
   text-align: center;
 }
@@ -3011,32 +3796,32 @@ h2 {
 }
 
 .expenses-container h3 {
-  display: inline-block;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2a4935;
-  background: linear-gradient(90deg, #d0ebdd, #f0f7f3);
-  padding: 25px 0px 25px 0px;
-  border-radius: 12px;
-  animation: fadeSlideIn 0.6s ease-out;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  text-transform: uppercase;
-  text-align: center;
-  letter-spacing: 1px;
-  margin-bottom: 0px;
-  width: 100%;
-}
+    display: inline-block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2a4935;
+    background: linear-gradient(90deg, #d0ebdd, #f0f7f3);
+    padding: 25px 0px 25px 0px;
+    border-radius: 12px;
+    animation: fadeSlideIn 0.6s ease-out;
+    box-shadow: 0 2px 5px #93b9a9e1;
+    text-transform: uppercase;
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 0px;
+    width: 100%;
+  }
 
 .expenses-table table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 12px; /* slightly increased spacing for breathing room */
+  border-spacing: 0 12px; 
   margin-bottom: 30px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #fff;
   border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(42, 73, 53, 0.1); /* subtle shadow around table */
+  overflow: hidden; 
+  box-shadow: 0 2px 10px rgba(76, 132, 96, 0.536); 
 }
 
 .expenses-table th,
@@ -3239,7 +4024,7 @@ Z
 }
 
 .my-groups-btn {
-  background-color: #2a4935;
+  background-color: #4d7768;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -3304,10 +4089,7 @@ Z
 
 .group-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
@@ -3316,35 +4098,32 @@ Z
 }
 
 .group-modal {
-  background-color: #ffffff;
-  border-radius: 12px;
+  background: #ffffff;
+  border-radius: 16px;
   width: 85%;
-  max-width: 480px;
-  max-height: 60vh; /* Slightly smaller height */
+  max-width: 460px;
+  max-height: 60vh;
   overflow-y: auto;
   overflow-x: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.2);
   animation: modalFadeIn 0.3s ease-out;
-  scrollbar-width: thin; /* Firefox */
-  scrollbar-color: #BBD8A3 transparent; /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: #6a9c89 transparent;
 }
 
-/* Custom Scrollbar for Webkit */
+/* Webkit scrollbar */
 .group-modal::-webkit-scrollbar {
   width: 6px;
 }
-.group-modal::-webkit-scrollbar-track {
-  background: transparent;
-}
 .group-modal::-webkit-scrollbar-thumb {
-  background-color: #537D5D;
+  background-color: #6a9c89;
   border-radius: 8px;
 }
 
 @keyframes modalFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-16px);
   }
   to {
     opacity: 1;
@@ -3353,72 +4132,68 @@ Z
 }
 
 .group-modal-header {
+  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  color: white;
+  padding: 20px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #d3d3d3;
-  background-color: #BBD8A3;
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
-  
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
 .group-modal-header h3 {
   margin: 0;
-  font-size: 1.4rem;
-  color: #5c5c5c;
+  font-size: 1.3rem;
 }
 
 .close-modal {
-  background: none;
+  background: #93b9a95b;
   border: none;
-  font-size: 1.5rem;
-  color: #5c5c5c;
+  font-size: 1.4rem;
+  color: white;
   cursor: pointer;
-  padding: 5px 8px;
+  padding: 6px;
   border-radius: 50%;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: background-color 0.3s, transform 0.2s;
 }
-
 .close-modal:hover {
-  background-color: #d0f0c0;
+  background-color: rgba(255, 255, 255, 0.2);
   transform: scale(1.1);
 }
 
 .groups-list {
-  padding: 10px;
-  background-color: #f9f9f9;
+  padding: 14px;
+  background-color: #f7fdf9;
 }
 
 .group-item {
-  cursor: pointer;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px #93b9a9e1;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-  border-radius: 10px;
-  background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  transition: background-color 0.25s, box-shadow 0.25s;
+  cursor: pointer;
 }
-
 .group-item:hover {
-  background-color: #e0f7e5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background-color: #e4f4ef;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 .group-info h4 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #2f6f45;
+  font-size: 1.05rem;
+  color: #4f7a6b;
 }
 
 .group-meta {
   margin-top: 4px;
-  font-size: 0.9rem;
-  color: #666;
+  font-size: 0.85rem;
+  color: #6a9c89;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -3426,18 +4201,20 @@ Z
 
 .group-meta i {
   margin-right: 6px;
-  color: #537D5D;
+  color: #6a9c89;
 }
+
 .group-actions {
+  color: #4f7a6b;
   font-size: 1.2rem;
-  color: #537D5D;
   display: flex;
   align-items: center;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s;
 }
 .group-item:hover .group-actions {
   transform: translateX(4px);
 }
+
 
 .group-modal-content {
   padding: 18px;
@@ -3519,7 +4296,7 @@ Z
 .group-tabs {
   display: flex;
   flex-wrap: wrap;
-  border-bottom: 2px solid  #f0f0f0;
+  border-bottom: 2px solid  #d5d4d4;
   margin-bottom: 30px;
   gap: 30px;
 }
@@ -3568,7 +4345,7 @@ Z
 }
 
 .add-expense-button {
-  background-color: #2a4935;
+  background: linear-gradient(135deg, #89c1b1, #5c8f7d);
   color: white;
   border: none;
   padding: 20px 20px;
@@ -3581,8 +4358,8 @@ Z
   transition: all 0.3s ease;
   font-size: 1rem;
   font-weight: 600;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  margin: 0 auto; /* This centers the button */
+  box-shadow: 0 2px 5px #93b9a9c2;
+  margin: 0 auto;
   width: 100%;
   position: relative;
 }
@@ -3684,7 +4461,7 @@ Z
 .members-list {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* slight increase for breathing room */
+  gap: 12px;
 }
 
 .member-item {
@@ -3692,9 +4469,9 @@ Z
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: linear-gradient(135deg, #e6f4ea, #cfe8d8); /* softer, greener gradient */
-  border-radius: 12px; /* slightly rounder */
-  box-shadow: 0 1px 4px rgba(106, 156, 137, 0.15);
+  background: linear-gradient(135deg, #ecfdf3, #cfe7d9); 
+  border-radius: 12px; 
+  box-shadow: 0 2px 5px #93b9a9;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
@@ -3771,61 +4548,78 @@ Z
 .invite-section {
   margin-top: 30px;
   padding: 25px 20px;
-  background: linear-gradient(135deg, #f0fdf4, #e8f5e9);
+  background: linear-gradient(135deg, #e8f8f1, #d8f3e7); /* slightly richer gradient */
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #2a4935;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.348);
+  border-left: 5px solid #598272;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.invite-section::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, rgba(42, 73, 53, 0.05), transparent 60%);
+  z-index: 0;
 }
 
 .invite-section:hover {
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
 }
 
 .invite-section h4 {
   margin: 0 0 10px 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2a4935;
+  color: #588668;
+  position: relative;
+  z-index: 1;
 }
 
 .invite-form {
   display: flex;
-  flex-wrap: wrap;
   gap: 12px;
   margin-top: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .email-input {
-  min-width: 150px;
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid #cfd8dc;
+  border: 1px solid #b0c4b1;
   border-radius: 8px;
   font-size: 0.95rem;
   outline: none;
-  transition: border 0.3s ease;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+  background-color: #f8fdf9;
 }
 
 .email-input:focus {
   border-color: #2a4935;
-  box-shadow: 0 0 0 2px rgba(42, 73, 53, 0.1);
+  box-shadow: 0 0 0 3px rgba(42, 73, 53, 0.12);
 }
 
 .invite-button {
-  background-color: #2a4935;
+  background: linear-gradient(135deg, #5d8978, #476e60);
   color: white;
   border: none;
   padding: 10px 18px;
   border-radius: 8px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
 }
 
 .invite-button:hover {
-  background-color: #1f3627;
+  background: linear-gradient(135deg, #1f3627, #16271c);
+  transform: scale(1.03);
 }
 
 .summary-grid {
@@ -3845,7 +4639,7 @@ Z
   background-color: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(68, 68, 68, 0.351);
 }
 
 .summary-header {
@@ -3872,7 +4666,7 @@ Z
   padding: 30px 40px;
   max-width: 800px;
   margin: 40px auto;
-  box-shadow: 0 8px 20px rgba(106, 156, 137, 0.06);
+  box-shadow: 0 2px 4px #93b9a9;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -3915,13 +4709,11 @@ Z
 
 .input-group {
   display: flex;
-  flex-wrap: wrap;
   gap: 12px;
   align-items: center;
 }
 
 .setting-input {
-  min-width: 150px;
   flex: 1;
   padding: 10px 14px;
   border: 1px solid #c8d8d0;
@@ -3973,7 +4765,7 @@ Z
   border-left: 4px solid #d32f2f;
   border-radius: 10px;
   margin-top: 40px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(65, 64, 64, 0.693);
 }
 
 .danger-title {
@@ -4063,9 +4855,13 @@ Z
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 30px;
-  border-bottom: 1px solid #2e4e38;
-  background-color: #7dc887;  
+  padding: 40px;
+  border-bottom: 3px solid #4f7a6b;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .modal-header h3 {
@@ -4073,20 +4869,30 @@ Z
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
+  font-size: 1.6rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .modal-header .close-button {
   position: absolute;
-  right: 10px;
+  right: 15px;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   cursor: pointer;
-  color: black;
+  color: #e4f9e4;
+  transition: color 0.3s ease;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.modal-header .close-button:hover {
+  color: #f9fefc;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .modal-body {
   padding: 20px;
-  background-color: #e4f9e4; 
+  background-color: #eefbf5; 
 }
 
 .modal-overlay2 {
@@ -4151,7 +4957,7 @@ Z
 .form-group input {
   width: 96%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #c0c0c0;
   border-radius: 4px;
 }
 
@@ -4179,7 +4985,7 @@ button.cancel-button{
 }
 
 .submit-button {
-  background: linear-gradient(135deg, #3f6b55, #2a4935);
+  background: linear-gradient(135deg, #82b1a3, #699b88, #476e60);
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -4271,8 +5077,8 @@ button.cancel-button{
   flex-wrap: wrap;
   }
   .contribution-form {
-    max-width: 700px;
-    margin-bottom: 0;
-  }
+      max-width: 700px;
+      margin-bottom: 0;
+    }
 }
 </style>
