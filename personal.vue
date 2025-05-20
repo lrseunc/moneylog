@@ -1757,7 +1757,7 @@ async deleteExpenseHandler(expense) {
 
 .voice-btn {
   background: #f0f0f0;
-  border: none;
+  border: 1px solid  #6a9c89;;
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -2056,7 +2056,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-add, .btn-edit {
-  background: linear-gradient(135deg, #598272, #3d6b4d);
+  background: linear-gradient(135deg, #70a18d, #487061);
   color: white;
   border: none;
   padding: 10px 12px;
@@ -2698,7 +2698,7 @@ select[disabled] {
  
 .btn {
   padding: 12px 50px;
-  background: linear-gradient(135deg, #598272, #3d6b4d); /* subtle gradient */
+  background: linear-gradient(135deg, #70a18d, #487061);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   color: #ffffff;
   border: none;
