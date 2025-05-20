@@ -106,7 +106,7 @@
         <div class="chart">
           <pie-chart :data="chartData" 
           :options="chartOptions" 
-          style="height: 200px;"/>
+          style="height: 280px;"/>
         
           <!-- Year and Month Picker for PDF generation -->
           <div class="download">
@@ -1182,12 +1182,13 @@ button:hover {
   width: 380px;
   padding: 20px;
   box-sizing: border-box;
-  background: #ecfcec;
+  background: #f5fff5;
   border-radius: 20px;
-  max-height: 600px;
+  max-height: 700px;
   border: 2px solid #336333;
   margin-bottom: 10px;
 }
+
 .download {
   display: flex;
   flex-wrap: wrap;
