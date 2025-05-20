@@ -1462,6 +1462,10 @@ updateExpenseView() {
       padding-left: 20px;
       padding-right: 20px;
     }
+
+    .profile-container {
+      margin: 70px 10px 20px 20px;
+    }
   
     .profile-container p {
       font-size: 15px;
@@ -1500,7 +1504,7 @@ updateExpenseView() {
     }
   }
   
-  @media screen and (max-width: 480px) {
+  @media screen and (max-width: 520px) {
     .content-wrapper {
       padding-top: 60px;
       padding-left: 5px;
