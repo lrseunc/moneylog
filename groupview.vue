@@ -183,6 +183,7 @@
   </div>
   </div>
   </div>
+  
   <div class="contribution-section">
     <h3>
     <i class="fas fa-hand-holding-usd"></i> 
@@ -992,7 +993,7 @@ offset: function(context) {
 <style scoped>
 .contribution-section {
   width: 95%;
-  margin: 10px auto 20px auto;
+  margin: 5px auto 20px auto;
   height: 250px;
   padding: 10px;
   box-sizing: border-box;
