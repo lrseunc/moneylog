@@ -316,7 +316,7 @@
   margin-top: 20px;
   background: linear-gradient(135deg, #d1d1d1 0%, #5a5a5a 100%);
   color: white;
-  border: none;
+  border: 1px solid #5a5a5a6d;
   padding: 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -418,8 +418,9 @@
    
    .card-header {
      padding: 30px;
-     background: linear-gradient(135deg, #baffec 0%, #afffa7 100%);
+     background: linear-gradient(135deg, #c1fff9 0%,#b0ffe2, #a7ffc0 100%);
      color: white;
+     border-bottom: 1px solid #c3c2c2;
      text-align: center;
    }
    
@@ -427,7 +428,7 @@
      margin: 0 0 20px;
      font-size: 28px;
      font-weight: 600;
-     color: #2c3e50;
+     color: #2c5040;
    }
    
    .tabs {
@@ -442,7 +443,7 @@
      flex: 1;
      padding: 12px;
      background: transparent;
-     border: none;
+     border: #2c3e5018 1px solid;
      color: #2c3e50;
      font-size: 16px;
      font-weight: 500;
@@ -455,9 +456,10 @@
    }
    .tab-button.active {
   background: rgba(255, 255, 255, 0.386);
+  border: #2c3e5018 1px solid;
   backdrop-filter: blur(6px);
   font-weight: 700;
-  box-shadow: inset 0 -2px 0 rgba(255,255,255,0.6);
+  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.848);
 }
    
    .tab-button:hover {
@@ -523,9 +525,9 @@
    .submit-button {
      width: 100%;
      padding: 14px;
-     background: linear-gradient(135deg, #8bffdc 0%, #4caf7a 100%);
+     background: linear-gradient(135deg, #abffe6 0%, #4caf95 100%);
      color: white;
-     border: none;
+     border: 1px solid #4caf9587;
      border-radius: 8px;
      font-size: 17px;
      font-weight: 700;
