@@ -3114,7 +3114,7 @@ showError(message) {
 
 .photo-wrapper {
   position: relative;
-  max-height: 400px;
+  height: 200px;
   overflow: hidden;
 }
 
