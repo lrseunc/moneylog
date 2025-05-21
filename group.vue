@@ -254,6 +254,12 @@
         Contribution
       </button>
       <button 
+    @click="activeTab = 'photos'" 
+    :class="{ active: activeTab === 'photos' }"
+  >
+    Photos
+  </button>
+      <button 
         v-if="isAdmin"
         @click="activeTab = 'settings'" 
         :class="{ active: activeTab === 'settings' }"
@@ -295,7 +301,7 @@
         </div>
                 
         <div v-else class="expenses-container">
-          <h3><i class="fas fa-coins"></i> <span>YOUR <br> EXPENSES</span></h3> 
+          <h3><i class="fas fa-coins"></i> <span>GROUP EXPENSES</span></h3> 
           <div class="expenses-section"> 
             <div class="expenses-table"> 
               <table>
@@ -486,6 +492,53 @@
         </div>
       </div>
 
+      <div v-if="activeTab === 'photos'" class="photos-tab">
+  <div class="photos-header">
+    <h2><i class="fas fa-images"></i> Group Photos</h2>
+    <button @click="showUploadModal = true" class="upload-photo-btn">
+      <i class="fas fa-plus"></i> Upload Photo
+    </button>
+  </div>
+
+  <div v-if="photosLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading photos...</p>
+  </div>
+
+  <div v-else-if="photosError" class="error-container">
+    <p class="error-message">{{ photosError }}</p>
+    <button @click="fetchPhotos" class="retry-button">Retry</button>
+  </div>
+
+  <div v-else-if="groupPhotos.length === 0" class="no-photos">
+    <p>No photos uploaded yet. Be the first to share!</p>
+  </div>
+
+  <div v-else class="photos-grid">
+    <div v-for="photo in groupPhotos" :key="photo.id" class="photo-card">
+      <div class="photo-wrapper">
+        <img :src="photo.image_url" :alt="photo.description || 'Group photo'" @click="openPhotoModal(photo)" class="photo-thumbnail" @error="handleImageError">
+        <div class="photo-actions" v-if="canDeletePhoto(photo)">
+          <button @click.stop="confirmDeletePhoto(photo)" class="delete-photo-btn">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div class="photo-meta">
+        <p class="photo-description">{{ photo.description || 'No description' }}</p>
+        <div class="photo-footer">
+          <span class="photo-uploader">
+            <i class="fas fa-user"></i> {{ photo.username }}
+          </span>
+          <span class="photo-date">
+            <i class="far fa-calendar-alt"></i> {{ formatDate(photo.created_at) }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
       <!-- Settings Tab (Admin Only) -->
       <div v-if="activeTab === 'settings' && isAdmin" class="settings-tab">
         <div class="settings-section">
@@ -535,6 +588,65 @@
       </div>
     </div>
   </div>
+
+  <!-- Photo Upload Modal -->
+<div v-if="showUploadModal" class="modal-overlay5">
+  <div class="modal-content5 photo-upload-modal">
+    <div class="modal-header5">
+      <h3>Upload Photo</h3>
+      <button @click="closePhotoModal" class="close-button">&times;</button>
+    </div>
+    <div class="modal-body5">
+      <form @submit.prevent="uploadPhoto">
+        <div class="form-group5">
+          <label>Photo Description</label>
+          <textarea v-model="newPhoto.description" placeholder="Add a description (optional)"></textarea>
+        </div>
+        
+        <div class="form-group5">
+          <label>Select Photo</label>
+          <input 
+            type="file" 
+            ref="photoInput"
+            accept="image/*"
+            @change="handleFileSelect"
+            required
+          >
+          <div v-if="photoPreview" class="photo-preview">
+            <img :src="photoPreview" alt="Preview">
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" @click="closePhotoModal" class="cancel-button">Cancel</button>
+          <button type="submit" class="submit-button" :disabled="uploadingPhoto">
+            <span v-if="uploadingPhoto">
+              <i class="fas fa-spinner fa-spin"></i> Uploading...
+            </span>
+            <span v-else>Upload Photo</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Photo View Modal -->
+<div v-if="viewingPhoto" class="modal-overlay5 photo-view-modal">
+  <div class="modal-content5">
+    <div class="modal-header5">
+      <h3>Photo Details</h3>
+      <button @click="viewingPhoto = null" class="close-button">&times;</button>
+    </div>
+    <div class="modal-body5">
+      <img :src="viewingPhoto.image_url" :alt="viewingPhoto.description">
+      <div class="photo-details">
+        <p v-if="viewingPhoto.description" class="photo-description">{{ viewingPhoto.description }}</p>
+        <p class="photo-meta">Uploaded by {{ viewingPhoto.username }} on {{ formatDate(viewingPhoto.created_at) }}</p>
+      </div>
+    </div>
+  </div>
+</div>
 
     <!-- Add Expense Modal -->
     <div v-if="showAddExpenseModal" class="modal-overlay">
@@ -789,6 +901,8 @@ export default {
   },
   data() {
     return {
+      pendingInvites: [],
+      showInvitesModal: false,
       memberContributions: [],
       contributions: [],
       paidAmountInput: 0,
@@ -825,6 +939,17 @@ export default {
       showConfirmationModal: false,
       promoteSuccess: '',
       showEditContributionModal: false,
+      photoPreview: null,
+    uploadingPhoto: false,
+    groupPhotos: [],
+    photosLoading: false,
+    photosError: null,
+      showUploadModal: false,
+    viewingPhoto: null,
+    newPhoto: {
+      description: '',
+      file: null
+    },
       editingContribution: {
       id: null,
       amount: 0,
@@ -864,32 +989,19 @@ export default {
       voiceInputActiveField: null,
       voiceCommandsHelp: [
       {
-        example: "'Set category [category name]'",
-        description: "Select expense category (Food, Bill, Transportation, etc.)"
+        example: "Click the voice recorder button before speaking, and click it again when you're done."
       },
       {
-    example: "'Set custom type [description]'",
-    description: "Enter a custom expense category description"
+        example: "Say the category (e.g., 'Transportation')."
   },
       {
-        example: "'Add item [item name]'",
-        description: "Enter item name (e.g., 'taxi fare', 'dinner')"
+        example: "If you selected 'Other', say your custom category (e.g., 'Pet supplies')."
       },
       {
-        example: "'Set amount [amount]'",
-        description: "Enter amount (e.g., 'fifty', 'one hundred twenty pesos')"
+        example: "Say the item name (e.g., 'Jeepney')." 
       },
       {
-        example: "'Submit'",
-        description: "Save the expense"
-      },
-      {
-        example: "'Stop'",
-        description: "Stop voice input"
-      },
-      {
-        example: "'Help'",
-        description: "Show this help dialog"
+        example: "Say the item price (e.g., 'eleven pesos')."
       }
     ]
     };
@@ -997,8 +1109,12 @@ export default {
     async handler(newGroupId) {
       if (newGroupId && newGroupId !== this.localGroupId) {
         this.localGroupId = newGroupId;
-        await this.fetchContributionHistory();
-        await this.initializeGroupData();
+        this.groupPhotos = [];
+        await Promise.all([
+          this.fetchContributionHistory(),
+          this.initializeGroupData(),
+          this.fetchPhotos() 
+        ]);
         this.originalName = this.group.group_name || '';
       }
     }
@@ -1051,7 +1167,14 @@ export default {
     if (this.groupId) {
       this.isBudgetLoading = true;
       try {
-        const res = await this.$axios.get(`/api/grp_expenses/groups/${this.groupId}/budget`);
+        const res = await this.$axios.get(
+        `/api/grp_expenses/groups/${this.groupId}/budget`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
         if (res.data && res.data.amount != null) {
           this.calculateRemaining();
         }
@@ -1071,6 +1194,10 @@ export default {
     return;
   }
 
+  if (this.$route.query.invite_check) {
+    await this.checkPendingInvites();
+  }
+
   console.log('User authenticated, checking groupId');
   if (!this.localGroupId) {
       console.error('Missing groupId parameter');
@@ -1081,6 +1208,8 @@ export default {
   try {
     console.log('Initializing group data...');
     await this.initializeGroupData();
+    console.log('Fetching photos...');
+    await this.fetchPhotos();
     console.log('Fetching contributions...');
     await this.fetchContributions();
     console.log('Fetching contribution history...');
@@ -1136,6 +1265,22 @@ export default {
       'updateGroupBudget'
     //  'fetchAvailableBudgets'
     ]),
+
+    handleImageError(event) {
+  console.error('Image failed to load:', event.target.src);
+  // Try to reconstruct the correct URL if it failed
+  const incorrectUrl = event.target.src;
+  if (incorrectUrl.includes('localhost:5173/uploads')) {
+    const correctUrl = incorrectUrl.replace(
+      'http://localhost:5173/uploads', 
+      `${this.$axios.defaults.baseURL}/uploads`
+    );
+    event.target.src = correctUrl;
+  } else {
+    event.target.style.display = 'none';
+  }
+},
+
     closeAlert() {
     this.showBudgetExceededAlert = false;
   },
@@ -1369,9 +1514,9 @@ export default {
     return 'Entertainment';
   }
   
-  if (['Hotel', 'Dorm', 'Rent', 'pharmacy', 'medicine', 'drug', 'insurance', 'dental', 'optical', 'checkup', 'clinic'].some(term => lowerSpoken.includes(term))) {
-    return 'Healthcare';
-  }
+  if (['hotel', 'dorm', 'rent', 'apartment', 'hostel', 'motel', 'airbnb', 'lodging', 'accommodation', 'lease'].some(term => lowerSpoken.includes(term))) {
+  return 'Accommodation';
+}
   
   if (['shop', 'clothes', 'gift', 'mall', 'store', 'amazon', 'online', 'purchase', 'buy', 'market'].some(term => lowerSpoken.includes(term))) {
     return 'Shopping';
@@ -1485,6 +1630,262 @@ export default {
     dangerouslyUseHTMLString: true
   });
 },
+
+async fetchPhotos() {
+    this.photosLoading = true;
+    this.photosError = null;
+    try {
+      const response = await this.$axios.get(
+        `/api/grp_expenses/groups/${this.localGroupId}/photos`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+      this.groupPhotos = response.data.photos.map(photo => {
+        return {
+          ...photo,
+          image_url: photo.image_url.startsWith('/uploads')
+            ? `${this.$axios.defaults.baseURL}${photo.image_url}`
+            : photo.image_url,
+          // Ensure these fields exist
+          username: photo.username || 'Unknown',
+          created_at: photo.created_at || new Date().toISOString()
+        };
+      });
+      }
+    } catch (err) {
+      this.photosError = err.response?.data?.message || 'Failed to load photos';
+      console.error('Error fetching photos:', err);
+    } finally {
+      this.photosLoading = false;
+    }
+  },
+  
+  handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type and size
+      if (!file.type.match('image.*')) {
+      this.showError('Please select an image file (JPEG, PNG, etc.)');
+      return;
+    }
+      
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        this.showError('Image size should be less than 5MB');
+        return;
+      }
+      
+      this.newPhoto.file = file;
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.photoPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  },
+  
+  async uploadPhoto() {
+  if (!this.newPhoto.file) {
+    this.showError('Please select a photo to upload');
+    return;
+  }
+  
+  this.uploadingPhoto = true;
+  
+  try {
+    const formData = new FormData();
+    formData.append('photo', this.newPhoto.file);
+    formData.append('description', this.newPhoto.description);
+    
+    const response = await this.$axios.post(
+      `/api/grp_expenses/groups/${this.localGroupId}/photos`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const photo = {
+        ...response.data.photo,
+        username: user.username, // Make sure username is included
+        created_at: new Date().toISOString(), // Ensure date is included
+        image_url: response.data.photo.image_url.startsWith('/uploads') 
+          ? `${this.$axios.defaults.baseURL}${response.data.photo.image_url}`
+          : response.data.photo.image_url
+      };
+
+      this.groupPhotos.unshift(photo);
+      this.$forceUpdate();
+      this.showSuccess('Photo uploaded successfully!');
+      this.closePhotoModal();
+    } else {
+      this.showError(response.data.message || 'Upload failed');
+    }
+  } catch (err) {
+    console.error('Error uploading photo:', err);
+    let errorMsg = 'Failed to upload photo';
+    if (err.response) {
+      errorMsg = err.response.data.message || errorMsg;
+      console.error('Server response:', err.response.data);
+    }
+    this.showError(errorMsg);
+  } finally {
+    this.uploadingPhoto = false;
+  }
+},
+  
+  openPhotoModal(photo) {
+    this.viewingPhoto = photo;
+  },
+  
+  closePhotoModal() {
+    this.showUploadModal = false;
+    this.newPhoto = { description: '', file: null };
+    this.photoPreview = null;
+    if (this.$refs.photoInput) {
+      this.$refs.photoInput.value = '';
+    }
+  },
+  
+  confirmDeletePhoto(photo) {
+    this.confirmationTitle = 'Delete Photo';
+    this.confirmationMessage = 'Are you sure you want to delete this photo?';
+    this.confirmAction = async () => {
+    try {
+      await this.deletePhoto(photo.id);
+      this.showSuccess('Photo deleted successfully!');
+    } catch (err) {
+      this.showError(err.response?.data?.message || 'Failed to delete photo');
+    } finally {
+      this.showConfirmationModal = false; // Always close the modal
+    }
+  };
+  this.showConfirmationModal = true;
+},
+  
+  async deletePhoto(photoId) {
+    try {
+      await this.$axios.delete(
+        `/api/grp_expenses/groups/${this.localGroupId}/photos/${photoId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      this.groupPhotos = this.groupPhotos.filter(p => p.id !== photoId);
+    } catch (err) {
+      console.error('Error deleting photo:', err);
+      throw err;
+    }
+  },
+  
+  canDeletePhoto(photo) {
+    const user = JSON.parse(localStorage.getItem('user'));
+    return this.isAdmin || photo.user_id === user.id;
+  },
+
+async checkPendingInvites() {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const response = await this.$axios.get(
+        '/api/grp_expenses/pending-invites',
+        {
+          params: { email: user.email },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data.success && response.data.data.length > 0) {
+        this.showInvitesModal = true;
+        this.pendingInvites = response.data.data;
+      }
+    } catch (err) {
+      console.error('Failed to check pending invites:', err);
+    }
+  },
+  
+async fetchPendingInvites() {
+  try {
+    const response = await this.$axios.get(
+      '/api/grp_expenses/pending-invites',
+      {
+        params: { email: this.user.email },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      this.pendingInvites = response.data.data;
+    }
+  } catch (err) {
+    console.error('Failed to fetch pending invites:', err);
+  }
+},
+
+showInvites() {
+  this.fetchPendingInvites();
+  this.showInvitesModal = true;
+},
+
+async acceptInvite(invite) {
+    try {
+      const response = await this.$axios.get(
+        `/api/grp_expenses/accept-invite?token=${invite.token}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        this.$notify({
+          title: 'Success',
+          message: `You've joined ${invite.group_name}`,
+          type: 'success'
+        });
+        
+        // Refresh the invites list
+        await this.fetchPendingInvites();
+        
+        // If we're not currently in a group, navigate to the new group
+        if (!this.localGroupId) {
+          this.$router.push({
+            name: 'Group',
+            params: { groupId: invite.group_id }
+          });
+        }
+        // If we're already in this group, refresh the data
+        else if (this.localGroupId === invite.group_id) {
+          await this.fetchGroupData();
+        }
+        
+        this.showInvitesModal = false;
+      }
+    } catch (err) {
+      this.$notify({
+        title: 'Error',
+        message: err.response?.data?.message || 'Failed to accept invitation',
+        type: 'error'
+      });
+    }
+  },
 
 async updateMemberContributions() {
   if (!this.members || !this.contributions) {
@@ -1607,7 +2008,7 @@ showError(message) {
     this.editingExpense = { ...expense };
     
     // Check if this is a custom category (not in our standard list)
-    const standardCategories = ['Food', 'Bill', 'Transportation', 'Entertainment', 'Healthcare', 'Shopping'];
+    const standardCategories = ['Food', 'Bill', 'Transportation', 'Entertainment', 'Accomodation', 'Shopping'];
     if (!standardCategories.includes(expense.expense_type)) {
       this.editingExpense.expense_type = 'Other';
       this.customExpenseType = expense.expense_type;
@@ -2356,27 +2757,47 @@ showError(message) {
     },
     
     async sendInvite() {
+  this.inviteError = '';
+  this.inviteSuccess = '';
+  
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!this.inviteEmail || !emailRegex.test(this.inviteEmail)) {
+    this.inviteError = 'Please enter a valid email address';
+    return;
+  }
+
+  try {
+    const response = await this.$axios.post(
+      `/api/grp_expenses/groups/${this.localGroupId}/members/invite`,
+      { 
+        email: this.inviteEmail 
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+
+     if (response.data.success) {
+      this.inviteSuccess = 'Invitation sent successfully!';
+      this.inviteEmail = '';
+      
+      setTimeout(() => {
+        this.inviteSuccess = '';
+      }, 3000);
+    }
+  } catch (err) {
+    console.error('Error sending invite:', err);
+    this.inviteError = err.response?.data?.message || 'Failed to send invitation';
+    
+    setTimeout(() => {
       this.inviteError = '';
-      this.inviteSuccess = '';
-      
-      if (!this.inviteEmail) {
-        this.inviteError = 'Please enter an email address';
-        return;
-      }
-      
-      try {
-        await this.sendInvite({ 
-      groupId: this.localGroupId,  
-      email: this.inviteEmail 
-    })
-        this.inviteSuccess = 'Invitation sent successfully!';
-        this.inviteEmail = '';
-        setTimeout(() => this.inviteSuccess = '', 3000);
-      } catch (err) {
-        console.error('Error sending invite:', err);
-        this.inviteError = err.response?.data?.message || 'Failed to send invitation';
-      }
-    },
+    }, 5000);
+  }
+},
+
     
     confirmRemoveMember(member) {
       this.confirmationTitle = 'Remove Member';
@@ -2523,16 +2944,309 @@ showError(message) {
   this.contributions = [];
   this.memberContributions = [];
   this.paidAmountInput = 0;
+  this.groupPhotos = []; 
   
   this.localGroupId = to.params.groupId; 
-  this.initializeGroupData()
-    .finally(() => next());
+
+  Promise.all([
+    this.initializeGroupData(),
+    this.fetchPhotos() // Explicitly fetch photos
+  ]).finally(() => next());
 }
 }
 };
 </script>
 
 <style scoped>
+/* Photos Tab Styles */
+.modal-overlay5 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content5 {
+  background-color: #f9fefc;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  margin: 60px auto;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-height: 90vh; 
+}
+
+.modal-header5 {
+  padding: 35px 30px; 
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 3px solid #4f7a6b;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.modal-header5 h3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 1.6rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.modal-header5 .close-button {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #e4f9e4;
+  transition: color 0.3s ease;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.modal-header5 .close-button:hover {
+  color: #f9fefc;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.modal-body5 {
+  padding: 16px 20px;
+  background-color: #f7feff; 
+}
+
+.form-group5 {
+  margin-bottom: 15px;
+}
+
+.form-group5 label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #4f7a6b;
+}
+
+.form-group5 textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+  height: 60px;
+}
+
+.form-group5 input {
+  width: 96%;
+  padding: 8px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+}
+.photos-tab {
+  padding: 20px;
+}
+
+.photos-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: -40px;
+  margin-bottom: 20px;
+}
+
+.upload-photo-btn {
+  background: linear-gradient(135deg, #8fc4b4, #72aa95, #548271);
+  color: white;
+  font-size: 16px;
+  border: 1px solid #477759;
+  padding: 13px 30px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.3s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.307);
+}
+
+.upload-photo-btn:hover {
+  background: linear-gradient(135deg, #b9e1d5, #a7d2c6, #8bbcae);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.photo-card {
+  border: 2px solid #4f7a6b;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.photo-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.photo-wrapper {
+  position: relative;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.photo-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.photo-thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.photo-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.photo-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.delete-photo-btn {
+  background-color: rgba(255,0,0,0.7);
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-meta {
+  padding: 10px;
+  background: #f5fbf9; /* very light greenish background */
+  border: 1px solid #d6e8e2;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+
+.photo-description {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  font-size: 14px;
+  color: #4f7a6b;
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+
+.photo-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+
+.photo-uploader, .photo-date {
+  font-size: 13px;
+  color: #666;
+  margin: 3px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Photo Upload Modal */
+.photo-upload-modal {
+  max-width: 500px;
+}
+
+.photo-preview {
+  margin-top: 10px;
+  max-height: 300px;
+  overflow: hidden;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 100px;
+  object-fit: contain;
+}
+
+/* Photo View Modal */
+.photo-view-modal .modal-content5 {
+  max-width: 60%;
+  max-height: 90vh;
+}
+
+.photo-view-modal img {
+  max-width: 100%;
+  max-height: 50vh;
+  display: block;
+  margin: 0 auto;
+}
+
+.photo-details {
+  margin-top: 15px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #eef9f5, #d9f2ea); 
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  color: #3c4c47;
+  transition: background 0.3s ease;
+}
+
+.no-photos {
+  text-align: center;
+  padding: 40px;
+  color: #4f7a6b;
+  background: linear-gradient(135deg, #f0f9f6, #e5f3ef);
+  border: 2px dashed #8bbcae;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-style: italic;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: background 0.3s ease;
+}
+
 /* Voice Input Styles */
 .voice-help-modal {
   position: fixed;
@@ -3092,6 +3806,7 @@ showError(message) {
   box-shadow: none;
   background: none;
   color: #2c3e50;
+  border: none;
   margin-bottom: 10px;
 }
 
@@ -3148,7 +3863,7 @@ showError(message) {
   max-width: 500px;
   margin: 0 auto 40px;
   padding: 20px;
-  background: #f4f9fa;
+  background: #f4faf7;
   border: 2px solid #2e4e38;
   border-radius: 8px;
 }
@@ -3325,7 +4040,7 @@ showError(message) {
 }
 
 .promote-success-message {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
   color: white;
   padding: 12px 20px;
   border-radius: 4px;
@@ -3334,25 +4049,35 @@ showError(message) {
   align-items: center;
   justify-content: space-between;
   animation: fadeIn 0.3s ease-in-out;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .promote-success-message i.fa-check-circle {
   margin-right: 10px;
+  font-size: 1.2em;
+  color: #e6f4ef; /* light soft contrast to blend well with the background */
 }
 
 .close-message {
   background: none;
   border: none;
-  color: white;
+  color: #ffffff;
   cursor: pointer;
   padding: 0;
   margin-left: 15px;
+  font-size: 1.2em;
+  transition: color 0.2s ease;
+}
+
+.close-message:hover {
+  color: #d0eae0; /* soft hover effect */
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
+  from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 .role-badge.admin {
   background-color: #ffeb3b;
   color: #000;
@@ -3466,7 +4191,7 @@ showError(message) {
 }
 
 .budget-container {
-  background-color: #e8f8f1;
+  background-color: #f4faf7;
   padding: 20px;
   border-radius: 15px;
   border: 2px solid #2e4e38;
@@ -3492,7 +4217,7 @@ showError(message) {
   margin: 0;
 }
 .btn-add, .btn-edit {
-      background: linear-gradient(135deg, #739c90, #5d8978, #476e60);
+  background: linear-gradient(135deg, #739c90, #5d8978, #476e60);
   color: white;
   border: none;
   padding: 8px 12px;
@@ -3512,7 +4237,7 @@ showError(message) {
   transition: margin-top 0.3s ease;
   margin-top: 0;
   flex-wrap: wrap;
-  background: rgba(32, 28, 28, 0.05);
+  background: rgba(115, 115, 115, 0.096);
   padding: 20px;
   border-radius: 10px;
 }
@@ -3638,9 +4363,10 @@ h2 {
   margin-bottom: 20px;
   font-size: 1.5rem;
   font-weight: 700;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.222);
   letter-spacing: 0.5px;
-  background: linear-gradient(to right, #8bbcae, #6a9c89);
+  border: 1px solid #497d5b;
+  background: linear-gradient(135deg, #8fc4b4, #72aa95, #548271);
 }
 
 .budget-form {
@@ -3800,11 +4526,10 @@ h2 {
     font-size: 1.5rem;
     font-weight: 600;
     color: #2a4935;
-    background: linear-gradient(90deg, #d0ebdd, #f0f7f3);
     padding: 25px 0px 25px 0px;
-    border-radius: 12px;
+    border-radius: 8px;
     animation: fadeSlideIn 0.6s ease-out;
-    box-shadow: 0 2px 5px #93b9a9e1;
+    box-shadow: 0 2px 8px #00000059;
     text-transform: uppercase;
     text-align: center;
     letter-spacing: 1px;
@@ -4345,11 +5070,11 @@ Z
 }
 
 .add-expense-button {
-  background: linear-gradient(135deg, #89c1b1, #5c8f7d);
-  color: white;
+  background: linear-gradient(to right, #e5faed, #bde8d3);
+  color: #2a4935;
   border: none;
   padding: 20px 20px;
-  border-radius: 6px;
+  border-radius: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -4358,7 +5083,7 @@ Z
   transition: all 0.3s ease;
   font-size: 1rem;
   font-weight: 600;
-  box-shadow: 0 2px 5px #93b9a9c2;
+  box-shadow: 0 2px 5px #a6a9a8c2;
   margin: 0 auto;
   width: 100%;
   position: relative;
@@ -4469,7 +5194,7 @@ Z
   justify-content: space-between;
   align-items: center;
   padding: 15px;
-  background: linear-gradient(135deg, #ecfdf3, #cfe7d9); 
+  background: linear-gradient(135deg, #f2fef7, #e5faee); 
   border-radius: 12px; 
   box-shadow: 0 2px 5px #93b9a9;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
@@ -4548,10 +5273,10 @@ Z
 .invite-section {
   margin-top: 30px;
   padding: 25px 20px;
-  background: linear-gradient(135deg, #e8f8f1, #d8f3e7); /* slightly richer gradient */
+  background: linear-gradient(135deg, #f5fdfa, #dff5eb); /* slightly richer gradient */
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.348);
-  border-left: 5px solid #598272;
+  border-left: 5px solid #5d8978;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -4850,6 +5575,7 @@ Z
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
+
 .modal-header {
   position: relative;
   display: flex;
