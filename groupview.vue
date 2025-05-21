@@ -999,7 +999,7 @@ offset: function(context) {
   box-sizing: border-box;
   overflow-y: auto;
   background: linear-gradient(145deg, #f9fbfa, #e8f0ed);
-  border: 2px solid #2ca58d;
+  border: 2px solid #336333;
   border-radius: 18px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -1431,8 +1431,8 @@ offset: function(context) {
 
 .summary-box {
   padding: 2px 16px 6px 16px; 
-  background-color: rgb(216, 251, 238);
-  border: 2px solid #6A9C89;
+  background-color: rgb(221, 255, 245);
+  border: 2px solid #336333;
   border-radius: 20px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   font-size: 16px;
@@ -1550,7 +1550,7 @@ button:hover {
 }
 
 .con-container {
-  background: rgb(225, 251, 234);
+  background: rgb(245, 255, 251);
   border: 2px solid #336333;
   border-radius: 20px;
   width: 70%; 
@@ -1629,7 +1629,7 @@ button:hover {
 }
 
 .expense-table tr.alternate-row {
-  background-color: #eefff9;
+  background-color: #eafffab5;
 }
 
 .total-amount {
