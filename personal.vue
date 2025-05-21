@@ -3497,7 +3497,7 @@ th {
 } 
 
 tr {
-  background-color: #f3fffb;
+  background-color: #f9fffd;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
   margin-bottom: 15px; 
   transition: all 0.2s ease;
