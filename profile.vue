@@ -1375,7 +1375,7 @@ updateExpenseView() {
 }
 
 .modal-card.logout-modal {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #96cbbc, #61927f);
   padding: 0.8rem 2rem 2rem 2rem; /* top right bottom left */
   border-radius: 1.25rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
@@ -1411,11 +1411,11 @@ updateExpenseView() {
 }
 
 .btn.cancel {
-  background: #cccccc;
+  background: #dddddd;
   color: #333;
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
-  border: none;
+  border: 1px solid #898888;
   font-weight: bold;
   cursor: pointer;
   transition: background 0.3s ease;
@@ -1428,7 +1428,7 @@ updateExpenseView() {
 .btn.confirm {
   background: linear-gradient(135deg, #6a9c89, #4f7a6b);
   color: white;
-  border: none;
+  border: 1px solid #4f7a6b;
   padding: 0.6rem 1.4rem;
   font-weight: 600;
   border-radius: 8px;
