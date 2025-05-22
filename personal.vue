@@ -14,11 +14,11 @@
         <span style="margin-left: 25px;">
     Are you sure you want to delete {{ expenseToDelete?.item_name }} ({{ formatPHP(expenseToDelete?.item_price) }})?
   </span>
-      <button @click="confirmDeleteExpense" class="btn-confirm">Yes</button>
-      <button @click="cancelDeleteExpense" class="btn-cancel1">No</button>
+      <button @click="confirmDeleteExpense" class="btn-cancel1">Yes</button>
+      <button @click="cancelDeleteExpense" class="btn-confirm">No</button>
     </div>
 
-    <div v-if="error" class="error-message">
+    <div v-if="error" class="error-message">btn-cancel1
         An error occurred: {{ error }}
         <button @click="resetError">Try Again</button>
     </div>
@@ -111,24 +111,13 @@
 
             <div class="form-group1">
               <label>Budget Amount (₱):</label>
-              <div class="input-with-voice">
-                <input 
-      type="text" 
-      v-model="budgetAmount" 
-      placeholder="Enter budget amount"
-      @input="formatCurrencyInput"
-      required
-    >
-    <button 
-      @click="toggleVoiceInput('budgetAmount')" 
-      class="voice-btn" 
-      :class="{ active: isListening && voiceInputActiveField === 'budgetAmount' }"
-      title="Set budget amount by voice"
-    >
-      <i class="fas fa-microphone"></i>
-    </button>
-  </div>
-  </div>
+              <input 
+                type="text" 
+                v-model="budgetAmount" 
+                placeholder="Enter budget amount"
+                @input="formatCurrencyInput"
+              required>
+            </div>
             <div class="form-actions">
               <button @click="isEditingBudget ? updateBudget() : submitAddBudget()" class="btn-save">
                 {{ isEditingBudget ? 'Update' : 'Save' }} Budget
@@ -342,7 +331,7 @@
       <div class="photo-wrapper">
         <img :src="photo.image_url" :alt="photo.description || 'Group photo'" @click="openPhotoModal(photo)" class="photo-thumbnail" @error="handleImageError">
         <div class="photo-actions">
-          <button @click.stop="confirmDeletePhoto(photo)" class="delete-photo-btn">
+          <button @click.stop="confirmDeletePhoto(photo)" class="delete-photo-btn" v-if="canDeletePhoto(photo)">
             <i class="fas fa-trash"></i>
           </button>
         </div>
@@ -361,14 +350,25 @@
     </div>
   </div>
 
-    <div v-if="showUploadModal" class="modal-overlay5">
+  <div v-if="showUploadModal" class="modal-overlay5">
   <div class="modal-content5 photo-upload-modal">
     <div class="modal-header5">
-      <h3>Upload Photo</h3>
+      <h3>{{ uploadSuccess ? 'Upload Complete' : 'Upload Photo' }}</h3>
       <button @click="closePhotoModal" class="close-button">&times;</button>
     </div>
     <div class="modal-body5">
-      <form @submit.prevent="uploadPhoto">
+      <div v-if="uploadSuccess" class="upload-success-message">
+        <div class="success-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <p>Photo uploaded successfully!</p>
+        <p>You may now close this modal.</p>
+        <button @click="closePhotoModal" class="success-close-button">
+          Close
+        </button>
+      </div>
+
+      <form v-else @submit.prevent="uploadPhoto">
         <div class="form-group5">
           <label>Photo Description</label>
           <textarea v-model="newPhoto.description" placeholder="Add a description (optional)"></textarea>
@@ -389,8 +389,8 @@
         </div>
         
         <div class="form-actions">
-          <button type="button" @click="closePhotoModal" class="cancel-button">Cancel</button>
-          <button type="submit" class="submit-button" :disabled="uploadingPhoto">
+          <button type="button" @click="closePhotoModal" class="cancel-button1">Cancel</button>
+          <button type="submit" class="submit-button1" :disabled="uploadingPhoto">
             <span v-if="uploadingPhoto">
               <i class="fas fa-spinner fa-spin"></i> Uploading...
             </span>
@@ -401,6 +401,22 @@
     </div>
   </div>
 </div>
+
+<div v-if="showConfirmationModal" class="modal-overlay2">
+      <div class="modal-content2 confirmation-modal">
+        <div class="modal-header2">
+          <h3>{{ confirmationTitle }}</h3>
+          <button @click="closeModal" class="close-button2">&times;</button>
+        </div>
+        <div class="modal-body2">
+          <p>{{ confirmationMessage }}</p>
+          <div class="confirmation-actions">
+            <button @click="closeModal" class="cancel-button">Cancel</button>
+            <button @click="confirmAction" class="confirm-button">Confirm</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
 <!-- Photo View Modal -->
 <div v-if="viewingPhoto" class="modal-overlay5 photo-view-modal">
@@ -417,23 +433,6 @@
       </div>
     </div>
   </div>
-
-      <!-- Confirmation Modal -->
-      <div v-if="showConfirmationModal" class="modal-overlay2">
-  <div class="modal-content2">
-    <div class="modal-header2">
-      <h3>{{ confirmationTitle }}</h3>
-      <button @click="showConfirmationModal = false" class="close-button2">&times;</button>
-    </div>
-    <div class="modal-body2">
-      <p>{{ confirmationMessage }}</p>
-    </div>
-    <div class="modal-footer5">
-      <button @click="showConfirmationModal = false" class="btn-cancel2">Cancel</button>
-      <button @click="executeConfirmAction" class="btn-confirm2">Confirm</button>
-    </div>
-  </div>
-</div>
 </div>
 </div>
 </div>
@@ -444,23 +443,29 @@
  <script>
  import Navigation from "./navigation.vue";
  import { mapState, mapGetters, mapActions } from 'vuex'
- import { computed } from 'vue';
  
  export default {
    name: 'Personal',
    components: { Navigation },
    data() {
      return {
-          // ... your existing data properties ...
-    showConfirmationModal: false,
+      uploadSuccess: false,
+      showConfirmationModal: false,
     confirmationTitle: '',
     confirmationMessage: '',
     confirmAction: null,
+      photoModal: {
+      show: false,
+      photo: { description: '', file: null },
+      preview: null,
+      uploading: false
+    },
       isAdmin: false,
       activeView: 'expenses', 
       photoFile: null,
       photoPreview: null,
     uploadingPhoto: false,
+    groupPhotos: [],
     photosLoading: false,
     photosError: null,
       showUploadModal: false,
@@ -525,31 +530,16 @@
       },
       {
         example: "Say the item price (e.g., 'eleven pesos')."
-      },
-      {
-          example: "Say an amount to set budget (e.g., '1000 pesos' or 'two thousand pesos')"
-        },
-        {
-          example: "Say 'Delete budget, add [amount] pesos' to replace your budget"
-        }
+      }
     ]
      };
    },
    
    
    computed: {
-    ...mapState(['addExpenses', 'personalBudgets', 'usdExchangeRate', 'personalPhotos']),
-  ...mapGetters(['getTotalAmount', 'getCurrentBudget', 'getAvailableMonths', 'getAddExpenseMonthYear', 'getPersonalPhotos', 'getPhotoUploadStatus']),
+    ...mapState(['addExpenses', 'personalBudgets', 'usdExchangeRate']),
+  ...mapGetters(['getTotalAmount', 'getCurrentBudget', 'getAvailableMonths', 'getAddExpenseMonthYear']),
   
-  groupPhotos() {
-    return this.getPersonalPhotos.map(photo => ({
-      ...photo,
-      image_url: photo.image_url.startsWith('/uploads')
-        ? `${this.$axios.defaults.baseURL}${photo.image_url}`
-        : photo.image_url
-    }));
-  },
-
   hasBudgetForCurrentMonth() {
     return this.currentMonthBudget?.budget_amount > 0;
   },
@@ -674,7 +664,7 @@ currentBudget() {
     await this.setSelectedMonthYear(currentMonthYear);
 
     this.setupVoiceRecognition();
-    await this.fetchPersonalPhotos();
+    this.fetchPhotos();
     
     await Promise.all([
       this.fetchExchangeRate(),
@@ -702,9 +692,12 @@ currentBudget() {
   }
 },
 
-  beforeUnmount() {
-    clearInterval(this.monthCheckInterval);
-  },
+beforeUnmount() {
+  clearInterval(this.monthCheckInterval);
+  if (this.photoPreview) {
+    URL.revokeObjectURL(this.photoPreview);
+  }
+},
 
 
   watch: {
@@ -743,31 +736,26 @@ currentBudget() {
        'addBudget',
        'updateBudget',
        'setSelectedMonthYear' ,
-       'fetchAddExpenses',
-       'fetchPersonalPhotos',
-       'uploadPersonalPhoto',
-       'deletePersonalPhoto'
+       'fetchAddExpenses' 
      ]),
-     
-     executeConfirmAction() {
-    if (this.confirmAction && typeof this.confirmAction === 'function') {
-      this.confirmAction();
-    }
-    this.showConfirmationModal = false;
-  },
 
      handleImageError(event) {
-  console.error('Image failed to load:', event.target.src);
-  // Try to reconstruct the correct URL if it failed
   const incorrectUrl = event.target.src;
-  if (incorrectUrl.includes('localhost:5173/uploads')) {
+  console.error('Image failed to load:', incorrectUrl);
+  
+  // Try to reconstruct the correct URL
+  if (incorrectUrl.includes('localhost:5173')) {
+    // Replace the frontend URL with backend URL
+    const backendBase = this.$axios.defaults.baseURL;
     const correctUrl = incorrectUrl.replace(
-      'http://localhost:5173/uploads', 
-      `${this.$axios.defaults.baseURL}/uploads`
+      'http://localhost:5173', 
+      backendBase
     );
     event.target.src = correctUrl;
   } else {
+    // Fallback - hide the broken image
     event.target.style.display = 'none';
+    event.target.parentElement?.classList?.add('broken-image');
   }
 },
 
@@ -799,36 +787,36 @@ currentBudget() {
   },
 
   setupVoiceRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    console.warn('Speech recognition not supported in this browser');
-    this.$toast?.warning?.("Voice commands not supported in your browser");
-    return;
-  }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('Speech recognition not supported in this browser');
+      return;
+    }
 
-  try {
     this.recognition = new SpeechRecognition();
-    this.recognition.continuous = false; // User clicks again to restart
-    this.recognition.interimResults = false; // Only final result matters
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
     this.recognition.maxAlternatives = 1;
 
     this.recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
+      
       this.voiceInput = transcript;
       this.processVoiceCommand(transcript);
-      this.$toast?.success?.(`Recognized: ${transcript}`);
     };
 
     this.recognition.onerror = (event) => {
       console.error('Speech recognition error', event.error);
-      if (event.error !== 'no-speech') {
-        this.$toast?.error?.(`Voice recognition error: ${event.error}`);
-      }
       this.isListening = false;
     };
 
     this.recognition.onend = () => {
-      this.isListening = false;
+      if (this.isListening) {
+        this.recognition.start();
+      }
     };
 
     // Define voice commands
@@ -852,127 +840,45 @@ currentBudget() {
       {
         pattern: /^help|what can i say/i,
         action: () => this.showVoiceHelp()
-      },
-      {
-        pattern: /^(\d+(?:\.\d+)?)\s*pesos?$/i,
-        action: (match) => this.handleBudgetAmountInput(match[1])
-      },
-      {
-        pattern: /^(delete budget, add|replace budget with|change budget to)\s*(\d+(?:\.\d+)?)\s*pesos?$/i,
-        action: (match) => this.handleEditBudgetCommand(match[2])
-      },
-      {
-        pattern: /^(set|add) budget (.*)/i,
-        action: (match) => this.handleBudgetAmountInput(match[2])
       }
     ];
+  },
 
-  } catch (err) {
-    console.error('Failed to initialize speech recognition:', err);
-    this.$toast?.error?.("Failed to initialize voice recognition");
-  }
-},
-
-toggleVoiceInput(field = null) {
-  if (!this.recognition) {
-    this.$toast.error("Voice recognition is not available in your browser");
-    return;
-  }
-
-  if (this.isListening) {
-    // Stop listening
-    try {
-      this.recognition.stop();
-      this.isListening = false;
-      this.voiceInputActiveField = null;
-      this.$toast.info("Stopped listening");
-    } catch (err) {
-      console.error('Error stopping recognition:', err);
+  startVoiceInput(field = null) {
+    if (!this.recognition) {
+      alert('Voice recognition is not supported in your browser');
+      return;
     }
-  } else {
-    // Start listening
+
+    this.stopVoiceInput();
+
+    this.voiceInputActiveField = field;
+    this.isListening = true;
+    this.voiceInput = ''; 
     try {
-      this.voiceInputActiveField = field;
-      this.isListening = true;
-      this.voiceInput = '';
       this.recognition.start();
       this.$toast.info("Listening... Speak now");
     } catch (err) {
       console.error('Speech recognition error:', err);
+      this.$toast.error("Error starting voice recognition");
       this.isListening = false;
-      this.$toast.error("Error starting voice recognition. Please try again.");
     }
-  }
-},
+  },
 
-  handleBudgetAmountInput(amountText) {
-      const amount = this.extractNumber(amountText);
-      if (amount !== null) {
-        if (!this.hasExistingBudget) {
-          this.showAddBudgetForm();
-        } else {
-          this.showEditBudgetForm();
+  stopVoiceInput() {
+    if (this.isListening) {
+      this.isListening = false;
+      this.voiceInputActiveField = null;
+      try {
+        if (this.recognition) {
+          this.recognition.stop();
         }
-        this.budgetAmount = amount;
-        this.$toast.success(`Budget amount set to: ${this.formatPHP(amount)}`);
-      } else {
-        this.$toast.error("Couldn't understand the amount. Please try again.");
+      } catch (err) {
+        console.error('Error stopping recognition:', err);
       }
-    },
-
-    // New method to handle edit budget command
-    handleEditBudgetCommand(amountText) {
-      const amount = this.extractNumber(amountText);
-      if (amount !== null) {
-        if (this.hasExistingBudget) {
-          this.showEditBudgetForm();
-          this.budgetAmount = amount;
-          this.$toast.success(`Budget will be updated to: ${this.formatPHP(amount)}`);
-        } else {
-          this.showAddBudgetForm();
-          this.budgetAmount = amount;
-          this.$toast.success(`Budget will be set to: ${this.formatPHP(amount)}`);
-        }
-      } else {
-        this.$toast.error("Couldn't understand the amount. Please try again.");
-      }
-    },
-
-    startVoiceInput(field = null) {
-  if (!this.recognition) {
-    this.$toast?.error?.("Voice recognition is not available in your browser");
-    return;
-  }
-
-  // Stop any ongoing recognition safely
-  this.stopVoiceInput?.();
-
-  this.voiceInputActiveField = field;
-  this.isListening = true;
-  this.voiceInput = '';
-
-  try {
-    this.recognition.start();
-    this.$toast?.info?.("Listening... Speak now");
-  } catch (err) {
-    console.error('Speech recognition error:', err);
-    this.isListening = false;
-    this.$toast?.error?.("Error starting voice recognition. Please try again.");
-  }
-},
-
-stopVoiceInput() {
-  if (this.isListening && this.recognition) {
-    try {
-      this.recognition.stop();
-    } catch (err) {
-      console.error('Error stopping recognition:', err);
+      this.$toast.info("Stopped listening");
     }
-    this.isListening = false;
-    this.voiceInputActiveField = null;
-    this.$toast?.info?.("Stopped listening");
-  }
-},
+  },
 
   processVoiceCommand(transcript) {
     if (!this.isListening) return;
@@ -1192,135 +1098,204 @@ stopVoiceInput() {
     this.photosLoading = true;
     this.photosError = null;
     try {
-      const result = await this.fetchPersonalPhotos();
-      if (!result.success) {
-        throw new Error(result.message);
+      const response = await this.$axios.get(
+        `/api/photos`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
+      
+      if (response.data && response.data.success === 1) {
+      this.groupPhotos = response.data.photos.map(photo => {
+        return {
+          ...photo,
+          image_url: photo.image_url.startsWith('/uploads')
+            ? `${this.$axios.defaults.baseURL}${photo.image_url}`
+            : photo.image_url,
+          // Ensure these fields exist
+          username: photo.username || 'Unknown',
+          created_at: photo.created_at || new Date().toISOString()
+        };
+      });
       }
-    } catch (error) {
-      this.photosError = error.message;
-      console.error('Photo fetch error:', error);
+    } catch (err) {
+      this.photosError = err.response?.data?.message || 'Failed to load photos';
+      console.error('Error fetching photos:', err);
     } finally {
       this.photosLoading = false;
     }
   },
 
-  handleFileSelect(event) {
+handleFileSelect(event) {
     const file = event.target.files[0];
-    if (!file) return;
-
-    // Validate file
-    if (!file.type.match('image.*')) {
+    if (file) {
+      // Validate file type and size
+      if (!file.type.match('image.*')) {
       this.$toast.error('Please select an image file (JPEG, PNG, etc.)');
       return;
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      this.$toast.error('Image size should be less than 5MB');
-      return;
+      
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        this.$toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      this.newPhoto.file = file;
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.photoPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
-
-    this.newPhoto.file = file;
-    
-    // Create preview
-    const reader = new FileReader();
-  reader.onload = (e) => {
-    this.photoPreview = e.target.result;
-  };
-  reader.onerror = () => {
-    this.$toast.error('Failed to read image file');
-    this.photoPreview = null;
-  };
-  reader.readAsDataURL(file);
-},
+  },
     
   async uploadPhoto() {
-    if (!this.newPhoto.file) {
-      this.$toast.error('Please select a photo to upload');
-      return;
-    }
+  if (!this.newPhoto.file) {
+    this.$toast.error('Please select a photo to upload');
+    return;
+  }
+  
+  this.uploadingPhoto = true;
 
+  try {
     const formData = new FormData();
     formData.append('photo', this.newPhoto.file);
     formData.append('description', this.newPhoto.description);
+    
+    const response = await this.$axios.post(
+      `/api/photos`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
 
-    this.uploadingPhoto = true; 
+    if (response.data && response.data.success === 1) {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const photo = {
+        id: response.data.photo.id,
+        image_url: response.data.photo.image_url,
+        description: response.data.photo.description,
+        user_id: user.id,
+        username: user.username,
+        created_at: new Date().toISOString()
+      };
 
-    try {
-      const result = await this.uploadPersonalPhoto(formData);
-      console.log('upload result:', result);
-      
-      if (result && result.success) {
-        this.$toast.success('Photo uploaded successfully!');
-
-        this.closePhotoModal();
-        await this.fetchPersonalPhotos();
-      } else {
-      const errorMessage = result?.message || 'Failed to upload photo';
-      this.$toast.error(errorMessage);
+      this.groupPhotos.unshift(photo);
+      this.uploadSuccess = true; 
+      this.$nextTick(() => {
+        this.showUploadModal = false;
+      });
+    } else {
+      throw new Error(response.data?.message || 'Upload failed');
     }
-  } catch (error) {
-    console.error('Upload error:', error);
-    this.$toast.error(error.message || 'Failed to upload photo');
+  } catch (err) {
+    console.error('Upload error:', err);
+    this.$toast.error(err.response?.data?.message || err.message || 'Failed to upload photo');
   } finally {
     this.uploadingPhoto = false;
   }
 },
-    
+
+resetPhotoForm() {
+  this.newPhoto = { description: '', file: null };
+  this.photoPreview = null;
+  if (this.$refs.photoInput) {
+    this.$refs.photoInput.value = '';
+  }
+  this.showUploadModal = false; // Explicitly close the modal
+},
+
 openPhotoModal(photo) {
     this.viewingPhoto = photo;
   },
   
   closePhotoModal() {
   this.showUploadModal = false;
+  this.uploadSuccess = false;
   this.newPhoto = { description: '', file: null };
   this.photoPreview = null;
-  this.uploadingPhoto = false;
-  
-  // Reset file input
   if (this.$refs.photoInput) {
     this.$refs.photoInput.value = '';
   }
 },
 
 confirmDeletePhoto(photo) {
+  if (!this.canDeletePhoto(photo)) {
+    this.$toast.error("You don't have permission to delete this photo");
+    return;
+  }
+  
   this.confirmationTitle = 'Delete Photo';
   this.confirmationMessage = 'Are you sure you want to delete this photo?';
   this.confirmAction = async () => {
     try {
-      await this.deletePhoto(photo.id);
-      this.$toast.success('Photo deleted successfully!');
-      this.fetchPhotos(); // Refresh the photo list
+      const response = await this.deletePhoto(photo.id);
+      
+      // Check for success in the response
+      if (response && response.success) {
+        this.$toast.success(response.message || 'Photo deleted successfully!');
+        this.groupPhotos = this.groupPhotos.filter(p => p.id !== photo.id);
+      } else {
+        throw new Error(response?.message || 'Photo deletion failed');
+      }
     } catch (err) {
-      this.$toast.error(err.response?.data?.message || 'Failed to delete photo');
+      console.error('Delete error:', err);
+      this.$toast.error(err.response?.data?.message || err.message || 'Failed to delete photo');
+    } finally {
+      this.showConfirmationModal = false;
     }
   };
   this.showConfirmationModal = true;
 },
+
+  closeModal() {
+    this.showConfirmationModal = false;
+    this.confirmAction = null;
+  },
+
+  beforeDestroy() {
+  if (this.photoPreview) {
+    URL.revokeObjectURL(this.photoPreview);
+  }
+  this.showUploadModal = false; 
+},
     
 async deletePhoto(photoId) {
-    try {
-      const result = await this.deletePersonalPhoto(photoId);
-      if (result.success) {
-        this.$toast.success('Photo deleted successfully!');
-      } else {
-        throw new Error(result.message);
+  try {
+    const response = await this.$axios.delete(`/api/photos/${photoId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
       }
-    } catch (error) {
-      this.$toast.error(error.message || 'Failed to delete photo');
-      console.error('Delete error:', error);
+    });
+        
+    if (response && response.data && response.data.success) {
+      this.groupPhotos = this.groupPhotos.filter(p => p.id !== photoId);
+      return response.data; // Return the successful response
     }
-  },
+    
+    // If response structure is unexpected
+    throw new Error(response?.data?.message || 'Unexpected response from server');
+    
+  } catch (err) {
+    console.error('Error deleting photo:', err);
+    throw err; // Re-throw the error to be caught by the calling function
+  }
+},
 
   canDeletePhoto(photo) {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user || !photo) return false;
-  
-  // For debugging - you can remove this later
   console.log('Current User ID:', user.id, 'Photo User ID:', photo.user_id);
-  
-  // Compare the current user's ID with the photo's user_id
   return user.id === photo.user_id;
 },
+
 
   async changeMonth(date) {
     const newMonthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -1966,8 +1941,32 @@ async deleteExpenseHandler(expense) {
 
  
 <style scoped>
-/* Photos Tab Styles */
+.upload-success-message {
+  text-align: center;
+  padding: 20px;
+}
 
+.success-icon {
+  font-size: 60px;
+  color: #4CAF50;
+  margin-bottom: 20px;
+}
+
+.success-close-button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+.success-close-button:hover {
+  background-color: #45a049;
+}
 .modal-overlay2 {
   position: fixed;
   top: 0;
@@ -1999,41 +1998,38 @@ async deleteExpenseHandler(expense) {
   font-size: 1.2rem;
 }
 
-.modal-header2 .close-button2 {
+.close-button2 {
   position: absolute;
   right: 15px;
-  background: none;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
   border: none;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   cursor: pointer;
-  color: #e4f9e4;
-  transition: color 0.3s ease;
-  padding: 5px;
-  border-radius: 50%;
+  color: #1a1a1a; /* deep black for a sleek look */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.8;
 }
 
-.modal-header2 .close-button2:hover {
-  color: #f9fefc;
-  background: rgba(255, 255, 255, 0.15);
+.close-button2:hover {
+  transform: translateY(-50%) scale(1.2);
+  opacity: 1;
 }
+
+
 .modal-body2 {
   padding: 20px;
   background-color: #ffebee;
 }
 
-.modal-content2 {
-  background-color: #f9fefc;
-  border-radius: 16px;
-  max-width: 500px;
-  width: 100%;
-  margin: 100px auto;
-  padding: 0;
-  font-family: 'Poppins', sans-serif;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+.confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-
+/* Photos Tab Styles */
 .modal-overlay5 {
   position: fixed;
   top: 0;
@@ -2045,23 +2041,40 @@ async deleteExpenseHandler(expense) {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  /* Add these transition properties */
+  transition: opacity 0.3s ease;
+}
+
+/* Add this new class for hidden state */
+.modal-overlay5.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .modal-content5 {
   background-color: #f9fefc;
   border-radius: 16px;
+  width: 90%;
   max-width: 500px;
-  width: 100%;
-  margin: 60px auto;
+  margin: 20px auto;
   padding: 0;
   font-family: 'Poppins', sans-serif;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  max-height: 90vh; 
+  max-height: 90vh;
+  /* Add transform for smooth animation */
+  transform: translateY(0);
+  transition: transform 0.3s ease;
 }
 
+/* Add this for hidden modal content */
+.modal-overlay5.hidden .modal-content5 {
+  transform: translateY(-20px);
+}
+
+
 .modal-header5 {
-  padding: 30px 30px;
+  padding: 40px 30px;
   position: relative;
   display: flex;
   justify-content: center;
@@ -2082,7 +2095,6 @@ async deleteExpenseHandler(expense) {
   font-size: 1.6rem;
   text-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-
 .modal-header5 .close-button {
   position: absolute;
   right: 15px;
@@ -2103,7 +2115,7 @@ async deleteExpenseHandler(expense) {
 
 .modal-body5 {
   padding: 16px 20px;
-  background-color: #eefbf5; 
+  background-color: #f6fffe; 
 }
 
 .form-group5 {
@@ -2142,6 +2154,7 @@ async deleteExpenseHandler(expense) {
 
 .photos-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   margin-top: -40px;
@@ -2175,7 +2188,7 @@ async deleteExpenseHandler(expense) {
 
 
 .upload-photo-btn {
-  background: linear-gradient(135deg, #a7d2c6, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #92c8b7, #79b2a2, #609480);
   color: white;
   font-size: 15px;
   border: none;
@@ -2516,6 +2529,86 @@ async deleteExpenseHandler(expense) {
   float: right;
 }
 
+
+.submit-button1, .cancel-button1 {
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.submit-button1 {
+  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  color: white;
+  box-shadow: 0 2px 5px rgba(106, 156, 137, 0.4);
+}
+
+.submit-button1:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
+  box-shadow: 0 4px 10px rgba(74, 109, 92, 0.6);
+}
+
+.cancel-button1 {
+  background: linear-gradient(to bottom, #5e5e5e, #3f3f3f); /* dark gray gradient */
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cancel-button1:hover {
+  background: linear-gradient(to bottom, #4a4a4a, #2f2f2f); /* slightly darker on hover */
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.cancel-button, .confirm-button {
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.cancel-button {
+  background: linear-gradient(to bottom, #5e5e5e, #3f3f3f); /* dark gray gradient */
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.cancel-button:hover {
+  background: linear-gradient(to bottom, #4a4a4a, #2f2f2f); /* slightly darker on hover */
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.confirm-button {
+  background: linear-gradient(135deg, #e57373, #d32f2f, #b71c1c);
+  color: white;
+  box-shadow: 0 2px 5px rgba(211, 47, 47, 0.4);
+}
+
+.cancel-button:hover {
+  background: linear-gradient(to bottom, #4a4a4a, #2f2f2f); /* slightly darker on hover */
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.confirm-button:hover{
+  background: linear-gradient(135deg, #d32f2f, #b71c1c, #7f0000);
+  box-shadow: 0 4px 10px rgba(123, 0, 0, 0.6);
+}
+
 /* .photo-viewer-modal {
    Your existing modal styles 
 }*/
@@ -2535,9 +2628,9 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-confirm {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
-  color: white;
-  box-shadow: 0 2px 5px rgba(106, 156, 137, 0.4);
+  background: linear-gradient(to bottom, #5e5e5e, #3f3f3f); /* dark gray gradient */
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .btn-cancel1 {
   background: linear-gradient(135deg, #e57373, #d32f2f, #b71c1c);
@@ -2546,8 +2639,9 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-confirm:hover {
-  background: linear-gradient(135deg, #7aa98c, #5e8873, #486858);
-  box-shadow: 0 4px 10px rgba(74, 109, 92, 0.6);
+  background: linear-gradient(to bottom, #4a4a4a, #2f2f2f); /* slightly darker on hover */
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .btn-cancel1:hover{
@@ -3037,7 +3131,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-add, .btn-edit {
-  background: linear-gradient(135deg, #70a18d, #487061);
+  background: linear-gradient(135deg, #7db39e, #5a8d7a);
   color: white;
   border: none;
   padding: 10px 12px;
@@ -3237,7 +3331,7 @@ async deleteExpenseHandler(expense) {
   border: 1px solid #ddd;
   cursor: pointer;
   transition: all 0.3s;
-  background: #4f7265;
+  background: #629985;
   color: white;
   padding: 6px 12px;
   border-radius: 5px;
@@ -3488,7 +3582,7 @@ th, td {
 } 
 
 th {
-  background-color: #6A9C89;
+  background-color: #6ea792;
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
@@ -3497,7 +3591,7 @@ th {
 } 
 
 tr {
-  background-color: #f9fffd;
+  background-color: #f1fffa;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
   margin-bottom: 15px; 
   transition: all 0.2s ease;
@@ -3578,7 +3672,7 @@ td, th {
      font-weight: bold;
      color: #333;
      padding: 20px;
-     background-color: #d0ebdd;
+     background-color: #d0ebe3;
      box-sizing: border-box;
      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
      text-align: center;
@@ -3624,7 +3718,7 @@ td, th {
   font-weight: 700;
   margin-bottom: 20px;
   margin-top: 0;
-  color: white;
+  color: #ffffff;
   background: linear-gradient(135deg, #9bd3c3, #6a9f8d);
   padding: 20px 16px;
   border-radius: 10px;
@@ -3636,7 +3730,7 @@ td, th {
 
 .form-group h3::before {
   content: "📝";
-  margin-right: 5px;
+  margin-right: 10px;
   font-size: 1.2rem;
   vertical-align: middle;
 }
@@ -3679,7 +3773,7 @@ select[disabled] {
  
 .btn {
   padding: 12px 50px;
-  background: linear-gradient(135deg, #70a18d, #487061);
+  background: linear-gradient(135deg, #84bea7, #629985);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   color: #ffffff;
   border: none;
@@ -3755,6 +3849,10 @@ select[disabled] {
   }
   .expenses-container {
     min-width: 340px;
+  }
+  .expense-photo-tabs {
+    justify-content: space-between;
+    gap: 10px;
   }
 }
 
