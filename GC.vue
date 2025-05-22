@@ -313,7 +313,7 @@
    <style scoped>
 .back-button {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 10px;
   background: linear-gradient(135deg, #d1d1d1 0%, #5a5a5a 100%);
   color: white;
   border: 1px solid #5a5a5a6d;
@@ -396,7 +396,7 @@
      background: #FFFDF6;
      padding: 20px;
      font-family: 'Poppins', sans-serif;
-     margin-top: 110px;
+     margin-top: 90px;
    }
  
    .centered-content {
@@ -417,7 +417,7 @@
    }
    
    .card-header {
-     padding: 30px;
+     padding: 25px;
      background: linear-gradient(135deg, #c1fff9 0%,#b0ffe2, #a7ffc0 100%);
      color: white;
      border-bottom: 1px solid #c3c2c2;
@@ -482,7 +482,7 @@
    
    .section-title {
      margin-top: 0;
-     margin-bottom: 25px;
+     margin-bottom: 20px;
      color: #2c3e50;
      font-size: 22px;
      font-weight: 600;
