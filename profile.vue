@@ -1009,7 +1009,7 @@ updateExpenseView() {
 
 .year-selector label {
   margin-right: 0.5rem;
-  color: #486858;
+  color: #26665e;
   font-weight: 500;
 }
 
@@ -1041,8 +1041,8 @@ updateExpenseView() {
   padding: 0.5rem 1rem;
   border: 2px solid #c5e0d5;
   border-radius: 6px;
-  background: #f7fbfa;
-  color: #4f7a6b;
+  background: #feffff;
+  color: #26665e;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1050,20 +1050,20 @@ updateExpenseView() {
 .month-buttons button:hover {
   background: #e2f2eb;
   border-color: #6a9c89;
-  color: #3f6557;
+  color: #26665e;
 }
 
 .month-buttons button.active {
-  background: #4f7a6b;
+  background: #26665e;
   color: #ffffff;
   border-color: #4f7a6b;
 }
 
 .summary-box {
-  background: linear-gradient(135deg, #f9fdfb, #ecf9f4, #def4ec);
+  background: linear-gradient(to right, #fdfffe, #f0fff9, #e6fff6);
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px #6a9c8954;
+  padding: 1.5rem;  
+  box-shadow: 0 2px 6px #6a9c8957;
   margin-bottom: 1.5rem;
   border: 1px solid #e0f1e9;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
@@ -1081,7 +1081,7 @@ updateExpenseView() {
   align-items: center;
   margin-bottom: 0.75rem;
   padding: 0.4rem 0.6rem;
-  color: #4f7a6b;
+  color: #26665e;
   font-size: 1rem;
   font-weight: 500;
   letter-spacing: 0.3px;
@@ -1100,7 +1100,7 @@ updateExpenseView() {
   margin-top: 1rem;
   padding-top: 0.5rem;
   border-top: 1px solid #e2eee7;
-  color: #486858;
+  color: #26665e;
 }
 
 .negative {
@@ -1143,18 +1143,18 @@ updateExpenseView() {
   display: flex;
   flex-direction: column;
   padding: 20px;
-  max-width: 1400px;
+  width: 85%;
   margin: 0 auto;
 }
   
 .profile-container {
-  background: linear-gradient(135deg, #f9fdfb, #ecf9f4, #def4ec);
-  padding: 30px;
+  background: linear-gradient(to right, #fdfffe, #ecf9f6, #def4f1);
+  padding: 15px;
   border-radius: 16px;
-  box-shadow: 0 4px 8px #6a9c8941;
-  margin: 100px 10px 20px 20px;
+  box-shadow: 0 4px 16px #6a9c8966;
+  margin: 120px 10px 30px 20px;
   position: relative;
-  border-left: 6px solid #6a9c89;
+  border-left: 4px solid #26665e;
   transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
@@ -1174,7 +1174,7 @@ updateExpenseView() {
 }
 .main-content {
   display: flex;
-  gap: 20px;
+  gap: 35px;
   padding: 0 20px;
   flex-wrap: wrap;
 }
@@ -1184,8 +1184,8 @@ updateExpenseView() {
   background: #ffffff;
   padding: 30px 30px 15px 30px; /* top right bottom left */
   border-radius: 12px;
-  box-shadow: 0 4px 8px #6a9c8941;
-  border-left: 6px solid #6a9c89;
+  box-shadow: 0 4px 10px #6a9c896b;
+  border-left: 4px solid #26665e;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
@@ -1196,7 +1196,7 @@ updateExpenseView() {
 
   .info strong {
   font-style: normal;
-  color: #4f7a6b;
+  color: #26665e;
 }
 
 .infos {
@@ -1215,8 +1215,8 @@ updateExpenseView() {
   background: #ffffff;
   padding: 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 8px #6a9c8941;
-  border-left: 6px solid #6a9c89;
+  box-shadow: 0 4px 10px #6a9c8941;
+  border-left: 4px solid #26665e;
   transition: box-shadow 0.3s ease;
   height: 100%;
   min-height: 410px;
@@ -1279,8 +1279,8 @@ updateExpenseView() {
   font-weight: 600;
   font-size:30px;
   text-align: center;
-  color: #4f7a6b;
-  border-bottom: 2px solid #8bbcae;
+  color: #26665e;
+  border-bottom: 2px solid #c4c4c4;
   padding-bottom: 6px;
   letter-spacing: 0.5px;
 }
@@ -1296,12 +1296,12 @@ updateExpenseView() {
 
 .year-selector label {
   font-weight: 500;
-  color: #4f7a6b;
+  color: #26665e;
 }
 
 .year-selector select {
   padding: 8px 12px;
-  border: 2px solid #6a9c89;
+  border: 2px solid #26665e;
   border-radius: 6px;
   font-family: "Poppins", sans-serif;
   font-size: 14px;
@@ -1314,18 +1314,18 @@ updateExpenseView() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
-  border-bottom: 2px solid #8bbcae;  
-  padding-bottom: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #c4c4c4;  
+  padding-bottom: 5px;
   position: relative;
 }
 
 .profile-header h2 {
   font-family: 'Poppins', sans-serif;
   font-size: 28px;
-  color: #4f7a6b;
+  color: #26665e;
   border-bottom: 0px solid white;
-  padding-bottom: 10px;
+  padding: 10px;
   margin: 0; 
   line-height: 1; 
   position: relative;
@@ -1333,7 +1333,7 @@ updateExpenseView() {
 }
 
 .logout-icon {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #9cd0c1, #305b4ada);
   border: 2px solid #6a9c89;
   cursor: pointer;
   padding: 10px;
@@ -1375,7 +1375,7 @@ updateExpenseView() {
 }
 
 .modal-card.logout-modal {
-  background: linear-gradient(135deg, #96cbbc, #61927f);
+  background: linear-gradient(135deg, #a6e7d9, #589486);
   padding: 0.8rem 2rem 2rem 2rem; /* top right bottom left */
   border-radius: 1.25rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
@@ -1415,7 +1415,7 @@ updateExpenseView() {
   color: #333;
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
-  border: 1px solid #898888;
+  border: 1px solid #959595;
   font-weight: bold;
   cursor: pointer;
   transition: background 0.3s ease;
@@ -1428,7 +1428,7 @@ updateExpenseView() {
 .btn.confirm {
   background: linear-gradient(135deg, #6a9c89, #4f7a6b);
   color: white;
-  border: 1px solid #4f7a6b;
+  border: 1px solid #598877;
   padding: 0.6rem 1.4rem;
   font-weight: 600;
   border-radius: 8px;
