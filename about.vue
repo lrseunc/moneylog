@@ -12,7 +12,7 @@
     <span class="highlight">spend with peace!</span></h2>
       <p class="description">
         Money Log is a budget tracker website focused on helping users manage and track their expenses. 
-        This enables individuals to record their expenses, categorize transactions, and follow their 
+        This program allows users to record their expenses, categorize transactions, and follow their 
         financial budget over time.
       </p>
       </div>
@@ -59,7 +59,7 @@
     <div class="register-container">
         <div class="register-card">
           <h3>Ready to take control of your finances?</h3>
-          <p>Join hundreds of users who are managing their money smarter</p>
+          <p>Join thousands of users who are managing their money smarter</p>
           <router-link to="/register" class="register-button">
             Get Started - It's Free
           </router-link>
@@ -68,7 +68,15 @@
           </div>
           </div>
           </div>
-  </div>
+
+          <div v-if="accountDeleted" class="deletion-popup">
+  <h3><i class="fas fa-check-circle"></i> Account Successfully Deleted</h3>
+  <p>We're sorry to see you go. You can always create a new account if you change your mind.</p>
+  <button class="ok-button" @click="accountDeleted = false">
+    <i class="fas fa-thumbs-up"></i> OK
+  </button>
+</div>
+</div>
 
 </template>
 
@@ -81,19 +89,28 @@ export default {
   components: { Navigation },
   data() {
     return {
-      // 👇 Add for protected data
       userInfo: null,
-      error: null
+      error: null,
+      accountDeleted: false
     };
   },
   mounted() {
-    // 🔐 Call protected API
-    fetch('http://localhost:3000/api/users/', { // Changed port from 8000 to 3000
-    headers: {
-      'Authorization': 'Bearer ' + localStorage.getItem('jsontoken'), // Changed from authToken
-      'Accept': 'application/json'
+    
+    if (this.$route.query.deleted) {
+      this.accountDeleted = true;
+      return;
     }
-  })
+    
+    // Only fetch user data if logged in
+    const token = localStorage.getItem('jsontoken');
+    if (!token) return;
+
+    fetch('http://localhost:3000/api/users/', {
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/json'
+      }
+    })
     .then(res => {
       if (!res.ok) throw new Error(res.statusText);
       return res.json();
@@ -105,7 +122,7 @@ export default {
       console.error("API Error:", err);
       this.error = "Failed to load user data";
     });
-},
+  }
 };
 </script>
 
@@ -116,13 +133,77 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  background-color: #f8faef;
+  background-color: rgb(250, 254, 255);
   overflow-x: hidden;
   overflow-y: auto;
 }
 </style>
 
 <style scoped>
+.deletion-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #cde5dc, #a6cfc1, #88b8a5);
+  border: 1px solid #a5d6a7;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  padding: 15px 30px 35px 30px;
+  width: 90%;
+  max-width: 450px;
+  border-radius: 16px;
+  text-align: center;
+  z-index: 1000;
+  font-family: 'Segoe UI', sans-serif;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.deletion-popup h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  color: #ffffff;
+}
+
+.deletion-popup p {
+  color: #f0f7f5;
+  font-size: 1rem;
+  margin-bottom: 25px;
+}
+
+.ok-button {
+  padding: 10px 24px;
+  background-color: #355f52; /* darker tone for contrast */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ok-button:hover {
+  background-color: #2a4d44;
+  transform: translateY(-1px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
 .register-container {
   max-width: 600px;
   margin: 30px auto 60px;
@@ -302,7 +383,7 @@ body {
   border-radius: 16px;
   padding: 25px; /* Reduced padding */
   transition: all 0.3s ease;
-  border-bottom: 6px solid rgb(1, 149, 1);
+  border-bottom: 6px solid #85A98F;
   box-shadow: 0 4px 12px rgba(50, 120, 70, 0.08);
   min-height: 220px; /* Smaller fixed height */
   display: flex;
@@ -519,7 +600,7 @@ body {
 .content {
   width: 50%;
   padding: 30px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 255, 240, 0.85));
+  background: white;
   border-radius: 24px;
   box-shadow: 0 15px 35px rgba(50, 120, 70, 0.12);
   backdrop-filter: blur(12px);
