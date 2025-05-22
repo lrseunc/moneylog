@@ -87,7 +87,7 @@ checkScreen(){
 <style scoped>
 header {
   position: fixed;
-  background: linear-gradient(135deg, #6A9C89 25%, #4E7E6A 60%, #3b6451 90%);
+  background: linear-gradient(135deg, #79b39d 25%, #598f79 60%, #41725f 90%);
   z-index: 99;
   width: 102%;
   transition: .5s ease all;
@@ -133,7 +133,7 @@ margin-left: 15px;
   font-size: 16px;
   position: relative;
   transition: color 0.3s ease;
-  color: #ffffff;
+  color:  rgb(255, 255, 250);
   text-decoration: none;
   padding-bottom: 2px;
   font-weight: 500;
@@ -189,7 +189,7 @@ position: absolute;
 top: 0;
 right: 24px;
 height: 100%;
-color: #ffffff;
+color: rgb(255, 255, 250);
 
 i {
   cursor: pointer;
@@ -214,7 +214,7 @@ transform: rotate(180deg);
   width: 100%;
   max-width: 200px;
   height: 100vh;
-  background: linear-gradient(180deg, #f6fdfd, #ebf4f0); /* soft complimentary background */
+  background: linear-gradient(180deg, #f9fffe, #e6efeb); /* soft complimentary background */
   margin-top: 2px;
   left: 0;
   padding: 20px 10px;
@@ -287,7 +287,7 @@ nav {
 
 .profile-trigger {
 font-size: 30px;
-color: #ffffff; 
+color:  rgb(255, 255, 250); 
 transition: color 0.3s ease, transform 0.3s ease;
 margin-left: 10px;
 cursor: pointer;
