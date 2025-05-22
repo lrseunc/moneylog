@@ -1,8 +1,6 @@
 //line 303//
         <div v-else class="expenses-container">
           <h3><i class="fas fa-coins"></i> <span>GROUP EXPENSES</span></h3> 
-          <div class="expenses-section"> 
-            <div class="expenses-table"> 
 
 
 <style scoped>
