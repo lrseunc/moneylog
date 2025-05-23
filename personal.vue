@@ -323,7 +323,7 @@
   </div>
 
   <div v-else-if="groupPhotos.length === 0" class="no-photos">
-    <p>No photos uploaded yet. Be the first to share!</p>
+    <p>No photos uploaded yet.</p>
   </div>
 
   <div v-else class="photos-grid">
@@ -339,9 +339,6 @@
       <div class="photo-meta">
         <p class="photo-description">{{ photo.description || 'No description' }}</p>
         <div class="photo-footer">
-          <span class="photo-uploader">
-            <i class="fas fa-user"></i> {{ photo.username }}
-          </span>
           <span class="photo-date">
             <i class="far fa-calendar-alt"></i> {{ formatDate(photo.created_at) }}
           </span>
@@ -357,18 +354,7 @@
       <button @click="closePhotoModal" class="close-button">&times;</button>
     </div>
     <div class="modal-body5">
-      <div v-if="uploadSuccess" class="upload-success-message">
-        <div class="success-icon">
-          <i class="fas fa-check-circle"></i>
-        </div>
-        <p>Photo uploaded successfully!</p>
-        <p>You may now close this modal.</p>
-        <button @click="closePhotoModal" class="success-close-button">
-          Close
-        </button>
-      </div>
-
-      <form v-else @submit.prevent="uploadPhoto">
+      <form @submit.prevent="uploadPhoto">
         <div class="form-group5">
           <label>Photo Description</label>
           <textarea v-model="newPhoto.description" placeholder="Add a description (optional)"></textarea>
@@ -423,13 +409,32 @@
   <div class="modal-content5">
     <div class="modal-header5">
       <h3>Photo Details</h3>
-      <button @click="viewingPhoto = null" class="close-button">&times;</button>
+      <button @click="viewingPhoto = null; resetZoom()" class="close-button">&times;</button>
     </div>
     <div class="modal-body5">
-      <img :src="viewingPhoto.image_url" :alt="viewingPhoto.description">
+      <div class="image-container" @wheel.prevent="handleWheelZoom">
+        <img 
+          :src="viewingPhoto.image_url" 
+          :alt="viewingPhoto.description"
+          :style="zoomStyle"
+          ref="zoomImage"
+          @mousedown="startDrag"
+        >
+      </div>
+      <div class="zoom-controls">
+        <button @click="zoomIn" class="zoom-btn" title="Zoom In">
+          <i class="fas fa-search-plus"></i>
+        </button>
+        <button @click="zoomOut" class="zoom-btn" title="Zoom Out">
+          <i class="fas fa-search-minus"></i>
+        </button>
+        <button @click="resetZoom" class="zoom-btn" title="Reset Zoom">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+      </div>
       <div class="photo-details">
         <p v-if="viewingPhoto.description" class="photo-description">{{ viewingPhoto.description }}</p>
-        <p class="photo-meta">Uploaded by {{ viewingPhoto.username }} on {{ formatDate(viewingPhoto.created_at) }}</p>
+        <p class="photo-meta">Uploaded on {{ formatDate(viewingPhoto.created_at) }}</p>
       </div>
     </div>
   </div>
@@ -449,6 +454,11 @@
    components: { Navigation },
    data() {
      return {
+      zoomLevel: 1,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    translate: { x: 0, y: 0 },
+    lastPosition: { x: 0, y: 0 },
       uploadSuccess: false,
       showConfirmationModal: false,
     confirmationTitle: '',
@@ -540,6 +550,13 @@
     ...mapState(['addExpenses', 'personalBudgets', 'usdExchangeRate']),
   ...mapGetters(['getTotalAmount', 'getCurrentBudget', 'getAvailableMonths', 'getAddExpenseMonthYear']),
   
+  zoomStyle() {
+    return {
+      transform: `scale(${this.zoomLevel}) translate(${this.translate.x}px, ${this.translate.y}px)`,
+      cursor: this.zoomLevel > 1 ? 'grab' : 'default'
+    };
+  },
+
   hasBudgetForCurrentMonth() {
     return this.currentMonthBudget?.budget_amount > 0;
   },
@@ -738,6 +755,58 @@ beforeUnmount() {
        'setSelectedMonthYear' ,
        'fetchAddExpenses' 
      ]),
+
+     zoomIn() {
+    if (this.zoomLevel < 3) {
+      this.zoomLevel += 0.1;
+    }
+  },
+  zoomOut() {
+    if (this.zoomLevel > 0.5) {
+      this.zoomLevel -= 0.1;
+    }
+  },
+  resetZoom() {
+    this.zoomLevel = 1;
+    this.translate = { x: 0, y: 0 };
+    this.lastPosition = { x: 0, y: 0 };
+  },
+  handleWheelZoom(e) {
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      this.zoomIn();
+    } else {
+      this.zoomOut();
+    }
+  },
+  startDrag(e) {
+    if (this.zoomLevel <= 1) return;
+    
+    this.isDragging = true;
+    this.dragStart = {
+      x: e.clientX - this.lastPosition.x,
+      y: e.clientY - this.lastPosition.y
+    };
+    document.addEventListener('mousemove', this.dragImage);
+    document.addEventListener('mouseup', this.stopDrag);
+  },
+  dragImage(e) {
+    if (!this.isDragging) return;
+    
+    this.translate = {
+      x: e.clientX - this.dragStart.x,
+      y: e.clientY - this.dragStart.y
+    };
+  },
+  stopDrag() {
+    this.isDragging = false;
+    this.lastPosition = {
+      x: this.translate.x,
+      y: this.translate.y
+    };
+    document.removeEventListener('mousemove', this.dragImage);
+    document.removeEventListener('mouseup', this.stopDrag);
+  },
 
      handleImageError(event) {
   const incorrectUrl = event.target.src;
@@ -1183,7 +1252,6 @@ handleFileSelect(event) {
         image_url: response.data.photo.image_url,
         description: response.data.photo.description,
         user_id: user.id,
-        username: user.username,
         created_at: new Date().toISOString()
       };
 
@@ -1941,6 +2009,47 @@ async deleteExpenseHandler(expense) {
 
  
 <style scoped>
+.image-container {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.image-container img {
+  max-width: 100%;
+  max-height: 100%;
+  transition: transform 0.2s ease;
+  transform-origin: center center;
+}
+
+.zoom-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.zoom-btn {
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.zoom-btn:hover {
+  background: #e0e0e0;
+}
+
+.photo-view-modal .modal-content5 {
+  max-width: 800px;
+}
 .upload-success-message {
   text-align: center;
   padding: 20px;
@@ -2074,7 +2183,7 @@ async deleteExpenseHandler(expense) {
 
 
 .modal-header5 {
-  padding: 40px 30px;
+  padding: 30px 30px;
   position: relative;
   display: flex;
   justify-content: center;
@@ -2115,7 +2224,7 @@ async deleteExpenseHandler(expense) {
 
 .modal-body5 {
   padding: 16px 20px;
-  background-color: #f6fffe; 
+  background-color: #eefbf5; 
 }
 
 .form-group5 {
@@ -2154,7 +2263,6 @@ async deleteExpenseHandler(expense) {
 
 .photos-header {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   margin-top: -40px;
@@ -2183,12 +2291,12 @@ async deleteExpenseHandler(expense) {
   align-items: center;
   gap: 8px;
   font-weight: 500;
-  font-style: italic; /* gentle style for description */
+  font-style: italic; 
 }
 
 
 .upload-photo-btn {
-  background: linear-gradient(135deg, #92c8b7, #79b2a2, #609480);
+  background: linear-gradient(135deg, #a7d2c6, #8bbcae, #6a9c93);
   color: white;
   font-size: 15px;
   border: none;
@@ -2367,9 +2475,9 @@ async deleteExpenseHandler(expense) {
   justify-content: center; /* Center horizontally */
   align-items: center;     /* Center vertically */
   border-bottom: 2px solid #d5d4d4;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   text-align: center;
-  gap: 400px; /* Optional: spacing between buttons */
+  gap: 300px; /* Optional: spacing between buttons */
 }
 
 
@@ -3092,20 +3200,24 @@ async deleteExpenseHandler(expense) {
   margin-top: 100px;
   display: flex;
   flex-wrap: nowrap; 
-  gap: 20px;
-  width: 100%;
+  gap: 35px;
+  width: 90%;
   flex-direction: row;
+  justify-content: center;     /* Centers items horizontally */
+  margin-left: auto;           /* Centers the container */
+  margin-right: auto;
 } 
 
 .budget-container {
-  flex: 1 1 30%;
+  flex: 1 1 350px;
   min-width: 150px;
-  background-color: #f4faf7;
+  height: auto;
+  max-height: 600px;
+  background: linear-gradient(135deg, #fdfffe, #ecf9f6, #def4f1);
   padding: 20px;
   border-radius: 15px;
-  border: 2px solid #2e4e38;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-  height: auto;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   color: #1e3a2b;
   font-size: 1.05rem;
 }
@@ -3131,19 +3243,17 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-add, .btn-edit {
-  background: linear-gradient(135deg, #7db39e, #5a8d7a);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f); /* Harmonized green gradient */
   color: white;
   border: none;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  max-width: 72px;
+  max-width: 80px;
   display: inline-block;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
-  
-  /* Creative additions */
   position: relative;
   overflow: hidden;
   font-weight: 600;
@@ -3159,7 +3269,7 @@ async deleteExpenseHandler(expense) {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.15), transparent 70%);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
   border-radius: 8px;
@@ -3171,20 +3281,18 @@ async deleteExpenseHandler(expense) {
   opacity: 1;
 }
 
-/* Hover effect */
 .btn-add:hover, .btn-edit:hover {
-  background: #e6e6e6;
-  color: #2a2a2a;
+  background: linear-gradient(135deg, #4f946c, #296e66);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
   font-weight: 700;
   letter-spacing: 0.1em;
 }
 
-
 .budget-display {
   flex-wrap: wrap;
-  background: rgba(32, 28, 28, 0.05);
+  background: rgba(91, 83, 83, 0.068);
   padding: 20px;
   border-radius: 10px;
 }
@@ -3328,14 +3436,26 @@ async deleteExpenseHandler(expense) {
 }
 
 .month-selector button {
-  border: 1px solid #ddd;
+  border: none;
   cursor: pointer;
-  transition: all 0.3s;
-  background: #629985;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #6fcf97, #3a9d8f);
   color: white;
-  padding: 6px 12px;
-  border-radius: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
   font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.month-selector button:hover {
+  background: linear-gradient(135deg, #63a485, #255a52);
+  color: white;
+  transform: translateY(-1.5px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 .expenses-summary {
@@ -3437,7 +3557,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .btn-save {
-  background-color: #4f7a6b;
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
   color: #fff;
   border: none;
 }
@@ -3505,33 +3625,34 @@ async deleteExpenseHandler(expense) {
   display: flex;
   flex-wrap: wrap;
   align-content: center;
-  flex: 1 1 65%;
+  flex: 1 1 60%;
   min-width: 280px;
-  background-color: #ecfaf3;
-  border: 2px solid #365c42;
+  background: linear-gradient(to right, #fdfffe, #eef8f6, #def4f1);
+  border: none;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.286);
   height: auto;
 }
 
 .expenses-container {
-  max-width: 100%; 
   margin: 0 auto;
   box-sizing: border-box;
-  width: 100%;
+  width: 90%;
+  max-height: 680px;
   background-color: white;
   padding: 20px;
   border-radius: 15px;
-  border: 2px solid #2e7d32;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.242);
   margin-top: 30px;
-  transition: box-shadow 0.3s ease;
   transition: all 0.3s ease;
 }
- 
+
 .expenses-container:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
 }
 
  .expense-form {
@@ -3562,8 +3683,9 @@ h3{
 }
 
 .expenses-table {
-  overflow-x: auto;
-  margin: 30px 0; 
+  max-height: 400px; 
+  overflow-y: auto;
+  margin: 0;
 }  
 
 table {
@@ -3582,16 +3704,16 @@ th, td {
 } 
 
 th {
-  background-color: #6ea792;
+  background: #ecf9f6;
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
-  color: white;
-  border-bottom: 3px solid #4f7a6b; 
+  color: #183d2a;
+  border-bottom: 3px solid #183d2a; 
 } 
 
 tr {
-  background-color: #f1fffa;
+  background-color: #fbfbfb;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
   margin-bottom: 15px; 
   transition: all 0.2s ease;
@@ -3608,6 +3730,7 @@ td, th {
   vertical-align: middle;
   white-space: nowrap;
 }
+
 .actions {
   display: flex;
   gap: 10px;
@@ -3629,7 +3752,7 @@ td, th {
 }
 
 .edit-btn {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
   color: white;
   box-shadow: 0 2px 5px rgba(106, 156, 137, 0.4);
 }
@@ -3671,21 +3794,21 @@ td, th {
      font-size: 20px;
      font-weight: bold;
      color: #333;
-     padding: 20px;
-     background-color: #d0ebe3;
+     padding: 15px;
+     background-color: #d7ebe9;
      box-sizing: border-box;
      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
      text-align: center;
      width: 100%;
      position: relative; 
-     bottom: 0;   
+     bottom: 0;  
      border-radius: 12px;
-     margin-top: -20px;
+     margin-top: 10px;
 }
 
 .form-title {
-  background: linear-gradient(to right, #8bbcae, #6a9c89);
-  color: #ffffff;
+  background: linear-gradient(to right, #c2f3e5, #9ae2c7);
+  color: #26665e;
   padding: 14px 20px;
   border-radius: 10px;
   text-align: center;
@@ -3705,7 +3828,7 @@ td, th {
 .form-group1 label,
 .form-group label {
   margin-bottom: 4px;
-  color: #4f7a6b;
+  color: #26665e;
   font-size: 1.1rem;
   font-weight: 600;
   text-align: left;
@@ -3716,14 +3839,13 @@ td, th {
 .form-group h3 {
   font-size: 1.35rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   margin-top: 0;
-  color: #ffffff;
-  background: linear-gradient(135deg, #9bd3c3, #6a9f8d);
-  padding: 20px 16px;
-  border-radius: 10px;
+  color: #183d2a;
+  background:none;
+  padding: 16px 16px;
+  border-bottom: 2px solid #183d2a;
   position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   letter-spacing: 0.5px;
 }
@@ -3731,7 +3853,7 @@ td, th {
 .form-group h3::before {
   content: "📝";
   margin-right: 10px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   vertical-align: middle;
 }
 
@@ -3744,7 +3866,7 @@ select {
   padding: 8px 10px;
   font-size: 0.95rem;
   border-radius: 8px;
-  border: 1.8px solid #6a9c89;
+  border: 1.8px solid #26665e;
   background-color: #f7f9f8;
   color: #333;
   box-sizing: border-box;
@@ -3773,8 +3895,8 @@ select[disabled] {
  
 .btn {
   padding: 12px 50px;
-  background: linear-gradient(135deg, #84bea7, #629985);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f); /* More vibrant green tones */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   color: #ffffff;
   border: none;
   border-radius: 14px;
@@ -3794,7 +3916,7 @@ select[disabled] {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   transition: all 0.4s ease;
 }
 
@@ -3803,8 +3925,8 @@ select[disabled] {
 }
 
 .btn:hover {
-  background: #dcdcdc;
-  color: #2a4935;
+  background: linear-gradient(135deg, #88e0b5, #32786e); /* Subtle hover shift */
+  color: #ffffff;
   transform: translateY(-2px);
 }
 
@@ -3841,11 +3963,10 @@ select[disabled] {
 @media (max-width: 760px) {
   .top-row {
     flex-wrap: wrap;
-    flex-direction: column;
   }
   .month-selector span{
     min-width: 150px;
-    padding: 10px;
+    padding: 0px;
   }
   .expenses-container {
     min-width: 340px;
