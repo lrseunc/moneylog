@@ -3627,7 +3627,7 @@ async deleteExpenseHandler(expense) {
   align-content: center;
   flex: 1 1 60%;
   min-width: 280px;
-  background: linear-gradient(to right, #fdfffe, #eef8f6, #def4f1);
+  background: linear-gradient(to right, #fcfffe, #ecf9f6, #e7fdfa);
   border: none;
   padding: 20px;
   border-radius: 15px;
@@ -3795,7 +3795,7 @@ td, th {
      font-weight: bold;
      color: #333;
      padding: 15px;
-     background-color: #d7ebe9;
+     background-color: #d2e4e2;
      box-sizing: border-box;
      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
      text-align: center;
