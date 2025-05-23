@@ -15,17 +15,40 @@
                                 <input type="email" name="email" v-model="email" class="text-style" required />
 
                                 <label class="form-label">PASSWORD</label>
-                                <input type="password" name="password" v-model="password" class="text-style" required />
+                                <div class="password-input-wrapper">
+                                    <input 
+                                        :type="showPassword ? 'text' : 'password'" 
+                                        name="password" 
+                                        v-model="password" 
+                                        class="text-style" 
+                                        required 
+                                    />
+                                    <span 
+                                        class="password-toggle" 
+                                        @click="showPassword = !showPassword"
+                                    >
+                                    <i :class="showPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
+                                    </span>
+                                </div>
+                                
 
                                 <label class="form-label">PASSWORD CONFIRMATION</label>
-                                <input 
-        type="password" 
-        name="password_confirmation" 
-        v-model="password_confirmation" 
-        @input="checkPasswordStrength"
-        class="text-style" 
-        required 
-    />
+                                <div class="password-input-wrapper">
+                                    <input 
+                                        :type="showConfirmPassword ? 'text' : 'password'" 
+                                        name="password_confirmation" 
+                                        v-model="password_confirmation" 
+                                        @input="checkPasswordStrength"
+                                        class="text-style" 
+                                        required 
+                                    />
+                                    <span 
+                                        class="password-toggle" 
+                                        @click="showConfirmPassword = !showConfirmPassword"
+                                    >
+                                    <i :class="showConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
+                                    </span>
+                                </div>
     <div class="password-strength-meter">
         <div 
             :class="['strength-bar', strengthClass]" 
@@ -165,15 +188,15 @@
 </template>
 
 <script>
-import { ref, inject, computed } from 'vue'
+import { ref, inject, computed, onMounted } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 export default {
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const someInjectedValue = inject('key')
-    
     const username = ref('')
     const email = ref('')
     const password = ref('')
@@ -182,6 +205,74 @@ export default {
     const isError = ref(false)
     const acceptedPrivacyPolicy = ref(false)
     const showPrivacyModal = ref(false)
+    const redirectAfterLogin = ref('') 
+    const showPassword = ref(false)
+    const showConfirmPassword = ref(false)
+
+        const inviteToken = route.query.inviteToken
+    if (inviteToken) {
+      redirectAfterLogin.value = `/api/grp_expenses/accept-invite?token=${inviteToken}`
+    }
+
+    const acceptInvitation = async (token) => {
+      try {
+        const response = await axios.get(
+          `/api/grp_expenses/accept-invite?token=${token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+            }
+          }
+        );
+        
+        if (response.data.success) {
+          router.push({
+            name: 'Group',
+            params: { groupId: response.data.groupId },
+            query: { invite_accepted: 'true' }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to accept invitation:', error);
+        serverMessage.value = error.response?.data?.message || 'Failed to process invitation';
+        isError.value = true;
+      } finally {
+        localStorage.removeItem('invitationToken');
+      }
+    };
+
+    onMounted(() => {
+      const token = route.query.token; // Now using the properly imported route
+      if (token) {
+        localStorage.setItem('invitationToken', token);
+      }
+    });
+
+    const handleRegistrationSuccess = async (response) => {
+      serverMessage.value = "Registration successful!";
+      isError.value = false;
+      
+      // Store the token if available
+      if (response.data.token) {
+        localStorage.setItem('jsontoken', response.data.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: response.data.user.id,
+          username: response.data.user.username,
+          email: response.data.user.email
+        }));
+      }
+
+      // Check for invitation token
+      const token = localStorage.getItem('invitationToken');
+      if (token) {
+        await acceptInvitation(token);
+      } else if (redirectAfterLogin.value) {
+        // Redirect to the invite URL after registration
+        window.location.href = redirectAfterLogin.value;
+      } else {
+        setTimeout(() => router.push('/login'), 1500);
+      }
+    };
 
     const hasMinLength = computed(() => password.value.length >= 8)
     const hasUppercase = computed(() => /[A-Z]/.test(password.value))
@@ -291,12 +382,34 @@ export default {
       strengthClass,
       strengthMessage,
       registerUser,
+      handleRegistrationSuccess,
+      redirectAfterLogin,
+      showPassword,
+      showConfirmPassword,
     };
   },
 };
 </script>
     
 <style scoped>
+.password-input-wrapper {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 40%;
+    color: #72aa95;
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+}
+
+.text-style {
+    padding-right: 35px; /* Make room for the eye icon */
+    width: 100%;
+}
 .server-message {
     color: red; 
 }
@@ -389,7 +502,7 @@ export default {
   margin-top: 1.5rem;
   padding: 1rem;
   background-color: #e4f3f0;
-  border-left: 4px solid #6a9c89;
+  border-left: 4px solid #44695c;
   border-radius: 6px;
 }
 
@@ -530,7 +643,7 @@ export default {
 
 .modal-header {
   background: linear-gradient(90deg, #d9ede6, #eaf5f1);
-  color: #4f7a6b;
+  color: #44695c;
   font-size: 1.1rem;
   padding: 0px 20px;
   border-bottom: 2px solid #6a9c89;
@@ -554,11 +667,11 @@ export default {
 }
 
 h2, h3 {
-  color: #4f7a6b;
+  color: #44695c;
 }
 
 h4 {
-  color: #6a9c89;
+  color: #44695c;
   font-size: 0.95rem;
   margin-bottom: 6px;
 }
@@ -577,15 +690,15 @@ h4 {
 }
 
 .modal-close-btn {
-  background: linear-gradient(135deg, #cfeae2, #b5d8cc);
+  background: linear-gradient(135deg, #cbefe4, #b8e5d7);
   border: none;
   font-size: 1em;
   cursor: pointer;
-  color: #4f7a6b;
+  color: #44695c;
   padding: 8px 16px;
   border-radius: 8px;
   transition: background 0.3s, color 0.3s, transform 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.236);
 }
 
 .modal-close-btn:hover {
