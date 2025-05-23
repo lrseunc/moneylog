@@ -133,7 +133,7 @@ body {
   margin: 0;
   padding: 0;
   width: 100%;
-  background-color: rgb(250, 254, 255);
+  background-color: #f8f9fa;
   overflow-x: hidden;
   overflow-y: auto;
 }
