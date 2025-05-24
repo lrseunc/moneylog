@@ -3946,12 +3946,6 @@ async deleteExpenseHandler(expense) {
   transition: all 0.3s ease;
 }
 
-.expenses-container:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  transform: translateY(-2px);
-  transition: all 0.3s ease;
-}
-
  .expense-form {
   text-align: center;
   width: 100%; 
