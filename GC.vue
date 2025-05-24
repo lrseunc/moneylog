@@ -121,7 +121,7 @@
               !this.forceShow && 
               this.userGroups.length === 1) {
             setTimeout(() => {
-              if (this.$route.name === 'GC') { // Double-check we're still on GC
+              if (this.$route.name === 'GC') { 
                 this.navigateToGroup(this.userGroups[0].id);
               }
             }, 100);
@@ -162,7 +162,6 @@
     navigateToGroup(groupId) {
       if (!groupId) return;
       
-      // Set the flag to prevent auto-redirect when coming back
       this.preventAutoRedirect = true;
       
       this.$router.push({
@@ -177,7 +176,7 @@
     },
  
      formatDate(dateString) {
-       // Your date formatting implementation
+
        return new Date(dateString).toLocaleDateString();
      },
  
@@ -314,9 +313,9 @@
 .back-button {
   width: 100%;
   margin-top: 10px;
-  background: linear-gradient(135deg, #d1d1d1 0%, #5a5a5a 100%);
+  background: linear-gradient(135deg, #c8c7c7, #747474, #bebebe);
   color: white;
-  border: 1px solid #5a5a5a6d;
+  border: none;
   padding: 12px;
   border-radius: 8px;
   cursor: pointer;
@@ -327,6 +326,7 @@
   font-size: 16px;
   font-weight: 600;
   transition: all 0.3s ease;
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.352);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -418,7 +418,7 @@
    
    .card-header {
      padding: 25px;
-     background: linear-gradient(135deg, #c1fff9 0%,#b0ffe2, #a7ffc0 100%);
+     background: linear-gradient(135deg, #dcffed, #b3edd7, #8fd2c6);
      color: white;
      border-bottom: 1px solid #c3c2c2;
      text-align: center;
@@ -428,7 +428,8 @@
      margin: 0 0 20px;
      font-size: 28px;
      font-weight: 600;
-     color: #2c5040;
+     color: white;
+     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.396);
    }
    
    .tabs {
@@ -444,7 +445,8 @@
      padding: 12px;
      background: transparent;
      border: #2c3e5018 1px solid;
-     color: #2c3e50;
+     color: white;
+     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.518);
      font-size: 16px;
      font-weight: 500;
      cursor: pointer;
@@ -455,7 +457,7 @@
      gap: 8px;
    }
    .tab-button.active {
-  background: rgba(255, 255, 255, 0.386);
+  background: rgba(197, 197, 197, 0.386);
   border: #2c3e5018 1px solid;
   backdrop-filter: blur(6px);
   font-weight: 700;
@@ -483,7 +485,7 @@
    .section-title {
      margin-top: 0;
      margin-bottom: 20px;
-     color: #2c3e50;
+     color: #365561;
      font-size: 22px;
      font-weight: 600;
      text-align: center;
@@ -525,14 +527,15 @@
    .submit-button {
      width: 100%;
      padding: 14px;
-     background: linear-gradient(135deg, #abffe6 0%, #4caf95 100%);
+     background: linear-gradient(135deg, #b8e3d4, #62a293, #a8d0c2);
      color: white;
-     border: 1px solid #4caf9587;
+     border: none;
      border-radius: 8px;
      font-size: 17px;
      font-weight: 700;
      cursor: pointer;
      transition: transform 0.2s ease, box-shadow 0.2s ease;
+     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.352);
      display: flex;
      align-items: center;
      justify-content: center;
