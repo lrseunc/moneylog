@@ -331,6 +331,9 @@
       <div class="photo-wrapper">
         <img :src="photo.image_url" :alt="photo.description || 'Group photo'" @click="openPhotoModal(photo)" class="photo-thumbnail" @error="handleImageError">
         <div class="photo-actions">
+          <button @click.stop="startEditPhoto(photo)" class="edit-photo-btn" v-if="canDeletePhoto(photo)">
+        <i class="fas fa-edit"></i>
+      </button>
           <button @click.stop="confirmDeletePhoto(photo)" class="delete-photo-btn" v-if="canDeletePhoto(photo)">
             <i class="fas fa-trash"></i>
           </button>
@@ -384,6 +387,52 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div v-if="editingPhoto" class="modal-overlay7">
+  <div class="modal-content7 photo-edit-modal">
+    <div class="modal-header7">
+      <h3>{{ updateSuccess ? 'Update Complete' : 'Edit Photo' }}</h3>
+      <button @click="cancelEditPhoto" class="close-button7">&times;</button>
+    </div>
+    <div class="modal-body7">
+      <form @submit.prevent="updatePhoto" v-if="!updateSuccess">
+        <div class="form-group7">
+          <label>Photo Description</label>
+          <textarea v-model="editPhotoDescription" placeholder="Update description"></textarea>
+        </div>
+        
+        <div class="form-group7">
+          <label>Replace Photo (optional)</label>
+          <input 
+            type="file" 
+            @change="handleEditFileSelect"
+            accept="image/*"
+          >
+          <div class="photo-preview7">
+            <img :src="editPhotoPreview" alt="Preview">
+          </div>
+        </div>
+        
+        <div class="form-actions7">
+          <button type="button" @click="cancelEditPhoto" class="cancel-button1">Cancel</button>
+          <button type="submit" class="submit-button1" :disabled="updatingPhoto">
+            <span v-if="updatingPhoto">
+              <i class="fas fa-spinner fa-spin"></i> Updating...
+            </span>
+            <span v-else>Update Photo</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Success message section -->
+      <div v-if="updateSuccess" class="update-success-message">
+        <i class="fas fa-check-circle success-icon"></i>
+        <p>Photo updated successfully!</p>
+        <button @click="cancelEditPhoto" class="ok-button">OK</button>
+      </div>
     </div>
   </div>
 </div>
@@ -454,6 +503,13 @@
    components: { Navigation },
    data() {
      return {
+      updateSuccess: false,
+    updatingPhoto: false,
+      editingPhoto: null,
+    editPhotoDescription: '',
+    editPhotoFile: null,
+    editPhotoPreview: null,
+    isEditingPhoto: false,
       zoomLevel: 1,
     isDragging: false,
     dragStart: { x: 0, y: 0 },
@@ -808,24 +864,33 @@ beforeUnmount() {
     document.removeEventListener('mouseup', this.stopDrag);
   },
 
-     handleImageError(event) {
+  handleImageError(event) {
   const incorrectUrl = event.target.src;
   console.error('Image failed to load:', incorrectUrl);
   
-  // Try to reconstruct the correct URL
+  // Check if the URL needs to be fixed
   if (incorrectUrl.includes('localhost:5173')) {
-    // Replace the frontend URL with backend URL
-    const backendBase = this.$axios.defaults.baseURL;
-    const correctUrl = incorrectUrl.replace(
-      'http://localhost:5173', 
-      backendBase
-    );
-    event.target.src = correctUrl;
-  } else {
-    // Fallback - hide the broken image
-    event.target.style.display = 'none';
-    event.target.parentElement?.classList?.add('broken-image');
+    // Try to reconstruct the correct URL
+    try {
+      // Extract just the path part
+      const urlObj = new URL(incorrectUrl);
+      const path = urlObj.pathname;
+      
+      // Create new URL using backend base URL
+      const backendBase = this.$axios.defaults.baseURL;
+      const correctUrl = backendBase + path;
+      
+      // Try loading with the corrected URL
+      event.target.src = correctUrl;
+      return;
+    } catch (e) {
+      console.error('Error reconstructing URL:', e);
+    }
   }
+  
+  // Fallback - hide the broken image
+  event.target.style.display = 'none';
+  event.target.parentElement?.classList?.add('broken-image');
 },
 
      showVoiceHelp() {
@@ -1163,39 +1228,130 @@ beforeUnmount() {
     }
   },
 
-  async fetchPhotos() {
-    this.photosLoading = true;
-    this.photosError = null;
-    try {
-      const response = await this.$axios.get(
-        `/api/photos`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-          }
-        }
-      );
+  startEditPhoto(photo) {
+    this.editingPhoto = { ...photo };
+    this.editPhotoDescription = photo.description || '';
+    this.editPhotoPreview = photo.image_url;
+    this.isEditingPhoto = true;
+  },
+
+  handleEditFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+      if (!file.type.match('image.*')) {
+        this.$toast.error('Please select an image file');
+        return;
+      }
       
-      if (response.data && response.data.success === 1) {
+      if (file.size > 5 * 1024 * 1024) {
+        this.$toast.error('Image size should be less than 5MB');
+        return;
+      }
+      
+      this.editPhotoFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.editPhotoPreview = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  },
+
+  async updatePhoto() {
+  if (!this.editingPhoto) return;
+
+  try {
+    const formData = new FormData();
+    formData.append('description', this.editPhotoDescription);
+    if (this.editPhotoFile) {
+      formData.append('photo', this.editPhotoFile);
+    }
+
+    const response = await this.$axios.put(
+      `/api/photos/${this.editingPhoto.id}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+
+    if (response.data && response.data.success === 1) {
+      // Update the photo in the list with complete URL
+      const updatedPhoto = response.data.photo;
+      if (!updatedPhoto.image_url.startsWith('http')) {
+        updatedPhoto.image_url = `${this.$axios.defaults.baseURL}${updatedPhoto.image_url}`;
+      }
+
+      const index = this.groupPhotos.findIndex(p => p.id === this.editingPhoto.id);
+      if (index !== -1) {
+        this.groupPhotos[index] = {
+          ...this.groupPhotos[index],
+          description: updatedPhoto.description,
+          image_url: updatedPhoto.image_url,
+          created_at: updatedPhoto.created_at
+        };
+      }
+
+      this.updateSuccess = true;
+    } else {
+      throw new Error(response.data?.message || 'Update failed');
+    }
+  } catch (error) {
+    console.error('Update error:', error);
+    this.$toast.error(error.response?.data?.message || error.message || 'Failed to update photo');
+  } finally {
+    this.updatingPhoto = false;
+  }
+},
+
+cancelEditPhoto() {
+  this.editingPhoto = null;
+  this.editPhotoDescription = '';
+  this.editPhotoFile = null;
+  this.editPhotoPreview = null;
+  this.updateSuccess = false;
+  this.isEditingPhoto = false;
+},
+
+async fetchPhotos() {
+  this.photosLoading = true;
+  this.photosError = null;
+  try {
+    const response = await this.$axios.get(
+      `/api/photos`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data && response.data.success === 1) {
       this.groupPhotos = response.data.photos.map(photo => {
+        // Ensure image_url is complete
+        let imageUrl = photo.image_url;
+        if (!imageUrl.startsWith('http')) {
+          imageUrl = `${this.$axios.defaults.baseURL}${imageUrl}`;
+        }
+        
         return {
           ...photo,
-          image_url: photo.image_url.startsWith('/uploads')
-            ? `${this.$axios.defaults.baseURL}${photo.image_url}`
-            : photo.image_url,
-          // Ensure these fields exist
+          image_url: imageUrl,
           username: photo.username || 'Unknown',
           created_at: photo.created_at || new Date().toISOString()
         };
       });
-      }
-    } catch (err) {
-      this.photosError = err.response?.data?.message || 'Failed to load photos';
-      console.error('Error fetching photos:', err);
-    } finally {
-      this.photosLoading = false;
     }
-  },
+  } catch (err) {
+    this.photosError = err.response?.data?.message || 'Failed to load photos';
+    console.error('Error fetching photos:', err);
+  } finally {
+    this.photosLoading = false;
+  }
+},
 
 handleFileSelect(event) {
     const file = event.target.files[0];
@@ -2009,6 +2165,175 @@ async deleteExpenseHandler(expense) {
 
  
 <style scoped>
+.update-success-message {
+  text-align: center;
+  padding: 20px;
+}
+
+.success-icon {
+  color: #3a9d8f;
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+
+.ok-button {
+  background-color: #3a9d8f;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.ok-button:hover {
+  background-color: #6fcfa5;
+}
+.modal-overlay7 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content7.photo-edit-modal {
+  background-color: #f9fefc;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+.modal-header7 {
+  padding: 30px 30px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 3px solid #4f7a6b;
+  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.modal-header7 h3 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  font-size: 1.6rem;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.close-button7 {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #e4f9e4;
+  transition: color 0.3s ease;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.modal-header7 .close-button:hover {
+  color: #f9fefc;
+  background: rgba(255, 255, 255, 0.15);
+}
+.modal-body7 {
+  padding: 16px 20px;
+  background-color: #eefbf5; 
+}
+
+.form-group7 {
+  margin-bottom: 15px;
+}
+
+.form-group7 label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #4f7a6b;
+}
+
+.form-group7 textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 14px;
+  height: 60px;
+}
+
+.form-group7 input[type="file"] {
+  width: 96%;
+  padding: 8px;
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+}
+
+.photo-preview7 {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.photo-preview7 img {
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.form-actions7 {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.edit-photo-btn {
+  background: linear-gradient(135deg,#a7d1c3, #8bbcae, #6a9c89 );
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(0px); /* Slight lift */
+  transition: background 0.3s ease;
+}
+
+.edit-photo-btn:hover {
+  background: linear-gradient( 135deg, #9fcfc1,#7fb1a3, #5e8f7d );
+}
+
+.photo-actions {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+}
 .image-container {
   width: 100%;
   height: 250px;
@@ -2053,28 +2378,6 @@ async deleteExpenseHandler(expense) {
 .upload-success-message {
   text-align: center;
   padding: 20px;
-}
-
-.success-icon {
-  font-size: 60px;
-  color: #4CAF50;
-  margin-bottom: 20px;
-}
-
-.success-close-button {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-top: 20px;
-  transition: background-color 0.3s;
-}
-
-.success-close-button:hover {
-  background-color: #45a049;
 }
 .modal-overlay2 {
   position: fixed;
@@ -2145,19 +2448,11 @@ async deleteExpenseHandler(expense) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  /* Add these transition properties */
-  transition: opacity 0.3s ease;
-}
-
-/* Add this new class for hidden state */
-.modal-overlay5.hidden {
-  opacity: 0;
-  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content5 {
@@ -2171,16 +2466,7 @@ async deleteExpenseHandler(expense) {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   max-height: 90vh;
-  /* Add transform for smooth animation */
-  transform: translateY(0);
-  transition: transform 0.3s ease;
 }
-
-/* Add this for hidden modal content */
-.modal-overlay5.hidden .modal-content5 {
-  transform: translateY(-20px);
-}
-
 
 .modal-header5 {
   padding: 30px 30px;
@@ -2189,7 +2475,7 @@ async deleteExpenseHandler(expense) {
   justify-content: center;
   align-items: center;
   border-bottom: 3px solid #4f7a6b;
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #b8f0db, #9fe3c9, #94dfd3);
   box-shadow: inset 0 -4px 6px rgba(0,0,0,0.1);
   color: #fff;
   font-weight: 700;
@@ -2198,11 +2484,12 @@ async deleteExpenseHandler(expense) {
 
 .modal-header5 h3 {
   position: absolute;
+  text-align: center;
   left: 50%;
   transform: translateX(-50%);
   margin: 0;
   font-size: 1.6rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.427);
 }
 .modal-header5 .close-button {
   position: absolute;
@@ -2224,7 +2511,7 @@ async deleteExpenseHandler(expense) {
 
 .modal-body5 {
   padding: 16px 20px;
-  background-color: #eefbf5; 
+  background-color: #FBFFFC; 
 }
 
 .form-group5 {
@@ -2259,6 +2546,8 @@ async deleteExpenseHandler(expense) {
 }
 .photos-tab {
   padding: 20px;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .photos-header {
@@ -2296,7 +2585,7 @@ async deleteExpenseHandler(expense) {
 
 
 .upload-photo-btn {
-  background: linear-gradient(135deg, #a7d2c6, #8bbcae, #6a9c93);
+  background: linear-gradient(135deg, #9fccbd, #6eb3a3, #82b2a1);
   color: white;
   font-size: 15px;
   border: none;
@@ -2323,7 +2612,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .photo-card {
-  border: 2px solid #4f7a6b;
+  border: 2px solid #6a9c89;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -2367,7 +2656,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .delete-photo-btn {
-  background-color: rgba(255,0,0,0.7);
+  background: linear-gradient(135deg,rgba(255, 102, 102, 0.9),rgba(255, 80, 80, 0.9),rgba(200, 40, 40, 0.9) );
   color: white;
   border: none;
   width: 30px;
@@ -2377,6 +2666,11 @@ async deleteExpenseHandler(expense) {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.delete-photo-btn:hover {
+  background: linear-gradient(135deg,rgba(255, 120, 120, 1),rgba(255, 60, 60, 1),rgba(180, 30, 30, 1) );
 }
 
 .photo-meta {
@@ -2421,17 +2715,19 @@ async deleteExpenseHandler(expense) {
 }
 
 .photo-preview {
-  margin-top: 10px;
-  max-height: 300px;
-  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 5px; /* reduced from 10px */
 }
 
 .photo-preview img {
-  width: 100%;
+  max-width: 200px !important; /* smaller than 100px */
   height: auto;
-  max-height: 100px;
-  object-fit: contain;
+  border-radius: 6px; /* slightly smaller corners */
+  border: 1px solid #ccc;
 }
+
 
 /* Photo View Modal */
 .photo-view-modal .modal-content5 {
@@ -2653,7 +2949,8 @@ async deleteExpenseHandler(expense) {
 }
 
 .submit-button1 {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89, #4f7a6b);
+  background: linear-gradient(135deg, #9fccbd, #6eb3a3, #82b2a1);
+  text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.352);
   color: white;
   box-shadow: 0 2px 5px rgba(106, 156, 137, 0.4);
 }
@@ -3530,8 +3827,8 @@ async deleteExpenseHandler(expense) {
   color: #2e4e40;
   padding: 20px;
   border-radius: 14px;
-  width: 92%;
-  max-width: 380px;
+  width: 90%;
+  max-width: 370px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   animation: fadeSlideUp 0.3s ease;
   font-family: "Segoe UI", sans-serif;
@@ -3595,7 +3892,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .expense-success-message {
-  background-color: #d4edda;
+  background-color: #d4ede8;
   color: #155724;
   padding: 10px;
   border-radius: 4px;
@@ -3627,9 +3924,9 @@ async deleteExpenseHandler(expense) {
   align-content: center;
   flex: 1 1 60%;
   min-width: 280px;
-  background: linear-gradient(to right, #fcfffe, #ecf9f6, #e7fdfa);
+  background: #fafffe;
   border: none;
-  padding: 20px;
+  padding: 30px;
   border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.286);
   height: auto;
@@ -3670,7 +3967,7 @@ async deleteExpenseHandler(expense) {
 .expenses-section h3 {
   text-align: center;
   align-content: center;
-  margin-top: 10px;
+  margin-top: 20px;
   color: #2e2e2e;
   font-size: 1.5rem; 
   padding-bottom: 10px;
@@ -3698,32 +3995,36 @@ table {
 th, td {
   padding: 6px 20px; 
   text-align: center;
-  border-bottom: 2px solid #e0e0e0;
-  color: #444;
+  border-bottom: 1px solid #d7e2dc;
+  vertical-align: middle;
+  user-select: none;
   font-size: 0.95rem;
 } 
 
 th {
-  background: #ecf9f6;
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
-  color: #183d2a;
-  border-bottom: 3px solid #183d2a; 
+  color: white;
+  text-transform: uppercase;
+  border-bottom: 2px solid #4f7a6b;
+  box-shadow: 0 2px 6px rgba(74, 109, 92, 0.3);
+  border-radius: 20px 20px 0 0;
 } 
 
 tr {
   background-color: #fbfbfb;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+  box-shadow: 0 10px 10px rgba(0,0,0,0.05); 
   margin-bottom: 15px; 
-  transition: all 0.2s ease;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 tr:hover {
   background-color: #f9f9f9;
   transform: translateY(-2px); 
-  box-shadow: 0 6px 12px rgba(0,0,0,0.08); 
-  transition: all 0.2s ease; 
+  box-shadow: 0 10px 12px rgba(0,0,0,0.08); 
+   transition: background-color 0.25s ease, box-shadow 0.25s ease;
 } 
 
 td, th {
@@ -3807,14 +4108,15 @@ td, th {
 }
 
 .form-title {
-  background: linear-gradient(to right, #c2f3e5, #9ae2c7);
-  color: #26665e;
+  background: linear-gradient(135deg, #b8f0db, #9fe3c9, #94dfd3);
+  color: white;
   padding: 14px 20px;
   border-radius: 10px;
   text-align: center;
   margin-bottom: 20px;
   font-size: 1.5rem;
   font-weight: 700;
+  text-shadow: 2px 1px 2px rgba(0, 0, 0, 0.427);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   letter-spacing: 0.5px;
 }
@@ -3839,14 +4141,15 @@ td, th {
 .form-group h3 {
   font-size: 1.35rem;
   font-weight: 700;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   margin-top: 0;
   color: #183d2a;
-  background:none;
-  padding: 16px 16px;
-  border-bottom: 2px solid #183d2a;
+  border-radius: 20px; 
+  background: linear-gradient(135deg, #effdf8, #def4ee, #e5faf3);
+  padding: 20px 16px;
   position: relative;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 6px rgba(64, 64, 64, 0.301);
   letter-spacing: 0.5px;
 }
 
@@ -3974,6 +4277,12 @@ select[disabled] {
   .expense-photo-tabs {
     justify-content: space-between;
     gap: 10px;
+  }
+     .photos-tab {
+    max-height: 500px;
+  }
+  .budget-form {
+    width: 80%;
   }
 }
 
