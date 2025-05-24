@@ -393,7 +393,7 @@
      display: flex;
      justify-content: center;
      align-items: center;
-     background: #FFFDF6;
+     background: #f8f9fa;
      padding: 20px;
      font-family: 'Poppins', sans-serif;
      margin-top: 90px;
@@ -418,7 +418,7 @@
    
    .card-header {
      padding: 25px;
-     background: linear-gradient(135deg, #dcffed, #b3edd7, #8fd2c6);
+     background: linear-gradient(135deg, #c7ffe2, #89e1bf, #8ddfcc);
      color: white;
      border-bottom: 1px solid #c3c2c2;
      text-align: center;
@@ -429,7 +429,7 @@
      font-size: 28px;
      font-weight: 600;
      color: white;
-     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.396);
+     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.525);
    }
    
    .tabs {
@@ -446,7 +446,7 @@
      background: transparent;
      border: #2c3e5018 1px solid;
      color: white;
-     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.518);
+     text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.525);
      font-size: 16px;
      font-weight: 500;
      cursor: pointer;
@@ -462,10 +462,11 @@
   backdrop-filter: blur(6px);
   font-weight: 700;
   box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.848);
+  text-shadow: 2px 1px 3px rgba(0, 0, 0, 0.525);
 }
    
    .tab-button:hover {
-     background: rgba(122, 122, 122, 0.2);
+     background: rgba(168, 168, 168, 0.347);
    }
  
    .tab-button, .submit-button {
