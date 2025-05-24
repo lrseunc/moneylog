@@ -543,7 +543,7 @@
    }
    
    .submit-button:hover {
-    background: linear-gradient(135deg, #a0e8d2 0%, #388e5c 100%);
+    background: linear-gradient(135deg, #98bbaf, #49796e, #8daea3);
     transform: scale(1.02);
     box-shadow: 0 6px 15px rgba(24, 90, 157, 0.3);
    }
