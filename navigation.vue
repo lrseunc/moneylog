@@ -91,9 +91,9 @@ header {
   z-index: 99;
   width: 102%;
   transition: .5s ease all;
-  height: 120px;
+  height: 100px;
   margin-left: -10px;
-  margin-top: -10px;
+  margin-top: -15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
@@ -165,10 +165,10 @@ display: flex;
 align-items: center;
 
 img {
-  width: 110px;
+  width: 90px;
   height: auto;
   transition: .5s ease all;
-  margin-top: 2px;
+  margin-top: 4px;
   margin-left: -10px;
 }
 }
@@ -178,7 +178,7 @@ display: flex;
 align-items: end;
 flex: 1;
 justify-content: flex-end;
-margin-top: 50px;
+margin-top: 40px;
 font-family: Arial, Helvetica, sans-serif;
 }
 
