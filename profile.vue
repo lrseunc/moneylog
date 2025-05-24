@@ -966,6 +966,7 @@ updateExpenseView() {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.256);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.379); 
   letter-spacing: 0.5px;
 }
 
