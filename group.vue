@@ -5483,12 +5483,12 @@ h2 {
 
 .expenses-table th {
   background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
-  font-size: 1rem;
+  font-size: 0.8rem;
   padding: 12px 20px;
   color: white;
   text-transform: uppercase;
   border-bottom: 2px solid #4f7a6b;    
-  border-radius: 20px 20px 0 0;
+  border-radius: 14px 14px 0 0;
   position: sticky;
   top: 0;
   font-weight: 600;
