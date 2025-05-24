@@ -5482,15 +5482,17 @@ h2 {
 }
 
 .expenses-table th {
-  background-color: #ecf9f6;              /* your base green */
-  color: #183d2a;
+  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
+  font-size: 1rem;
+  padding: 12px 20px;
+  color: white;
+  text-transform: uppercase;
+  border-bottom: 2px solid #4f7a6b;    
+  border-radius: 20px 20px 0 0;
   position: sticky;
   top: 0;
   font-weight: 600;
-  padding: 12px 20px;
-  border-bottom: 3px solid #4f7a6b;      /* darker shade from earlier gradient */
   letter-spacing: 0.05em;
-  text-transform: uppercase;
   box-shadow: 0 2px 4px rgba(74, 109, 92, 0.2);  /* subtle green tinted shadow */
 }
 Z
