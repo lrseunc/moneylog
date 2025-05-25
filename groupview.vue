@@ -1564,7 +1564,7 @@ button:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   align-items: flex-start;
   margin-bottom: 10px;
-  max-height: 120vh; 
+  max-height: 130vh; 
 }
 
 /* For Chrome/Edge/Safari */
