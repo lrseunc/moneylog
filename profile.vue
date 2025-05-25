@@ -1379,7 +1379,7 @@ updateExpenseView() {
 }
 
 .modal-card.logout-modal {
-  background: linear-gradient(135deg, #a6e7d9, #589486);
+  background: linear-gradient(135deg, #a4e3c7, hsl(172, 31%, 53%));
   padding: 0.8rem 2rem 2rem 2rem; /* top right bottom left */
   border-radius: 1.25rem;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
@@ -1395,6 +1395,7 @@ updateExpenseView() {
   font-size: 1.6rem;
   margin-bottom: 0.75rem;
   font-weight: 700;
+  text-shadow: 2px 3px 6px #33333375;
   display: flex;
   justify-content: center;
   align-items: center;
