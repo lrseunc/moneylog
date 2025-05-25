@@ -393,7 +393,7 @@
      display: flex;
      justify-content: center;
      align-items: center;
-     background: #f8f9fa;
+     background: #F8F9FA;
      padding: 20px;
      font-family: 'Poppins', sans-serif;
      margin-top: 90px;
