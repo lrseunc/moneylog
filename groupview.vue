@@ -183,7 +183,6 @@
   </div>
   </div>
   </div>
-  
   <div class="contribution-section">
     <h3>
     <i class="fas fa-hand-holding-usd"></i> 
@@ -992,16 +991,17 @@ offset: function(context) {
 
 <style scoped>
 .contribution-section {
-  width: 95%;
-  margin: 5px auto 20px auto;
+  width: 100%;
+  max-width: 1140px;
+  margin: 5px auto 25px auto;
   height: 250px;
   padding: 10px;
   box-sizing: border-box;
   overflow-y: auto;
   background: linear-gradient(145deg, #f9fbfa, #e8f0ed);
-  border: 2px solid #336333;
+  border: none;
   border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
@@ -1010,7 +1010,7 @@ offset: function(context) {
 
 .contribution-section:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
 .contribution-section h3 {
@@ -1202,11 +1202,11 @@ offset: function(context) {
   width: calc(100% - 60px);
   margin: 20px 30px;
   padding: 16px 36px;
-  background: linear-gradient(135deg, #355248, #7fb0a1, #b4e0d2);
-  color: #ffffff;
+  background: linear-gradient(135deg, #e8ffec, #def4f3, #c4fff1);
+  color: #32615f;
+  border: 2px solid #385248;
   font-size: 1.25rem;
   font-weight: 600;
-  border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
@@ -1219,7 +1219,7 @@ offset: function(context) {
 
 .show-groups-button:hover {
   background-position: right;
-  background: linear-gradient(135deg, #b4e0d2, #7fb0a1, #355248); /* Brighter on hover */
+  background: linear-gradient(135deg, #67c29a, #359588);
   transform: translateY(-3px) scale(1.03);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
 }
@@ -1280,7 +1280,7 @@ offset: function(context) {
 }
 
 .group-modal-header {
-  background: linear-gradient(135deg, #8bbcae, #6a9c89);
+  background: linear-gradient(135deg, #67c29a, #359588);
   color: white;
   padding: 14px 20px;
   display: flex;
@@ -1431,23 +1431,24 @@ offset: function(context) {
 
 .summary-box {
   padding: 2px 16px 6px 16px; 
-  background-color: rgb(221, 255, 245);
-  border: 2px solid #336333;
+  background-color: #dbfff7;
+  border: none;
   border-radius: 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   font-size: 16px;
   margin: 2px 0 6px 0; 
   text-align: center;
   color: #000000;
-  min-width: 280px;
+  min-width: 250px;
   max-width: 100%;
+  margin-bottom: 15px;
 }
 
 .summary-item {
   display: flex;
   justify-content: space-between;
-  margin: 16px 0;
-  font-size: 18px; 
+  margin: 10px 0;
+  font-size: 16px; 
   font-weight: bold;
 }
 
@@ -1504,7 +1505,7 @@ offset: function(context) {
 font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 font-size: 20px;
 position: relative;
-margin-top: 120px;
+margin-top: 100px;
 display: flex;
 justify-content: center;
 margin-bottom: -10px;
@@ -1524,12 +1525,14 @@ button {
 }
 
 button.active {
-  background-color: #2a4935;
+  background: linear-gradient(135deg, #67c29a, #359588);
+  text-shadow: 2px 1px 4px rgba(0, 0, 0, 0.2);
   color: white;
+  border-color: #32615f;
 }
 
 button:hover {
-  background-color: #2a4935;
+  background-color: #32615f;
   color: white;
 }
 
@@ -1550,19 +1553,17 @@ button:hover {
 }
 
 .con-container {
-  background: rgb(245, 255, 251);
-  border: 2px solid #336333;
+  background: #fafffe;
+  padding: 10px;
+  border: none;
   border-radius: 20px;
-  width: 70%; 
-  min-width: 380px;
-  max-width: 900px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 80%; 
+  min-width: 280px;
+  max-width: 700px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   align-items: flex-start;
   margin-bottom: 10px;
-  overflow-y: auto; /* Enables vertical scrolling when needed */
-  max-height: 105vh; /* Limits height to 80% of viewport height */
-  scrollbar-width: thin; /* For Firefox */
-  scrollbar-color: #2a4935 #ecfcec; /* For Firefox */
+  max-height: 120vh; 
 }
 
 /* For Chrome/Edge/Safari */
@@ -1593,13 +1594,21 @@ button:hover {
 }
 
 .filter-buttons button.active {
-  background-color: #598272;
-  color: white;
-  border-color: #2a4935;
+    background: linear-gradient(135deg, #67c29a, #359588);
+    text-shadow: 2px 1px 4px rgba(0, 0, 0, 0.2);
+    color: white;
+    border-color: #32615f;
 }
 
 .filter-buttons button:hover {
-  background-color: #2a4935;
+  background-color: #32615f;
+}
+
+.expense-table {
+  max-height: 500px;
+  overflow-y: auto;
+  scrollbar-width: thin; 
+  scrollbar-color: #32615f #ecfcf9;
 }
 
 .expense-table table {
@@ -1620,7 +1629,8 @@ button:hover {
 }
 
 .expense-table th {
-  background-color: #6A9C89;
+  background: linear-gradient(135deg, #6fcfa5, #3ea799);
+  text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.277);
   color: white;
 }
 
@@ -1629,7 +1639,7 @@ button:hover {
 }
 
 .expense-table tr.alternate-row {
-  background-color: #eafffab5;
+  background-color: #eefffc;
 }
 
 .total-amount {
@@ -1639,17 +1649,19 @@ button:hover {
 
 .chart-summary {
   max-height: 700px;
+  margin-left: 30px;
 }
 
 .chart{
   width: 380px;
   padding: 20px;
   box-sizing: border-box;
-  background: #ecfcec;
+  background: linear-gradient(to right, #f4fffa, #f0fff9, #e6fff6);
   border-radius: 20px;
-  max-height:600px;
-  border: 2px solid #336333;
-  margin-bottom: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
+  max-height: 700px;
+  border: none;
+  margin-bottom: 25px;
 }
 
 .download {
@@ -1676,7 +1688,7 @@ display: flex;
 flex-wrap: wrap;
 padding: 10px 20px;
 font-size: 16px;
-background-color: #598272;
+background: linear-gradient(135deg, #67c29a, #359588);
 color: white;
 border: none;
 cursor: pointer;
@@ -1690,4 +1702,36 @@ margin-top: 10px;
 background-color: #1e3731;
 }
 
-</style> 
+
+@media (max-width: 1135px) {
+.chart-summary {
+  margin-left: 0;
+}
+.chart{
+    width: 400px;
+  }
+  .current-group {
+    width: 80%;
+  }
+  .contribution-section {
+    width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-con{
+    text-align: center;
+  }
+  .con-container {
+    max-height: 140vh;
+    margin-bottom: 10px;
+  }
+  .chart-summary{
+    width: 85%;
+    margin-left: 0;
+  }
+  .chart{
+    width: 100%;
+  }
+}
+</style>
