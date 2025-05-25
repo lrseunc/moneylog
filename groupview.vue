@@ -6,7 +6,9 @@
       <h1><i class="fa fa-coins"></i>  Group Expenses</h1>
     </div>
 
-    <button @click="showGroupModal = true" class="show-groups-button">
+    
+    <div class="con-container">
+      <button @click="showGroupModal = true" class="show-groups-button">
       <i class="fas fa-users"></i> View Your Groups
     </button>
 
@@ -61,8 +63,6 @@
       </div>
     </div>
 
-    
-    <div class="con-container">
       <div v-if="$store.state.group.currentGroup" class="current-group">
   <div class="group-line">
     <i class="fas fa-user-friends"></i>
@@ -1199,8 +1199,9 @@ offset: function(context) {
 
 .show-groups-button {
   display: block;
-  width: calc(100% - 60px);
-  margin: 20px 30px;
+  width: 95%;
+  min-width: 250px;
+  margin: 20px 20px;
   padding: 16px 36px;
   background: linear-gradient(135deg, #e8ffec, #def4f3, #c4fff1);
   color: #32615f;
@@ -1704,6 +1705,10 @@ background-color: #1e3731;
 
 
 @media (max-width: 1135px) {
+.show-groups-button {
+   margin-left: 0px;
+   width: 100%;
+}
 .chart-summary {
   margin-left: 0;
 }
