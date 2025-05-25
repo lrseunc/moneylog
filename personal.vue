@@ -3509,7 +3509,7 @@ async deleteExpenseHandler(expense) {
   flex: 1 1 350px;
   min-width: 150px;
   height: auto;
-  max-height: 600px;
+  max-height: 650px;
   background: linear-gradient(135deg, #fdfffe, #ecf9f6, #def4f1);
   padding: 20px;
   border-radius: 15px;
@@ -3520,7 +3520,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .budget-header {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: space-between;
   display: flex;
   align-items: center;
@@ -3923,7 +3923,7 @@ async deleteExpenseHandler(expense) {
   flex-wrap: wrap;
   align-content: center;
   flex: 1 1 60%;
-  min-width: 280px;
+  min-width: 200px;
   background: #fafffe;
   border: none;
   padding: 30px;
@@ -3933,7 +3933,7 @@ async deleteExpenseHandler(expense) {
 }
 
 .expenses-container {
-  margin: 0 auto;
+  margin: 30px auto 20px;
   box-sizing: border-box;
   width: 90%;
   max-height: 680px;
@@ -3942,7 +3942,6 @@ async deleteExpenseHandler(expense) {
   border-radius: 15px;
   border: none;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.242);
-  margin-top: 30px;
   transition: all 0.3s ease;
 }
 
@@ -3996,7 +3995,7 @@ th, td {
 } 
 
 th {
-  background: linear-gradient(135deg, #6fcfa5, #3a9d8f);
+  background: linear-gradient(135deg, #6fcfa5, #3ea799);
   font-weight: 700;
   font-size: 1rem; 
   padding: 12px 20px; 
@@ -4004,7 +4003,7 @@ th {
   text-transform: uppercase;
   border-bottom: 2px solid #4f7a6b;
   box-shadow: 0 2px 6px rgba(74, 109, 92, 0.3);
-  border-radius: 20px 20px 0 0;
+  border-radius: 18px 18px 0 0;
 } 
 
 tr {
@@ -4015,7 +4014,7 @@ tr {
 }
 
 tr:hover {
-  background-color: #f9f9f9;
+  background-color: #ecfff7;
   transform: translateY(-2px); 
   box-shadow: 0 10px 12px rgba(0,0,0,0.08); 
    transition: background-color 0.25s ease, box-shadow 0.25s ease;
@@ -4090,7 +4089,7 @@ td, th {
      font-weight: bold;
      color: #333;
      padding: 15px;
-     background-color: #d2e4e2;
+     background-color: #d1e7e4;
      box-sizing: border-box;
      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
      text-align: center;
@@ -4139,7 +4138,7 @@ td, th {
   margin-top: 0;
   color: #183d2a;
   border-radius: 20px; 
-  background: linear-gradient(135deg, #effdf8, #def4ee, #e5faf3);
+  background: linear-gradient(135deg, #e8ffec, #def4ee, #c4fff1 );
   padding: 20px 16px;
   position: relative;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -4257,16 +4256,23 @@ select[disabled] {
   }
 }
 
+@media (max-width: 1030px) {
+ .budget-header {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
 @media (max-width: 760px) {
   .top-row {
     flex-wrap: wrap;
   }
   .month-selector span{
-    min-width: 150px;
+    min-width: 100px;
     padding: 0px;
   }
   .expenses-container {
-    min-width: 340px;
+    min-width: 300px;
   }
   .expense-photo-tabs {
     justify-content: space-between;
