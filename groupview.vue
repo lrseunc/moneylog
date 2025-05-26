@@ -1160,7 +1160,7 @@ offset: function(context) {
 }
 .current-group {
   margin: 20px auto;
-  padding: 10px 16px;
+  padding: 8px 16px;
   width: 95%;
   max-width: 400px;
   background-color: #e0f7f4;
@@ -1194,7 +1194,7 @@ offset: function(context) {
 
 .current-group i {
   color: #2ca58d;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .show-groups-button {
@@ -1202,7 +1202,7 @@ offset: function(context) {
   width: 95%;
   min-width: 250px;
   margin: 20px 20px;
-  padding: 16px 36px;
+  padding: 12px 36px;
   background: linear-gradient(135deg, #e8ffec, #def4f3, #c4fff1);
   color: #32615f;
   border: 2px solid #385248;
@@ -1560,7 +1560,7 @@ button:hover {
   border-radius: 20px;
   width: 80%; 
   min-width: 280px;
-  max-width: 700px;
+  max-width: 680px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.293);
   align-items: flex-start;
   margin-bottom: 10px;
@@ -1614,7 +1614,7 @@ button:hover {
 
 .expense-table table {
   position: relative;
-  width: 90%;
+  width: 95%;
   justify-self: center;
   margin-top: 20px;
   border-collapse: collapse;
@@ -1627,6 +1627,10 @@ button:hover {
   border: 1px solid #000000;
   vertical-align: top;
   word-break: break-word; 
+}
+
+.expense-table td { 
+ font-size: 15px;
 }
 
 .expense-table th {
@@ -1650,11 +1654,11 @@ button:hover {
 
 .chart-summary {
   max-height: 700px;
-  margin-left: 30px;
+  margin-left: 25px;
 }
 
 .chart{
-  width: 380px;
+  width: 400px;
   padding: 20px;
   box-sizing: border-box;
   background: linear-gradient(to right, #f4fffa, #f0fff9, #e6fff6);
@@ -1705,6 +1709,10 @@ background-color: #1e3731;
 
 
 @media (max-width: 1135px) {
+.con-container {
+    max-height: 130vh;
+    margin-bottom: 10px;
+  }
 .show-groups-button {
    margin-left: 0px;
    width: 100%;
@@ -1720,6 +1728,10 @@ background-color: #1e3731;
   }
   .contribution-section {
     width: 90%;
+  }
+  .expense-table th, .expense-table td {
+    font-size: 13px;
+    padding: 8px;
   }
 }
 
@@ -1737,6 +1749,10 @@ background-color: #1e3731;
   }
   .chart{
     width: 100%;
+  }
+  .expense-table th, .expense-table td {
+    font-size: 10px;
+    padding: 7px;
   }
 }
 </style>
