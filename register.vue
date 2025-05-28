@@ -736,8 +736,8 @@ h4 {
     .login-container {
     width: 100%;
     max-width: 650px;
-    min-width: 390px;
-    max-height: 600px;
+    min-width: 300px;
+    max-height: 620px;
     background: rgba(255, 255, 255, 0.92); /* Crisp white with slight transparency */
     border-radius: 20px;
     display: flex;
@@ -816,6 +816,8 @@ h4 {
     input.text-style {
     border-radius: 10px;
     width: 100%;
+    max-width: 350px;
+    min-width: 150px;
     height: 10px;
     padding: 10px 12px;
     font-size: 14px;
@@ -838,8 +840,10 @@ input.text-style:hover {
     
 input.text-style1 {
     border-radius: 10px;
-    width: 230px;
-    height: 20px;
+    width: 100%;
+    max-width: 350px;
+    min-width: 150px;
+    height: 10px;
     padding: 10px 12px;
     font-size: 14px;
     background: none;
@@ -870,7 +874,9 @@ input.text-style1:hover {
     
     button.login-btn,
 .login-btn1 {
-    width: 200px;
+    width: 100%;
+    max-width: 250px;
+    min-width: 160px;
     background: linear-gradient(135deg, #a8d0c2, #62a293, #a8d0c2);
     border-radius: 20px;
     border: none;
@@ -1010,6 +1016,9 @@ button.login-btn:hover,
             .login-deco-container {
                 width: 50%;
             }
+            .form-label {
+                font-size: 14px;
+            }
         
             .deco-image {
                 max-width: 220px;
@@ -1032,6 +1041,14 @@ button.login-btn:hover,
                 font-size: 14px;
                 padding: 8px 0;
             }
+            .privacy-label {
+                font-size: 13px;
+            }
+
+            .error-message,
+            .success-message {
+                font-size: 14px;
+            }
         }
         
         @media (max-width: 480px) {
@@ -1039,7 +1056,7 @@ button.login-btn:hover,
                 padding: 20px;
                 gap: 10px;
             }
-        
+
             .login-form,
             .login-deco-container {
                 width: 50%;
@@ -1049,13 +1066,13 @@ button.login-btn:hover,
             .deco-image {
                 max-width: 220px;
             }
+
+             .text-input-container {
+                width: 90%;
+            }
         
             .penny {
                 font-size: 28px;
-            }
-    
-            .text-input-container {
-                width: 100%;
             }
         
             span.login-label {
@@ -1066,6 +1083,10 @@ button.login-btn:hover,
             .login-btn {
                 font-size: 13px;
                 padding: 6px 0;
+            }
+            .error-message,
+            .success-message {
+                font-size: 13px;
             }
         }
     </style>
