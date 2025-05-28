@@ -1185,7 +1185,7 @@ updateExpenseView() {
 .personal-summary {
   flex: 2;
   min-height: 450px;
-  max-height: 550px;
+  max-height: 580px;
   background: #ffffff;
   padding: 30px 30px 15px 30px; /* top right bottom left */
   border-radius: 12px;
