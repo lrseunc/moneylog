@@ -197,6 +197,7 @@ header {
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
   text-align: center;
   max-width: 380px;
+  min-width: 180px;
   width: 90%;
   color: white;
   animation: popIn 0.4s ease-out;
@@ -654,6 +655,12 @@ display: flex;
 justify-content: center;
 align-items: center;
 z-index: 1000;
+}
+
+@media (max-width: 480px) {
+  .modal-card.logout-modal {
+    width: 70%;
+  }
 }
 
 </style>
