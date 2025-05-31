@@ -4828,7 +4828,7 @@ if (response.data.success) {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr auto;
   align-items: center;
-  padding: 10px 8px;
+  padding: 10px 5px;
   border-bottom: 1px solid #eaeaea;
   font-size: 0.98rem;
   color: #2c3e50;
@@ -4842,14 +4842,12 @@ if (response.data.success) {
 .contribution-date {
   text-align: left;
   font-size: 0.97rem;
+  width: 95%;
 }
-
-.contribution-amount {
-  text-align: left;
-}
-
+.contribution-amount,
 .contribution-note {
   text-align: left;
+  font-size: 0.97rem;
 }
 
 .status-badge {
@@ -5520,7 +5518,7 @@ h2 {
 }
 
 .group-wrapper {
-  min-width: 68%;
+  min-width: 65%;
   width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
@@ -6907,9 +6905,18 @@ button.cancel-button{
   padding: 25px 0px 25px 0px;
   width: 650px;
   }
+  .contribution-date, 
+  .contribution-amount,
+  .contribution-note {
+    text-align: left;
+    font-size: 0.85rem;
+}
+  .contribution-list li {
+    width: 100%;
+  }
 }
 
-@media (max-width: 780px) {
+@media (max-width: 860px) {
   .group-con {
     flex-wrap: wrap;
     flex-direction: column;
