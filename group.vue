@@ -197,20 +197,38 @@
       min="0"
       step="0.01"
       @keyup.enter="saveContribution"
+      :disabled="!canAddContributions"
+    >
+  </div>
+
+  <div class="form-group">
+    <label>Note</label>
+    <input 
+      type="text" 
+      v-model="contributionNoteInput" 
+      placeholder="Enter a note (optional)"
+      @keyup.enter="saveContribution"
+      :disabled="!canAddContributions"
     >
   </div>
   <div class="btn-save-wrapper">
-  <button 
-    @click="saveContribution" 
-    class="btn-save"
-    :disabled="paidAmountLoading || !paidAmountInput || paidAmountInput <= 0"
-  >
-    <span v-if="paidAmountLoading">
-      <i class="fas fa-spinner fa-spin"></i> Saving...
-    </span>
-    <span v-else>Save Contribution</span>
+    <button 
+      @click="saveContribution" 
+      class="btn-save"
+      :disabled="paidAmountLoading || !paidAmountInput || paidAmountInput <= 0 || !canAddContributions"
+      :class="{ 'disabled-btn': !canAddContributions }"
+    >
+      <span v-if="paidAmountLoading">
+        <i class="fas fa-spinner fa-spin"></i> Saving...
+      </span>
+      <span v-else>Save Contribution</span>
   </button>
   </div>
+
+  <div v-if="!canAddContributions" class="contributions-disabled-notice">
+    <i class="fas fa-info-circle"></i> Contributions can only be added after expenses are created in this group.
+  </div>
+
   <div v-if="contributionHistory.length > 0" class="contribution-history">
     <h4><i class="fas fa-history"></i> Your Contribution History</h4>
     <ul class="contribution-list">
@@ -221,6 +239,7 @@
     <div class="contribution-amount">
       {{ formatPHP(contribution.amount) }}
     </div>
+    <div class="contribution-note">{{ contribution.note || 'No note' }}</div>
     <button @click="editContribution(contribution)" class="edit-btn" title="Edit">
       <i class="fas fa-edit"></i>
     </button>
@@ -312,6 +331,7 @@
                     <th>Item Price</th>
                     <th>Date</th>
                     <th>Added By</th>
+                    <th>Note</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -322,6 +342,7 @@
                     <td>{{ formatPHP(expense.item_price) }}</td>
                     <td>{{ formatDate(expense.expense_date) }}</td>
                     <td>{{ expense.username }}</td>
+                    <td>{{ expense.note || 'N/A' }}</td>
                     <td class="actions">
                       <div class="action-buttons">
                         <button 
@@ -433,7 +454,7 @@
     </div>
   </div>
 
-        <div v-if="isAdmin" class="invite-section">
+        <div class="invite-section">
             <h3>Invite New Member</h3>
             <div class="invite-form">
               <input 
@@ -874,6 +895,28 @@
     </button>
           </div>
         </div>
+
+        <div class="form-group">
+          <label>Note</label>
+          <div class="input-with-voice">
+            <input 
+              v-model="newExpense.note" 
+              type="text" 
+              required
+              minlength="2"
+              maxlength="255"
+            />
+            <button 
+              @click="startVoiceInput('note')" 
+              class="voice-btn" 
+              :class="{ active: isListening && voiceInputActiveField === 'note' }"
+              title="Set note by voice"
+            >
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
+        </div>
+
         
         <div class="form-actions">
           <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
@@ -922,7 +965,17 @@
         @keyup.enter="updateContribution"
       >
     </div>
-    
+    <div class="form-group">
+      <label>Note</label>
+      <input
+        type="text"
+        v-model="editingContribution.note"
+        placeholder="Enter note (optional)"
+        class="form-control"
+        @keyup.enter="updateContribution"
+      >
+    </div>
+        
     <div class="modal-actions">
       <button @click="updateContribution" class="btn-save1" :disabled="!editingContribution.amount || editingContribution.amount <= 0">
         Save Changes
@@ -973,6 +1026,10 @@
               <label>Amount</label>
               <input v-model="editingExpense.item_price" type="number" step="0.01" min="0" required>
             </div>
+            <div class="form-group">
+              <label>Note</label>
+              <input v-model="editingExpense.note" type="text" required>
+            </div>
             <div class="form-actions">
               <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
               <button type="submit" class="submit-button">Update Expense</button>
@@ -1020,9 +1077,9 @@ export default {
   data() {
     return {
       blockedMembers: [],
-    blockingMember: false,
-    unblockingMember: false,
-    showBlockedMembers: false,
+      blockingMember: false,
+      unblockingMember: false,
+      showBlockedMembers: false,
       editPhotoPreview: null,
       editPhotoFile: null,
       editingPhoto: null,  // Initialize as null
@@ -1036,6 +1093,7 @@ export default {
       memberContributions: [],
       contributions: [],
       paidAmountInput: 0,
+      contributionNoteInput: '',
       contributionHistory: [],
       paidAmountLoading: false,
       localGroupId: this.groupId,
@@ -1070,13 +1128,13 @@ export default {
       promoteSuccess: '',
       showEditContributionModal: false,
       photoPreview: null,
-    uploadingPhoto: false,
-    groupPhotos: [],
-    photosLoading: false,
-    photosError: null,
+      uploadingPhoto: false,
+      groupPhotos: [],
+      photosLoading: false,
+      photosError: null,
       showUploadModal: false,
-    viewingPhoto: null,
-    newPhoto: {
+      viewingPhoto: null,
+      newPhoto: {
       description: '',
       file: null
     },
@@ -1093,12 +1151,14 @@ export default {
         item_name: '',
         item_price: 0,
         expense_type: '',
+        note: '',
       },
       customExpenseType: '', 
       editingExpense: {
       expense_type: '',
       item_name: '',
-      item_price: null
+      item_price: null,
+      note: ''
     },
       
       editingExpense: {},
@@ -1146,6 +1206,10 @@ export default {
       isAdmin: state => state.isAdmin,
       groupBudget: state => state.groupBudget || {}
     }),
+
+    canAddContributions() {
+    return this.filteredExpenses.length > 0;
+  },
 
     zoomStyle() {
     return {
@@ -1500,9 +1564,14 @@ export default {
     //  'fetchAvailableBudgets'
     ]),
 
-    editPhoto(photo) {
-  this.editingPhoto = { ...photo };
-},
+        setNoteFromVoice(noteText) {
+        this.newExpense.note = noteText;
+        this.$toast.success(`Note set to: ${noteText}`);
+      },
+
+      editPhoto(photo) {
+      this.editingPhoto = { ...photo };
+    },
 
 canEditPhoto(photo) {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -1632,6 +1701,10 @@ canEditPhoto(photo) {
         action: (match) => this.setAmountFromVoice(match[2])
       },
       {
+        pattern: /^(set|add|enter) note (.*)/i,
+        action: (match) => this.setNoteFromVoice(match[2])
+      },
+      {
         pattern: /^submit|save|add expense/i,
         action: () => this.handleSubmit()
       },
@@ -1697,10 +1770,13 @@ canEditPhoto(photo) {
         case 'amount':
           this.handleAmountInput(transcript);
           break;
-          case 'customType': 
-    this.handleCustomTypeInput(transcript);
-    break;
-      }
+        case 'customType': 
+          this.handleCustomTypeInput(transcript);
+          break;
+        case 'note':
+          this.handleNoteInput(transcript);
+          break;
+        }
       this.stopVoiceInput(); // Auto-stop after field input
       return;
     }
@@ -1732,6 +1808,11 @@ canEditPhoto(photo) {
     } else {
       this.$toast.error("Couldn't understand the amount. Please try again.");
     }
+  },
+
+    handleNoteInput(transcript) {
+    this.newExpense.note = transcript;
+    this.$toast.success(`Note set to: ${transcript}`);
   },
 
   handleGeneralCommands(transcript) {
@@ -2638,7 +2719,9 @@ showError(message) {
     amount: parseFloat(plainContribution.amount),
     date: plainContribution.date,
     status: plainContribution.status,
-    originalAmount: parseFloat(plainContribution.amount)
+    note: plainContribution.note || '', 
+    originalAmount: parseFloat(plainContribution.amount),
+    originalNote: plainContribution.note || '' 
   };
   this.showEditContributionModal = true;
 },
@@ -2652,7 +2735,8 @@ async updateContribution() {
   try {
     const response = await this.$axios.put(
       `/api/grp_expenses/groups/${this.localGroupId}/contributions/${this.editingContribution.id}`,
-      { amount: this.editingContribution.amount },
+      { amount: this.editingContribution.amount,
+        note: this.editingContribution.note },
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
@@ -2678,6 +2762,9 @@ async updateContribution() {
     if (this.editingContribution.originalAmount) {
       this.editingContribution.amount = this.editingContribution.originalAmount;
     }
+    if (this.editingContribution.originalNote) {
+    this.editingContribution.note = this.editingContribution.originalNote;
+  }
     this.showEditContributionModal = false;
   },
 
@@ -2731,17 +2818,24 @@ async updateContribution() {
     try {
       this.paidAmountLoading = true;
       const amount = parseFloat(this.paidAmountInput);
+      const note = this.contributionNoteInput ? this.contributionNoteInput.trim() : '';
       
       if (isNaN(amount) || amount <= 0) {
         this.showError('Please enter a valid amount');
         return;
       }
+
+      if (this.filteredExpenses.length === 0) {
+      this.showError('Cannot add contributions - the group has no expenses yet');
+      return;
+    }
       
       const user = JSON.parse(localStorage.getItem('user'));
       const response = await this.$axios.post(
         `/api/grp_expenses/groups/${this.localGroupId}/contributions`,
         { 
           amount,
+          note,
           user_id: user.id,
           group_id: this.localGroupId 
         },
@@ -2755,6 +2849,7 @@ async updateContribution() {
       if (response.data.success) {
         this.showSuccess('Contribution saved successfully!');
         this.paidAmountInput = 0;
+        this.contributionNoteInput = ''; 
 
         await Promise.all([
           this.fetchContributions(),
@@ -3165,6 +3260,7 @@ async updateBudget() {
       expense_type: this.newExpense.expense_type === 'Other' 
         ? this.customExpenseType 
         : this.newExpense.expense_type,
+      note: this.newExpense.note, 
       group_id: this.localGroupId,
       user_id: user.id   
     };
@@ -3224,6 +3320,7 @@ showError(message) {
           item_name: this.editingExpense.item_name,
           item_price: parseFloat(this.editingExpense.item_price),
           expense_type: this.editingExpense.expense_type,
+          note: this.editingExpense.note,
           group_id: this.localGroupId,
           user_id: user.id   
         };
@@ -3336,7 +3433,8 @@ showError(message) {
       this.showConfirmationModal = true;
     },
     
-  async sendInvite() {
+// In your methods section of Group.vue
+async sendInvite() {
   this.inviteError = '';
   this.inviteSuccess = '';
   
@@ -3360,9 +3458,30 @@ showError(message) {
       }
     );
 
-     if (response.data.success) {
+    if (response.data.success) {
       this.inviteSuccess = 'Invitation sent successfully!';
       this.inviteEmail = '';
+      
+      // Show notification with copyable group code
+      this.$notify({
+        title: 'Invitation Sent',
+        message: `
+          <div>
+            <p>Invitation sent to ${this.inviteEmail}</p>
+            <div class="group-code-container" style="margin-top: 10px;">
+              <p>Group Code: <strong>${this.group.group_code}</strong></p>
+              <button 
+                @click="copyGroupCode"
+                style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;"
+              >
+                Copy Code
+              </button>
+            </div>
+          </div>
+        `,
+        dangerouslyUseHTMLString: true,
+        duration: 5000
+      });
       
       setTimeout(() => {
         this.inviteSuccess = '';
@@ -3578,6 +3697,30 @@ if (response.data.success) {
 </script>
 
 <style scoped>
+.contributions-disabled-notice {
+  background-color: #e3f3ee;
+  padding: 10px;
+  margin: 10px auto;             
+  border-radius: 4px;
+  color: #2c3e50;                 
+  font-size: 0.9rem;
+  text-align: center;
+  width: fit-content;
+  max-width: 100%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* subtle shadow */
+}
+
+.contributions-disabled-notice i {
+  color: #2c3e50;                  /* match white tone */
+  margin-right: 8px;
+}
+
+.disabled-btn {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #e0e0e0 !important;
+}
+
 /* Add to your styles */
 .blocked-members-section {
   margin-top: 20px;
@@ -3587,25 +3730,37 @@ if (response.data.success) {
 
 .btn-blocked-members {
   background: #f6fafd;
-  border: 1px solid #ddd;
+  border: 1px solid #6a9c89;
   padding: 0.8rem 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   font-size: 15px;
+  font-weight: 500;
+  color: #22684d;
+  transition: 
+    background-color 0.3s ease, 
+    box-shadow 0.3s ease, 
+    transform 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .btn-blocked-members:hover {
-  background: #e9ecef;
+  background: #e0f1ef;
+  box-shadow: 0 4px 10px rgba(38, 102, 94, 0.1);
+  transform: translateY(-1px);
 }
+
 
 .blocked-members-list {
   margin-top: 1rem;
   border: 1px solid #eee;
   border-radius: 4px;
   overflow: hidden;
+  border: 2px dashed #ced4da;
+  border-radius: 8px;
 }
 
 .blocked-member-item {
@@ -3649,10 +3804,17 @@ if (response.data.success) {
 }
 
 .no-blocked-members {
-  padding: 1rem;
+  padding: 1.2rem;
+  margin: 1rem;
   text-align: center;
   color: #6c757d;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-size: 15px;
+  font-style: italic;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
+
 .modal-overlay10 {
   position: fixed;
   top: 0;
@@ -4664,7 +4826,7 @@ if (response.data.success) {
 
 .contribution-list li {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   align-items: center;
   padding: 10px 8px;
   border-bottom: 1px solid #eaeaea;
@@ -4683,6 +4845,10 @@ if (response.data.success) {
 }
 
 .contribution-amount {
+  text-align: left;
+}
+
+.contribution-note {
   text-align: left;
 }
 
@@ -5104,7 +5270,7 @@ if (response.data.success) {
 }
 
 .budget-total-container {
-  min-width: 28%;
+  min-width: 30%;
   box-sizing: border-box;
 }
 
@@ -5358,7 +5524,7 @@ h2 {
   width: 100%;
   box-sizing: border-box;
   margin: 0 auto;
-  max-width: 1200px;
+  max-width: 1000px;
 }
 
 .group-body {
