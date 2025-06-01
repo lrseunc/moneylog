@@ -1163,6 +1163,8 @@ button:hover {
 }
 
 .expense-table th, .expense-table td {
+  font-size: 14px;
+  text-transform: uppercase; 
   padding: 12px;
   text-align: center;
   border: 1px solid #000000;
@@ -1249,6 +1251,10 @@ background-color: #1e3731;
 .chart{
     width: 400px;
   }
+  .expense-table th, .expense-table td {
+    font-size: 13px;
+    padding: 8px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1265,6 +1271,10 @@ background-color: #1e3731;
   }
   .chart{
     width: 100%;
+  }
+  .expense-table th, .expense-table td {
+    font-size: 11px;
+    padding: 7px;
   }
 }
 </style> 
