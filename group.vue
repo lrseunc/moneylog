@@ -1019,30 +1019,32 @@
     </div>
     
     <!-- Confirmation Modal -->
-    <div v-if="showConfirmationModal" class="modal-overlay2">
+    <div v-if="showConfirmationModal" class="modal-overlay">
       <div class="modal-content confirmation-modal">
         <div class="modal-header2">
           <h3>{{ confirmationTitle }}</h3>
-          <button @click="closeModal" class="close-button2">&times;</button>
+          <button @click="closeModal" class="close-button">&times;</button>
         </div>
         <div class="modal-body2">
           <p>{{ confirmationMessage }}</p>
 
-          <!-- New note input -->
-          <label for="noteInput">Note:</label>
-          <textarea
-            id="noteInput"
-            v-model="confirmationNote"
-            placeholder="Enter your note here (optional)"
-            rows="1"
-            class="note-textarea" 
-          ></textarea>
+          <!-- Conditional note input -->
+          <div v-if="confirmationNoteRequired" class="note-section">
+            <label for="noteInput">Note:</label>
+            <textarea
+              id="noteInput"
+              v-model="confirmationNote"
+              placeholder="Enter your note here (optional)"
+              rows="1"
+              class="note-textarea"
+            ></textarea>
+          </div>
+
           <div class="confirmation-actions">
             <button @click="closeModal" class="cancel-button">Cancel</button>
             <button @click="confirmAction" class="confirm-button">Confirm</button>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -2234,6 +2236,8 @@ async fetchPhotos() {
 
     this.confirmationTitle = 'Delete Photo';
     this.confirmationMessage = 'Are you sure you want to delete this photo?';
+    this.confirmationNoteRequired = false;
+    this.confirmationNote = '';
     this.confirmAction = async () => {
     try {
       await this.deletePhoto(photo.id);
@@ -2291,6 +2295,8 @@ async fetchPhotos() {
   confirmBlockMember(member) {
     this.confirmationTitle = 'Block Member';
     this.confirmationMessage = `Are you sure you want to block ${member.username}? They won't be able to rejoin unless unblocked.`;
+    this.confirmationNoteRequired = true;
+    this.confirmationNote = '';
     this.confirmAction = async () => {
       try {
         this.blockingMember = true;
@@ -2331,6 +2337,8 @@ async fetchPhotos() {
   confirmUnblockMember(member) {
     this.confirmationTitle = 'Unblock Member';
     this.confirmationMessage = `Are you sure you want to unblock ${member.username}? They will be able to rejoin the group.`;
+    this.confirmationNoteRequired = false;
+    this.confirmationNote = '';
     this.confirmAction = async () => {
       try {
         this.unblockingMember = true;
@@ -2586,6 +2594,8 @@ async updateMemberContributions() {
     leaveGroup() {
   this.confirmationTitle = 'Leave Group';
   this.confirmationMessage = 'Are you sure you want to leave this group? You will need to be invited again to rejoin.';
+  this.confirmationNoteRequired = false;
+  this.confirmationNote = '';
   this.confirmAction = async () => {
     try {
       await this.$store.dispatch('group/leaveGroup', this.localGroupId);
@@ -2610,6 +2620,8 @@ async updateMemberContributions() {
     promoteToAdmin(member) {
   this.confirmationTitle = 'Promote to Admin';
   this.confirmationMessage = `Are you sure you want to promote ${member.username} to admin? They will have full control over this group.`;
+  this.confirmationNoteRequired = false;
+  this.confirmationNote = '';
   this.confirmAction = async () => {
     try {
       await this.$store.dispatch('group/promoteToAdmin', {
@@ -3389,6 +3401,8 @@ showError(message) {
     confirmDeleteExpense(expense) {
       this.confirmationTitle = 'Delete Expense';
       this.confirmationMessage = `Are you sure you want to delete "${expense.item_name}" (${this.formatPHP(expense.item_price)})?`;
+      this.confirmationNoteRequired = false;
+      this.confirmationNote = '';
       this.confirmAction = async () => {
       try {
         await this.deleteExpense({
@@ -3483,6 +3497,8 @@ async sendInvite() {
     confirmRemoveMember(member) {
       this.confirmationTitle = 'Remove Member';
       this.confirmationMessage = `Are you sure you want to remove ${member.username} from the group?`;
+      this.confirmationNoteRequired = true;
+      this.confirmationNote = '';      
       this.confirmAction = async () => {
         try {
           console.log('Removing member with:', {
@@ -3560,6 +3576,8 @@ async sendInvite() {
     confirmDeleteGroup() {
       this.confirmationTitle = 'Delete Group';
       this.confirmationMessage = 'Are you sure you want to delete this group permanently? This action cannot be undone.';
+      this.confirmationNoteRequired = false;
+      this.confirmationNote = '';
       this.confirmAction = async () => {
         try {
           await this.deleteGroup(this.localGroupId);
