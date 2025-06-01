@@ -162,7 +162,6 @@ router.route('/groups/:groupId/contributions')
           c.user_id,
           u.username,
           c.amount,
-          c.note,
           c.created_at as date,
           c.status
          FROM contributions c
@@ -181,7 +180,7 @@ router.route('/groups/:groupId/contributions')
   .post(groupAuth('member'), async (req, res) => {
     try {
       const { groupId } = req.params;
-      const { amount, user_id, note } = req.body;
+      const { amount, user_id} = req.body;
 
       if (!amount || isNaN(amount)) {
         return res.status(400).json({ success: 0, message: 'Invalid amount' });
@@ -197,8 +196,8 @@ router.route('/groups/:groupId/contributions')
       }
 
       await pool.query(
-        'INSERT INTO contributions (group_id, user_id, amount, note, status) VALUES (?, ?, ?, ?, ?)',
-        [groupId, user_id, amount, note, 'completed']
+        'INSERT INTO contributions (group_id, user_id, amount, status) VALUES (?, ?, ?, ?, ?)',
+        [groupId, user_id, amount, 'completed']
       );
 
       return res.json({ success: 1, message: 'Contribution saved successfully' });
@@ -224,7 +223,6 @@ router.route('/groups/:groupId/contributions')
         c.user_id,
         u.username,
         c.amount,
-        c.note,
         DATE_FORMAT(c.created_at, '%Y-%m-%d') as date,
         c.status,
         c.group_id  // Make sure this is included
@@ -271,7 +269,6 @@ router.route('/groups/:groupId/contributions')
         `SELECT 
           id,
           amount,
-          note, 
           DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as date,
           status 
          FROM contributions 
@@ -290,7 +287,7 @@ router.route('/groups/:groupId/contributions')
 router.post('/groups/:groupId/contributions', groupAuth('member'), async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { amount, note, user_id } = req.body;
+    const { amount, user_id } = req.body;
 
     if (!amount || isNaN(amount) || amount <= 0) {
       return res.status(400).json({ success: 0, message: 'Invalid amount' });
@@ -320,8 +317,8 @@ router.post('/groups/:groupId/contributions', groupAuth('member'), async (req, r
     await pool.query('START TRANSACTION');
 
     const [result] = await pool.query(
-      'INSERT INTO contributions (group_id, user_id, amount, note, status) VALUES (?, ?, ?, ?)',
-      [groupId, user_id, amount, note, 'pending']
+      'INSERT INTO contributions (group_id, user_id, amount, status) VALUES (?, ?, ?, ?)',
+      [groupId, user_id, amount, 'pending']
     );
 
     const [newContribution] = await pool.query(
@@ -330,7 +327,6 @@ router.post('/groups/:groupId/contributions', groupAuth('member'), async (req, r
         c.user_id,
         u.username,
         c.amount,
-        c.note,
         DATE_FORMAT(c.created_at, '%Y-%m-%d %H:%i:%s') as date,
         c.status
        FROM contributions c
@@ -358,7 +354,7 @@ router.put('/groups/:groupId/contributions/:contributionId', groupAuth('member')
   let connection;
   try {
     const { groupId, contributionId } = req.params;
-    const { amount, note } = req.body;
+    const { amount } = req.body;
 
     // Validate input
     if (!amount || isNaN(amount) || amount <= 0) {
@@ -394,8 +390,8 @@ router.put('/groups/:groupId/contributions/:contributionId', groupAuth('member')
 
     // Update the contribution
     await connection.query(
-      'UPDATE contributions SET amount = ?, note = ? WHERE id = ?',
-      [amount, note, contributionId]
+      'UPDATE contributions SET amount = ?, WHERE id = ?',
+      [amount, contributionId]
     );
 
     await connection.query('COMMIT');
