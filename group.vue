@@ -201,16 +201,6 @@
     >
   </div>
 
-  <div class="form-group">
-    <label>Note</label>
-    <input 
-      type="text" 
-      v-model="contributionNoteInput" 
-      placeholder="Enter a note (optional)"
-      @keyup.enter="saveContribution"
-      :disabled="!canAddContributions"
-    >
-  </div>
   <div class="btn-save-wrapper">
     <button 
       @click="saveContribution" 
@@ -239,7 +229,6 @@
     <div class="contribution-amount">
       {{ formatPHP(contribution.amount) }}
     </div>
-    <div class="contribution-note">{{ contribution.note || 'No note' }}</div>
     <button @click="editContribution(contribution)" class="edit-btn" title="Edit">
       <i class="fas fa-edit"></i>
     </button>
@@ -337,12 +326,12 @@
                 </thead>
                 <tbody>
                   <tr v-for="expense in filteredExpenses" :key="expense.id">
-                    <td>{{ expense.expense_type || 'N/A' }}</td>
-                    <td>{{ expense.item_name || 'N/A' }}</td>
+                    <td>{{ (expense.expense_type || 'N/A') .toUpperCase() }}</td>
+                    <td>{{ (expense.item_name || 'N/A') .toUpperCase() }}</td>
                     <td>{{ formatPHP(expense.item_price) }}</td>
                     <td>{{ formatDate(expense.expense_date) }}</td>
                     <td>{{ expense.username }}</td>
-                    <td>{{ expense.note || 'N/A' }}</td>
+                    <td>{{ expense.note || 'no note' }}</td>
                     <td class="actions">
                       <div class="action-buttons">
                         <button 
@@ -814,13 +803,13 @@
               @change="handleCategoryChange"
             >
               <option value="">Select a category</option>
-              <option value="Food">Food</option>
-              <option value="Bill">Bill</option>
-              <option value="Transportation">Transportation</option>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Other">Other</option>
+              <option value="Food">FOOD</option>
+              <option value="Bill">BILL</option>
+              <option value="Transportation">TRANSPORTATION</option>
+              <option value="Entertainment">ENTERTAINMENT</option>
+              <option value="Healthcare">HEALTHCARE</option>
+              <option value="Shopping">SHOPPING</option>
+              <option value="Other">OTHER</option>
             </select>
             <button 
       @click="startVoiceInput('category')" 
@@ -859,6 +848,7 @@
           <div class="input-with-voice">
             <input 
               v-model="newExpense.item_name" 
+              @change="newExpense.item_name = $event.target.value.toUpperCase()"
               type="text" 
               required
               minlength="2"
@@ -901,8 +891,8 @@
           <div class="input-with-voice">
             <input 
               v-model="newExpense.note" 
+              placeholder="Enter a note (optional)"
               type="text" 
-              required
               minlength="2"
               maxlength="255"
             />
@@ -965,17 +955,7 @@
         @keyup.enter="updateContribution"
       >
     </div>
-    <div class="form-group">
-      <label>Note</label>
-      <input
-        type="text"
-        v-model="editingContribution.note"
-        placeholder="Enter note (optional)"
-        class="form-control"
-        @keyup.enter="updateContribution"
-      >
-    </div>
-        
+
     <div class="modal-actions">
       <button @click="updateContribution" class="btn-save1" :disabled="!editingContribution.amount || editingContribution.amount <= 0">
         Save Changes
@@ -999,14 +979,13 @@
             <div class="form-group">
               <label>Category</label>
               <select v-model="editingExpense.expense_type" required>
-                <option value="Food">Food</option>
-                <option value="Entertainment">Accomodation</option>
-                <option value="Transportation">Transportation</option>
-                <option value="Entertainment">Bills</option>
-                <option value="Entertainment">Shopping</option>
-                <option value="Entertainment">Entertainment</option>
-                <option value="Utilities">Essentials</option>
-                <option value="Other">Others</option>
+              <option value="Food">FOOD</option>
+              <option value="Bill">BILL</option>
+              <option value="Transportation">TRANSPORTATION</option>
+              <option value="Entertainment">ENTERTAINMENT</option>
+              <option value="Healthcare">HEALTHCARE</option>
+              <option value="Shopping">SHOPPING</option>
+              <option value="Other">OTHER</option>
               </select>
             </div>
             <div v-if="editingExpense.expense_type === 'Other'" class="form-group">
@@ -1020,7 +999,7 @@
         </div>
             <div class="form-group">
               <label>Item Name</label>
-              <input v-model="editingExpense.item_name" type="text" required>
+              <input v-model="editingExpense.item_name" @input="editingExpense.item_name = $event.target.value.toUpperCase()" type="text" required>
             </div>
             <div class="form-group">
               <label>Amount</label>
@@ -1028,7 +1007,7 @@
             </div>
             <div class="form-group">
               <label>Note</label>
-              <input v-model="editingExpense.note" type="text" required>
+              <input v-model="editingExpense.note" type="text">
             </div>
             <div class="form-actions">
               <button type="button" @click="closeModal" class="cancel-button">Cancel</button>
@@ -1048,11 +1027,22 @@
         </div>
         <div class="modal-body2">
           <p>{{ confirmationMessage }}</p>
+
+          <!-- New note input -->
+          <label for="noteInput">Note:</label>
+          <textarea
+            id="noteInput"
+            v-model="confirmationNote"
+            placeholder="Enter your note here (optional)"
+            rows="1"
+            class="note-textarea" 
+          ></textarea>
           <div class="confirmation-actions">
             <button @click="closeModal" class="cancel-button">Cancel</button>
             <button @click="confirmAction" class="confirm-button">Confirm</button>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -2719,9 +2709,7 @@ showError(message) {
     amount: parseFloat(plainContribution.amount),
     date: plainContribution.date,
     status: plainContribution.status,
-    note: plainContribution.note || '', 
     originalAmount: parseFloat(plainContribution.amount),
-    originalNote: plainContribution.note || '' 
   };
   this.showEditContributionModal = true;
 },
@@ -2735,8 +2723,7 @@ async updateContribution() {
   try {
     const response = await this.$axios.put(
       `/api/grp_expenses/groups/${this.localGroupId}/contributions/${this.editingContribution.id}`,
-      { amount: this.editingContribution.amount,
-        note: this.editingContribution.note },
+      { amount: this.editingContribution.amount},
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
@@ -2762,9 +2749,6 @@ async updateContribution() {
     if (this.editingContribution.originalAmount) {
       this.editingContribution.amount = this.editingContribution.originalAmount;
     }
-    if (this.editingContribution.originalNote) {
-    this.editingContribution.note = this.editingContribution.originalNote;
-  }
     this.showEditContributionModal = false;
   },
 
@@ -2818,7 +2802,6 @@ async updateContribution() {
     try {
       this.paidAmountLoading = true;
       const amount = parseFloat(this.paidAmountInput);
-      const note = this.contributionNoteInput ? this.contributionNoteInput.trim() : '';
       
       if (isNaN(amount) || amount <= 0) {
         this.showError('Please enter a valid amount');
@@ -2835,7 +2818,6 @@ async updateContribution() {
         `/api/grp_expenses/groups/${this.localGroupId}/contributions`,
         { 
           amount,
-          note,
           user_id: user.id,
           group_id: this.localGroupId 
         },
@@ -4826,7 +4808,7 @@ if (response.data.success) {
 
 .contribution-list li {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr auto;
   align-items: center;
   padding: 10px 5px;
   border-bottom: 1px solid #eaeaea;
@@ -4839,13 +4821,8 @@ if (response.data.success) {
   background-color: #f3f9ff;
 }
 
-.contribution-date {
-  text-align: left;
-  font-size: 0.97rem;
-  width: 95%;
-}
-.contribution-amount,
-.contribution-note {
+.contribution-date,
+.contribution-amount {
   text-align: left;
   font-size: 0.97rem;
 }
@@ -5614,7 +5591,6 @@ h2 {
     border-radius: 8px;
     animation: fadeSlideIn 0.6s ease-out;
     box-shadow: 0 2px 8px #00000059;
-    text-transform: uppercase;
     text-align: center;
     letter-spacing: 1px;
     margin-bottom: 0px;
@@ -6776,6 +6752,12 @@ h2 {
   background-color: #ffebee;
 }
 
+.note-textarea {
+  width: 70%;
+  margin-bottom: -3px;
+  margin-left: 10px;
+}
+
 .form-group {
   margin-bottom: 15px;
 }
@@ -6904,15 +6886,6 @@ button.cancel-button{
   .expenses-section h3{
   padding: 25px 0px 25px 0px;
   width: 650px;
-  }
-  .contribution-date, 
-  .contribution-amount,
-  .contribution-note {
-    text-align: left;
-    font-size: 0.85rem;
-}
-  .contribution-list li {
-    width: 100%;
   }
 }
 
