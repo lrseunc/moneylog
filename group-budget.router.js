@@ -196,7 +196,7 @@ router.route('/groups/:groupId/contributions')
       }
 
       await pool.query(
-        'INSERT INTO contributions (group_id, user_id, amount, status) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO contributions (group_id, user_id, amount, status) VALUES (?, ?, ?, ?)',
         [groupId, user_id, amount, 'completed']
       );
 
@@ -390,7 +390,7 @@ router.put('/groups/:groupId/contributions/:contributionId', groupAuth('member')
 
     // Update the contribution
     await connection.query(
-      'UPDATE contributions SET amount = ?, WHERE id = ?',
+      'UPDATE contributions SET amount = ? WHERE id = ?',
       [amount, contributionId]
     );
 
