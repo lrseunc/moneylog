@@ -144,13 +144,13 @@
            <div class="input-with-voice">
            <select v-model="expenseType" required @change="checkExpenseType">
             <option value="">Select a category</option> 
-            <option value="Food">Food</option>
-             <option value="Bill">Bill</option>
-             <option value="Transportation">Transportation</option>
-             <option value="Entertainment">Entertainment</option>
-             <option value="Healthcare">Healthcare</option>
-             <option value="Shopping">Shopping</option> 
-             <option value="Other">Other</option>
+            <option value="Food">FOOD</option>
+             <option value="Bill">BILL</option>
+             <option value="Transportation">TRANSPORTATION</option>
+             <option value="Entertainment">ENTERTAINMENT</option>
+             <option value="Healthcare">HEALTHCARE</option>
+             <option value="Shopping">SHOPPING</option> 
+             <option value="Other">OTHER</option>
             </select>
             <button 
       @click="startVoiceInput('category')" 
@@ -183,10 +183,10 @@
 </div>
 
  
-         <div class="form-group">
+  <div class="form-group">
   <label>ITEM NAME:</label>
   <div class="input-with-voice">
-    <input type="text" v-model="itemName" @input="onItemNameChange" placeholder="Enter item name" required />
+    <input type="text" v-model="itemName" @input="onItemNameChange" placeholder="Enter item name" required style="text-transform: uppercase;" />
     <button 
       @click="startVoiceInput('item')" 
       class="voice-btn" 
@@ -201,7 +201,7 @@
 <div class="form-group">
   <label>ITEM PRICE:</label>
   <div class="input-with-voice">
-    <input type="number" v-model.number="itemPrice" placeholder="Enter item price" required step="0.01" />
+    <input type="number" v-model.number="itemPrice" placeholder="Enter item price" required step="0.01" style="text-transform: uppercase"/>
     <button 
       @click="startVoiceInput('amount')" 
       class="voice-btn" 
@@ -282,8 +282,8 @@
           </thead>
           <tbody>
             <tr v-for="expense in filteredExpenses" :key="expense?.id">
-              <td>{{ expense?.expense_type || 'N/A' }}</td>
-              <td>{{ expense?.item_name || 'N/A' }}</td>
+              <td>{{ (expense?.expense_type || 'N/A') .toUpperCase() }}</td>
+              <td>{{ (expense?.item_name || 'N/A') .toUpperCase() }}</td>
               <td>{{ expense?.item_price ? formatPHP(expense.item_price) : '₱0.00' }}</td>
               <td>{{ formatDate(expense?.expense_date) }}</td>
               <td class="actions">
@@ -1516,7 +1516,6 @@ async deletePhoto(photoId) {
   canDeletePhoto(photo) {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user || !photo) return false;
-  console.log('Current User ID:', user.id, 'Photo User ID:', photo.user_id);
   return user.id === photo.user_id;
 },
 
@@ -3405,7 +3404,8 @@ async deleteExpenseHandler(expense) {
   border: 1px solid #ef9a9a;
   border-radius: 6px;
   padding: 20px 30px; /* Increased padding */
-  min-width: 320px;    /* Optional: ensures a wider box */
+  max-width: 520px;
+  min-width: 250px;    /* Optional: ensures a wider box */
   color: #c62828;
   font-weight: bold;
   font-size: 1.2em;    /* Increased font size */
