@@ -848,7 +848,7 @@
           <div class="input-with-voice">
             <input 
               v-model="newExpense.item_name" 
-              @change="newExpense.item_name = $event.target.value.toUpperCase()"
+              @input="newExpense.item_name = $event.target.value.toUpperCase()"
               type="text" 
               required
               minlength="2"
