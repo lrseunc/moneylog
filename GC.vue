@@ -463,7 +463,7 @@
   position: fixed;
   top: 0;
   right: -500px;
-  width: 300px;
+  width: 250px;
   height: 100vh;
   background: #fff;
   border-left: 1px solid #ccc;
