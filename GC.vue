@@ -1,6 +1,6 @@
 <template>
   <div class="fixed-container">
-    <navigation/>
+    <navigation />
     
     <div class="group-management-container">
       <div class="centered-content">
@@ -69,8 +69,46 @@
           </div>
         </div>
       </div>
+  <div class="notifications-container" v-if="notifications.length > 0">
+  <h3 class="notifications-title">
+    <i class="fas fa-bell"></i> Notifications
+  </h3>
+  <div class="notification-list">
+    <div v-for="(notification, index) in notifications" :key="index" 
+         class="notification-item" :class="notification.type">
+      <div class="notification-header">
+        <i class="fas" :class="{
+          'fa-ban': notification.type === 'blocked',
+          'fa-user-minus': notification.type === 'removed'
+        }"></i>
+        <span class="notification-type">
+          {{ notification.type === 'blocked' ? 'Blocked' : 'Removed' }}
+        </span>
+        <span class="notification-time">
+          {{ formatTimeAgo(notification.timestamp) }}
+        </span>
+        <button @click="dismissNotification(index)" class="dismiss-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="notification-content">
+        <p>From group: <strong>{{ notification.groupName }}</strong></p>
+        <p class="notification-action">
+          {{ notification.type === 'blocked' ? 'Blocked' : 'Removed' }} by: 
+          <strong>{{ notification.type === 'blocked' ? notification.blocked_by_name : notification.removed_by_name }}</strong>
+        </p>
+        <p v-if="notification.reason" class="notification-reason">
+          Reason: <em>"{{ notification.reason }}"</em>
+        </p>
+        <p v-else class="notification-reason">
+          No reason provided
+        </p>
+      </div>
     </div>
   </div>
+</div>
+</div>
+</div>
   </template>
 
   <script>
@@ -81,6 +119,7 @@
     components: { Navigation },
     data() {
       return {
+        notifications: [],
         userGroups: [],
         activeTab: 'create',
         groupName: '',
@@ -96,13 +135,72 @@
      async created() {
       this.preventAutoRedirect = this.$route.query.fromGroup === 'true';
 
-     await this.fetchUserGroups();
-    if (this.$route.query.fromGroup && !this.preventAutoRedirect) {
-      this.forceShow = true;
-    }
-  },
+      await this.fetchUserGroups();
+      await this.fetchNotifications();
+      
+      if (this.$route.query.fromGroup && !this.preventAutoRedirect) {
+        this.forceShow = true;
+      }
+    },
    
      methods: {
+      async fetchNotifications() {
+        try {
+          const response = await this.$axios.get('/api/grp_expenses/user-notifications', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+            }
+          });
+          
+          if (response.data.success) {
+            this.notifications = response.data.notifications.map(notif => ({
+              ...notif,
+              timestamp: new Date(notif.timestamp)
+            }));
+          } else {
+            // Handle cases where API returns success:0
+            console.warn('Notifications API warning:', response.data.message);
+          }
+        } catch (err) {
+          console.error('Error fetching notifications:', err.response?.data || err.message);
+          // Show user-friendly message
+          this.$notify({
+            title: 'Error',
+            message: 'Could not load notifications',
+            type: 'error',
+            duration: 5000
+          });
+        }
+      },
+  
+  formatTimeAgo(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  },
+  
+  async dismissNotification(index) {
+    const notification = this.notifications[index];
+    try {
+      await this.$axios.delete(`/api/grp_expenses/notifications/${notification.id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      });
+      this.notifications.splice(index, 1);
+    } catch (err) {
+      console.error('Error dismissing notification:', err);
+    }
+  },
 
        async fetchUserGroups() {
        try {
@@ -234,6 +332,24 @@
    
            this.isLoading = true;
            this.error = '';
+
+           const blockedCheck = await this.$axios.get(
+      `/api/grp_expenses/groups/check-blocked/${this.groupCodeInput}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+
+    if (blockedCheck.data.isBlocked) {
+      let message = 'You are blocked from joining this group';
+      if (blockedCheck.data.reason) {
+        message += `. Reason: ${blockedCheck.data.reason}`;
+      }
+      this.error = message;
+      return;
+    }
  
            const response = await this.$axios.post(
        '/api/grp_expenses/join',
@@ -249,45 +365,41 @@
  
      console.log('Join response:', response.data);
            
-              if (response.data.success) {
-               const groupId = response.data.data.groupId;     
-               const groupCode = response.data.data.groupCode; 
- 
-               const user = JSON.parse(localStorage.getItem('user')) || {};
-       user.currentGroupId = groupId;
-       localStorage.setItem('user', JSON.stringify(user));
-       
-       this.$notify({
-         title: 'Success',
-         message: 'Joined group successfully!',
-         type: 'success'
-       });
-       
-       this.$router.push({
-         name: 'Group',
-         params: { groupId: groupId }
-       });
-     } else {
-       throw new Error(response.data?.message || 'Failed to join group');
-     }
-   } catch (err) {
-     console.error('Join group error:', {
-       error: err,
-       response: err.response?.data
-     });
-     
-     this.error = err.response?.data?.message || 
+     if (response.data.success) {
+      if (response.data.message.includes('pending')) {
+        // Show pending approval message
+        this.$notify({
+          title: 'Request Submitted',
+          message: 'Please wait for the admin to accept your request to join the group.',
+          type: 'info',
+          duration: 5000
+        });
+      } else {
+        // Regular success message if immediate join is allowed
+        this.$notify({
+          title: 'Success',
+          message: 'Joined group successfully!',
+          type: 'success'
+        });
+        
+        this.$router.push({
+          name: 'Group',
+          params: { groupId: response.data.data.groupId }
+        });
+      }
+    } else {
+      throw new Error(response.data?.message || 'Failed to join group');
+    }
+  } catch (err) {
+    console.error('Join group error:', err);
+    this.error = err.response?.data?.message || 
                  err.message || 
                  'Failed to join group';
-                 
-     if (err.response?.status === 401) {
-       this.$router.push('/login');
-     }
-   } finally {
-     this.isLoading = false;
-   }
- }
- },
+  } finally {
+    this.isLoading = false;
+  }
+}
+     },
 
  beforeRouteEnter(to, from, next) {
     next(async vm => {
@@ -310,6 +422,100 @@
    </script>
    
    <style scoped>
+.notifications-container {
+  position: fixed;
+  bottom: 1rem;      
+  right: 1rem;      
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 1.5rem;
+  max-width: 600px;        
+  max-height: 80vh;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+
+.notifications-title {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notification-item {
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.notification-item.blocked {
+  background: #fff0f0;
+  border-color: #ff6b6b;
+}
+
+.notification-item.removed {
+  background: #fff9f0;
+  border-color: #ffb347;
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.notification-type {
+  flex-grow: 1;
+}
+
+.notification-time {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.notification-content {
+  font-size: 0.9rem;
+}
+
+.notification-reason {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255,255,255,0.7);
+  border-radius: 4px;
+}
+
+.notification-action {
+  color: #666;
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.dismiss-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.dismiss-btn:hover {
+  color: #666;
+}
+
+
+
 .back-button {
   width: 100%;
   margin-top: 10px;
@@ -593,16 +799,20 @@
    }
    
    .error-message {
-     padding: 12px 15px;
-     background: #fff5f5;
-     border: 1px solid #fed7d7;
-     border-radius: 8px;
-     color: #e53e3e;
-     font-size: 14px;
-     display: flex;
-     align-items: center;
-     gap: 8px;
-   }
+  padding: 12px 15px;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  color: #e53e3e;
+  font-size: 14px;
+  display: flex;
+  margin-top: 6px;
+  align-items: center;      /* vertical center */
+  justify-content: center;  /* horizontal center */
+  gap: 8px;
+  text-align: center;       /* keep if text spans multiple lines */
+}
+
    
    .fade-enter-active,
    .fade-leave-active {
@@ -631,5 +841,15 @@
        font-size: 14px;
        padding: 10px;
      }
+     .notifications-container {       
+      max-height: 60vh;
+     }
+  }
+
+   @media (max-width: 480px) {
+.notifications-container {
+  max-width: 180px;        
+  max-height: 50vh;
+}
    }
    </style>
