@@ -69,10 +69,18 @@
           </div>
         </div>
       </div>
-  <div class="notifications-container" v-if="notifications.length > 0">
-  <h3 class="notifications-title">
-    <i class="fas fa-bell"></i> Notifications
-  </h3>
+  <!-- Toggle Button -->
+    <button class="notifications-toggle" @click="isSidebarOpen = !isSidebarOpen">
+      <i class="fas fa-bell"></i>
+      <span v-if="notifications.length > 0" class="notification-badge">{{ notifications.length }}</span>
+    </button>
+
+    <!-- Sidebar Notification Panel -->
+    <div class="notifications-sidebar" :class="{ open: isSidebarOpen }" v-if="notifications.length > 0">
+      <h3 class="notifications-title">
+        <i class="fas fa-bell"></i> Notifications
+        <button class="close-btn" @click="isSidebarOpen = false"><i class="fas fa-times"></i></button>
+      </h3>
   <div class="notification-list">
     <div v-for="(notification, index) in notifications" :key="index" 
          class="notification-item" :class="notification.type">
@@ -128,7 +136,8 @@
         error: '',
         isLoading: false,
         forceShow: false,
-        preventAutoRedirect: false 
+        preventAutoRedirect: false,
+        isSidebarOpen: false
        };
      },
  
@@ -144,6 +153,9 @@
     },
    
      methods: {
+     dismissNotification(index) {
+      this.notifications.splice(index, 1);
+    },
       async fetchNotifications() {
         try {
           const response = await this.$axios.get('/api/grp_expenses/user-notifications', {
@@ -422,18 +434,70 @@
    </script>
    
    <style scoped>
-.notifications-container {
+.notifications-toggle {
   position: fixed;
-  bottom: 1rem;      
-  right: 1rem;      
+  bottom: 1rem;
+  right: 1rem;
+  background: #41725f;
+  color: #fff;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 50%;
+  padding: 2px 6px;
+}
+
+.notifications-sidebar {
+  position: fixed;
+  top: 0;
+  right: -500px;
+  width: 300px;
+  height: 100vh;
   background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  padding: 1.5rem;
-  max-width: 600px;        
-  max-height: 80vh;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.1);
   overflow-y: auto;
+  padding: 1.5rem;
+  transition: right 0.3s ease;
   z-index: 1000;
+}
+
+.notifications-sidebar.open {
+  right: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  float: right;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.notification-item {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.notification-item.blocked {
+  border-left: 4px solid red;
+}
+
+.notification-item.removed {
+  border-left: 4px solid orange;
 }
 
 
@@ -841,15 +905,5 @@
        font-size: 14px;
        padding: 10px;
      }
-     .notifications-container {       
-      max-height: 60vh;
-     }
-  }
-
-   @media (max-width: 480px) {
-.notifications-container {
-  max-width: 180px;        
-  max-height: 50vh;
-}
    }
    </style>
