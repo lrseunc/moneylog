@@ -1202,7 +1202,7 @@ button.login-btn:hover,
     
     @media (max-width: 1024px) {
             .login-container {
-                padding: 20px;
+                padding: 15px;
                 gap: 10px;
             }
         
@@ -1212,7 +1212,7 @@ button.login-btn:hover,
             }
     
             .text-input-container {
-                width: 100%;
+                width: 95%;
             }
         
             .deco-image {
@@ -1221,20 +1221,16 @@ button.login-btn:hover,
             }
         
             .penny {
-                font-size: 36px;
+                font-size: 45px;
             }
         
             span.login-label {
-                font-size: 36px;
+                font-size: 35px;
+                margin-bottom: 10px;
             }
         }
         
         @media (max-width: 768px) {
-            .login-container {
-                padding: 20px;
-                gap: 10px;
-            }
-
             .login-form-items{
                 width: 100%;
             }
@@ -1260,7 +1256,7 @@ button.login-btn:hover,
             }
         
             .penny {
-                font-size: 32px;
+                font-size: 38px;
             }
         
             span.login-label {
@@ -1282,11 +1278,6 @@ button.login-btn:hover,
         }
         
         @media (max-width: 480px) {
-            .login-container {
-                padding: 20px;
-                gap: 10px;
-            }
-
             .login-form,
             .login-deco-container {
                 width: 50%;
