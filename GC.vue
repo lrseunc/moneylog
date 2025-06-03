@@ -514,7 +514,8 @@
 .notification-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.2rem;
+  margin-bottom: 25px;
 }
 
 .notification-item {
