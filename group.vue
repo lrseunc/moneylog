@@ -1,3 +1,4 @@
+
 <template>
   <Navigation />
   <div class="group-header-decoration">
@@ -608,6 +609,43 @@
       <!-- Settings Tab (Admin Only) -->
       <div v-if="activeTab === 'settings' && isAdmin" class="settings-tab">
         <div class="settings-section">
+    <h3 class="section-title"><i class="fas fa-user-clock"></i> Pending Join Requests</h3>
+    
+    <div v-if="pendingRequestsLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading pending requests...</p>
+    </div>
+    
+    <div v-else-if="pendingRequestsError" class="error-container">
+      <p class="error-message">{{ pendingRequestsError }}</p>
+      <button @click="fetchPendingRequests" class="retry-button">Retry</button>
+    </div>
+    
+    <div v-else-if="pendingRequests.length === 0" class="no-requests">
+      <p>No pending join requests</p>
+    </div>
+    
+    <div v-else class="requests-list">
+      <div v-for="request in pendingRequests" :key="request.id" class="request-item">
+        <div class="request-info">
+          <span class="request-user">{{ request.username }}</span>
+          <span class="request-email">{{ request.email }}</span>
+          <span class="request-date">Requested: {{ formatDate(request.requested_at) }}</span>
+        </div>
+        
+        <div class="request-actions">
+          <button @click="approveRequest(request)" class="approve-button">
+            <i class="fas fa-check"></i> Approve
+          </button>
+          <button @click="rejectRequest(request)" class="reject-button">
+            <i class="fas fa-times"></i> Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+        
+        <div class="settings-section">
           <h3 class="section-title"><i class="fas fa-cog"></i> Group Settings</h3>
          
           <div class="setting-item">
@@ -1030,11 +1068,11 @@
 
           <!-- Conditional note input -->
           <div v-if="confirmationNoteRequired" class="note-section">
-            <label for="noteInput">Note:</label>
+            <label for="noteInput">Reason:</label>
             <textarea
               id="noteInput"
               v-model="confirmationNote"
-              placeholder="Enter your note here (optional)"
+              placeholder="Enter your reason here (optional)"
               rows="1"
               class="note-textarea"
             ></textarea>
@@ -1068,6 +1106,11 @@ export default {
   },
   data() {
     return {
+      confirmationNote: '', 
+      confirmationNoteRequired: false,
+      pendingRequests: [],
+      pendingRequestsLoading: false,
+      pendingRequestsError: null,
       blockedMembers: [],
       blockingMember: false,
       unblockingMember: false,
@@ -1307,6 +1350,11 @@ export default {
   },
 
   watch: {
+    isAdmin(newVal) {
+    if (newVal) {
+      this.fetchPendingRequests();
+    }
+  },
     localGroupId: {
     immediate: true,
     async handler(newGroupId, oldGroupId) {
@@ -1324,15 +1372,25 @@ export default {
   },
   'groupId': {
     immediate: true,
-    async handler(newGroupId) {
-      if (newGroupId && newGroupId !== this.localGroupId) {
+    async handler(newGroupId, oldGroupId) {
+      if (newGroupId && newGroupId !== oldGroupId) {
+        // Reset all local data
+        this.resetComponentState();
+        
+        // Update local group ID
         this.localGroupId = newGroupId;
-        this.groupPhotos = [];
+        
+        // Fetch all necessary data
         await Promise.all([
+          this.fetchGroupData(),
+          this.fetchPhotos(),
+          this.loadExpenses(),
+          this.fetchContributions(),
           this.fetchContributionHistory(),
-          this.initializeGroupData(),
-          this.fetchPhotos() 
+          this.fetchBudgetData()
         ]);
+        
+        // Set original name for comparison
         this.originalName = this.group.group_name || '';
       }
     }
@@ -1525,6 +1583,10 @@ export default {
     this.contributions = this.contributions || [];
     this.memberContributions = this.memberContributions || [];
     
+    if (this.isAdmin) {
+      await this.fetchPendingRequests();
+    }
+
    // await this.fetchAvailableBudgets();
   } catch (err) {
     console.error('Failed to load group data:', err);
@@ -1556,6 +1618,32 @@ export default {
     //  'fetchAvailableBudgets'
     ]),
 
+    resetComponentState() {
+    // Reset all component data that's specific to a group
+    //this.expenses = [];
+    this.$store.commit('group/RESET_EXPENSES');
+    this.contributions = [];
+    this.contributionHistory = [];
+    this.memberContributions = [];
+    this.groupPhotos = [];
+    this.blockedMembers = [];
+    this.pendingRequests = [];
+    this.pendingInvites = [];
+    this.showBlockedMembers = false;
+    
+    // Reset budget related data
+    this.remainingBudget = 0;
+    this.budgetProgress = 0;
+    
+    // Reset any modal states
+    this.showAddExpenseModal = false;
+    this.showEditExpenseModal = false;
+    this.showConfirmationModal = false;
+    
+    // Reset form data
+    this.resetNewExpense();
+  },
+  
         setNoteFromVoice(noteText) {
         this.newExpense.note = noteText;
         this.$toast.success(`Note set to: ${noteText}`);
@@ -2047,6 +2135,137 @@ handleEditFileSelect(event) {
   }
 },
 
+async fetchPendingRequests() {
+  this.pendingRequestsLoading = true;
+  this.pendingRequestsError = null;
+  
+  try {
+    const response = await this.$axios.get(
+      `/api/grp_expenses/${this.localGroupId}/requests`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      // Transform data to match your template structure
+      this.pendingRequests = response.data.data.map(request => ({
+        id: request.id,
+        username: request.username,
+        email: request.email,
+        requested_at: request.requested_at
+      }));
+    }
+  } catch (err) {
+    this.pendingRequestsError = err.response?.data?.message || 'Failed to load pending requests';
+    console.error('Error fetching pending requests:', err);
+  } finally {
+    this.pendingRequestsLoading = false;
+  }
+},
+  
+  async approveRequest(request) {
+  try {
+    const response = await this.$axios.put(
+      `/api/grp_expenses/${this.localGroupId}/requests/${request.id}/approve`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      this.$notify({
+        title: 'Success',
+        message: `${request.username} has been approved`,
+        type: 'success'
+      });
+      await this.fetchPendingRequests();
+      await this.fetchGroupData(); // Refresh members list
+    }
+  } catch (err) {
+    this.$notify({
+      title: 'Error',
+      message: err.response?.data?.message || 'Failed to approve request',
+      type: 'error'
+    });
+  }
+},
+  
+async rejectRequest(request) {
+  try {
+    const response = await this.$axios.put(
+      `/api/grp_expenses/${this.localGroupId}/requests/${request.id}/reject`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      this.$notify({
+        title: 'Success',
+        message: `${request.username}'s request has been rejected`,
+        type: 'success'
+      });
+      await this.fetchPendingRequests();
+    }
+  } catch (err) {
+    this.$notify({
+      title: 'Error',
+      message: err.response?.data?.message || 'Failed to reject request',
+      type: 'error'
+    });
+  }
+},
+
+  async joinGroup() {
+  try {
+    const response = await this.$axios.post(
+      '/api/grp_expenses/join',
+      { groupCode: this.groupCodeInput },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+        }
+      }
+    );
+    
+    if (response.data.success) {
+      if (response.data.message.includes('pending')) {
+        // Show pending approval message
+        this.$notify({
+          title: 'Request Submitted',
+          message: 'Your join request is pending admin approval',
+          type: 'info'
+        });
+      } else {
+        // Regular success message
+        this.$notify({
+          title: 'Success',
+          message: response.data.message,
+          type: 'success'
+        });
+      }
+      
+      // Refresh groups list
+      await this.fetchUserGroups();
+    }
+  } catch (err) {
+    this.$notify({
+      title: 'Error',
+      message: err.response?.data?.message || 'Failed to join group',
+      type: 'error'
+    });
+  }
+},
+
 async updatePhoto() {
   if (!this.editingPhoto) return;
   
@@ -2302,14 +2521,16 @@ async fetchPhotos() {
         this.blockingMember = true;
         
         const response = await this.$axios.post(
-          `/api/grp_expenses/groups/${this.localGroupId}/members/${member.id}/block`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
-            }
+        `/api/grp_expenses/groups/${this.localGroupId}/members/${member.id}/block`,
+        { 
+          reason: this.confirmationNote || null 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
           }
-        );
+        }
+      );
         
         if (response.data.success) {
           this.showSuccess(`${member.username} has been blocked`);
@@ -3110,38 +3331,61 @@ async updateBudget() {
     },
 
     async initializeGroupData() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = localStorage.getItem('jsontoken');
+      const user = JSON.parse(localStorage.getItem('user'));
+      const token = localStorage.getItem('jsontoken');
 
-  if (!user || !token) {
-    this.$router.push('/login');
-    return;
-  }
+      if (!user || !token) {
+        this.$router.push('/login');
+        return;
+      }
 
-  if (!this.localGroupId) {
-    this.$router.push('/GC');
-    return;
-  }
+      if (!this.localGroupId) {
+        this.$router.push('/GC');
+        return;
+      }
 
-  try {
-    await Promise.all([
-      this.fetchGroupData(),
-      this.loadExpenses(),
-      this.$store.dispatch('group/fetchGroupBudget', this.localGroupId)
-    ]);
-    
-    // Call calculateRemaining after all data is loaded
-    this.calculateRemaining();
-    
-    // Verify access after loading
-    if (!this.hasGroupAccess) {
-      this.$router.replace('/GC');
-    }
-  } catch (err) {
-    console.error('Failed to load group data:', err);
-    this.$router.replace('/GC');
-  }
-},
+      try {
+        // First verify membership and get role/status
+        const membershipResponse = await this.$axios.get(
+          `/api/grp_expenses/${this.localGroupId}/verify-membership`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        // Check for pending request
+        if (membershipResponse.data.hasPendingRequest) {
+          localStorage.setItem('pendingGroupId', this.localGroupId);
+          this.$router.push({
+            name: 'GC',
+            query: { fromGroup: 'true' }
+          });
+          return;
+        }
+
+        // Admin should always have access regardless of status
+        const isAdmin = membershipResponse.data.role === 'admin';
+        
+        // For non-admins, check if they're active members
+        if (!isAdmin && (!membershipResponse.data.isMember || membershipResponse.data.status !== 'active')) {
+          this.$notify({
+            title: 'Access Denied',
+            message: 'You do not have access to this group',
+            type: 'error'
+          });
+          this.$router.push('/GC');
+          return;
+        }
+
+        // Initialize group data here...
+        await this.fetchGroupData();
+      } catch (err) {
+        console.error('Failed to initialize group data:', err);
+        this.$router.push('/GC');
+      }
+    },
     
     async fetchGroupData() {
  const user = JSON.parse(localStorage.getItem('user'));
@@ -3494,23 +3738,24 @@ async sendInvite() {
 },
 
     
-    confirmRemoveMember(member) {
-      this.confirmationTitle = 'Remove Member';
-      this.confirmationMessage = `Are you sure you want to remove ${member.username} from the group?`;
-      this.confirmationNoteRequired = true;
-      this.confirmationNote = '';      
-      this.confirmAction = async () => {
-        try {
-          console.log('Removing member with:', {
-        groupId: this.localGroupId,  // Verify this exists
-        memberId: member.id          // Verify this exists
-      });
-
-          await this.removeMember({ 
-        groupId: this.localGroupId, 
-        memberId: member.id 
-      });
-
+confirmRemoveMember(member) {
+  this.confirmationTitle = 'Remove Member';
+  this.confirmationMessage = `Are you sure you want to remove ${member.username} from the group?`;
+  this.confirmationNoteRequired = true;
+  this.confirmationNote = '';      
+  this.confirmAction = async () => {
+    try {
+      await this.$axios.post(
+        `/api/grp_expenses/${this.localGroupId}/members/${member.id}/remove`,
+        { 
+          reason: this.confirmationNote || null 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jsontoken')}`
+          }
+        }
+      );
           this.$notify({
             title: 'Success',
             message: 'Member removed successfully',
@@ -3518,6 +3763,7 @@ async sendInvite() {
           });
 
           this.closeModal();
+          await this.fetchGroupData();
         } catch (err) {
           console.error('Error removing member:', err);
           this.$notify({
@@ -3662,8 +3908,6 @@ if (response.data.success) {
       next('/GC');
       return;
     }
-        
-        // Rest of your existing route guard logic
     });
 },
 
@@ -3697,6 +3941,82 @@ if (response.data.success) {
 </script>
 
 <style scoped>
+.requests-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.request-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa; /* light gray */
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+.request-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.request-user {
+  font-weight: 600;
+  color: #333;
+}
+
+.request-email {
+  font-size: 13px;
+  color: #555;
+}
+
+.request-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.request-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.approve-button,
+.reject-button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s ease;
+}
+
+/* Approve Button */
+.approve-button {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.approve-button:hover {
+  background-color: #c3e6cb;
+}
+
+/* Reject Button */
+.reject-button {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.reject-button:hover {
+  background-color: #f5c6cb;
+}
 .contributions-disabled-notice {
   background-color: #e3f3ee;
   padding: 10px;
@@ -6950,6 +7270,16 @@ button.cancel-button{
   }
   .confirmation-modal {
     width: 80%;
+  }
+  .request-item {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .request-actions{
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    gap: 5px;
   }
 }
 </style>
