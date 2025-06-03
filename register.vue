@@ -981,19 +981,7 @@ h4 {
     border: 1px solid rgba(255, 255, 255, 0.3); /* Subtle border for depth */
     transition: all 0.3s ease;
     position: relative;
-}
-
-/* Optional: Lift effect on hover */
-.login-container:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        8px 8px 16px rgba(0, 0, 0, 0.1),
-        -8px -8px 16px rgba(255, 255, 255, 0.712),
-        inset 1px 1px 2px rgba(255, 255, 255, 0.712),
-        inset -1px -1px 2px rgba(0, 0, 0, 0.07);
-}
-
-    
+}    
     .login-form {
         width: 50%;
         display: flex;
@@ -1306,7 +1294,6 @@ button.login-btn:hover,
             }
             .error-message,
             .success-message {
-                max-width: 150px;
                 font-size: 12px;
             }
             .modal-column{
