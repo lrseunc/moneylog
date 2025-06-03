@@ -637,7 +637,7 @@ const resendOTP = async () => {
     font-weight: 500;
     font-size: 0.9rem;
     padding: 8px 12px;
-    margin-top: 10px;
+    margin-top: 15px;
     margin-bottom: 5px;
     border-radius: 4px;
     transition: color 0.3s ease, text-decoration 0.3s ease;
@@ -1255,7 +1255,7 @@ button.login-btn:hover,
                 width: 100%;
             }
             .about-link {
-                margin-top: 5px;
+                margin-top: 13px;
                 font-size: 13px;
             }
         
@@ -1317,6 +1317,14 @@ button.login-btn:hover,
             .success-message {
                 max-width: 150px;
                 font-size: 12px;
+            }
+            .modal-column{
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+            .highlight-grid {
+                display: grid;
+                grid-template-columns: repeat(1, 1fr);
             }
         }
     </style>
