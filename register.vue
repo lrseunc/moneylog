@@ -8,6 +8,12 @@
                             <span class="login-label">REGISTER</span>
     
                             <div class="text-input-container">
+                                <label class="form-label">FIRST NAME</label>
+                                <input type="text" name="first_name" v-model="first_name" class="text-style" required />
+
+                                <label class="form-label">LAST NAME</label>
+                                <input type="text" name="last_name" v-model="last_name" class="text-style" required />
+
                                 <label class="form-label">USERNAME</label>
                                 <input type="text" name="username" v-model="username" class="text-style" required />
 
@@ -49,6 +55,9 @@
                                     <i :class="showConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'"></i>
                                     </span>
                                 </div>
+                                <p class="password-hint">
+                                Password must contain uppercase or lowercase letter, number, and special character.
+                                </p>
     <div class="password-strength-meter">
         <div 
             :class="['strength-bar', strengthClass]" 
@@ -83,6 +92,34 @@
                                         About Money Log System
                             </router-link>
                         </div>
+                        <div v-if="showOTPModal" class="modal-overlay">
+                                <div class="modal-container">
+                                    <div class="modal-header">
+                                        <h2>Email Verification</h2>
+                                        <button @click="showOTPModal = false" class="modal-close-btn">&times;</button>
+                                    </div>
+                                    <div class="modal-content">
+                                        <p>We've sent a 6-digit verification code to your email address. Please enter it below:</p>
+                                        
+                                        <div class="otp-input-container">
+                                            <input 
+                                                type="text" 
+                                                v-model="otp" 
+                                                maxlength="6" 
+                                                class="otp-input" 
+                                                placeholder="Enter OTP"
+                                            />
+                                        </div>
+                                        
+                                        <p v-if="otpMessage" class="message" :class="{ 'error-message': isOtpError, 'success-message': !isOtpError }">
+                                            {{ otpMessage }}
+                                        </p>
+                                        
+                                        <button @click="verifyEmail" class="verify-btn">Verify Email</button>
+                                        <button @click="resendOTP" class="resend-btn">Resend OTP</button>
+                                    </div>
+                                    </div>
+                                    </div>
                     </form>    
                 </div>
                 <div class="login-deco-container">
@@ -155,6 +192,18 @@
                 </div>
                 </div>
 
+                <div class="data-privacy">
+                    <h3>Compliance with the Data Privacy Act of the Philippines</h3>
+                    <p>Money Log is committed to protecting your personal data in accordance with <strong>Republic Act No. 10173, the Data Privacy Act of 2012</strong>. We ensure that:</p>
+                    <ul>
+                        <li><strong>Transparency:</strong> You are informed about the data we collect and how it is used.</li>
+                        <li><strong>Legitimate Purpose:</strong> Your data is processed only for services you have opted into.</li>
+                        <li><strong>Proportionality:</strong> We collect only data necessary for providing our financial tracking services.</li>
+                        <li><strong>Data Subject Rights:</strong> You have the right to access, correct, and erase your personal data.</li>
+                        <li><strong>Security Measures:</strong> We implement administrative, technical, and physical safeguards to protect your data.</li>
+                    </ul>
+                </div>
+
                 
                 <div class="policy-highlights">
                     <h3>Key Privacy Features:</h3>
@@ -168,8 +217,8 @@
                             <div>Group expenses are encrypted end-to-end</div>
                         </div>
                         <div class="highlight-item">
-                            <div class="highlight-icon">📊</div>
-                            <div>Visualizations process data locally when possible</div>
+                            <div class="highlight-icon">🗂️</div>
+                            <div>Deleting a group will immediately delete all related data.</div>
                         </div>
                         <div class="highlight-item">
                             <div class="highlight-icon">🗑️</div>
@@ -183,7 +232,7 @@
             <div class="modal-footer">
                 <button @click="showPrivacyModal = false" class="modal-close-btn">I Understand</button>
             </div>
-        </div>
+        </div>       
     </div>
 </template>
 
@@ -196,6 +245,8 @@ export default {
   setup() {
     const router = useRouter()
     const route = useRoute()
+    const first_name = ref('')
+    const last_name = ref('')
     const someInjectedValue = inject('key')
     const username = ref('')
     const email = ref('')
@@ -208,6 +259,13 @@ export default {
     const redirectAfterLogin = ref('') 
     const showPassword = ref(false)
     const showConfirmPassword = ref(false)
+     // OTP Verification
+     const showOTPModal = ref(false)
+    const otp = ref('')
+    const otpMessage = ref('')
+    const isOtpError = ref(false)
+    const tempToken = ref('')
+
 
         const inviteToken = route.query.inviteToken
     if (inviteToken) {
@@ -313,11 +371,11 @@ export default {
       serverMessage.value = ''
       isError.value = false 
     
-      if (!username.value || !email.value || !password.value || !password_confirmation.value) {
-    serverMessage.value = "All fields are required!"
-    isError.value = true
-    return
-  }
+      if (!first_name.value || !last_name.value || !username.value || !email.value || !password.value || !password_confirmation.value) {
+        serverMessage.value = "All fields are required!"
+        isError.value = true
+        return
+      }
     
   if (password.value !== password_confirmation.value) {
     serverMessage.value = "Passwords do not match!"
@@ -338,33 +396,110 @@ export default {
   }
     
   try {
-    const res = await axios.post('http://localhost:3000/api/users', {
-      username: username.value,
-      email: email.value,
-      password: password.value,
-      accepted_privacy_policy: true
+    const checkRes = await axios.post('http://localhost:3000/api/users/check-email', {
+      email: email.value
     });
 
-    if (res.data.success === 1) {
-        serverMessage.value = "Registration successful! Redirecting...";
-        isError.value = false
-        setTimeout(() => router.push('/login'), 1500)
-    } else {
-        serverMessage.value = res.data.message || "Registration failed.";
+    if (checkRes.data.exists) {
+      serverMessage.value = "Email already registered!";
+      isError.value = true;
+      return;
+    }
+
+        // First step: Send registration data to get OTP
+            const res = await axios.post('http://localhost:3000/api/users/send-registration-otp', {
+          first_name: first_name.value,
+          last_name: last_name.value,
+          username: username.value,
+          email: email.value,
+          password: password.value,
+          accepted_privacy_policy: true
+        });
+
+        if (res.data.success === 1) {
+          // Store temporary token for verification
+          tempToken.value = res.data.tempToken
+          // Show OTP modal
+          showOTPModal.value = true
+          otpMessage.value = "OTP sent to your email. Please check your inbox."
+        } else {
+          serverMessage.value = res.data.message || "Registration failed.";
+          isError.value = true
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+        if (error.response?.data?.message) {
+          serverMessage.value = error.response.data.message;
+        } else {
+          serverMessage.value = "Registration failed. Please try again.";
+        }
         isError.value = true
+      }
+    };
+
+    const verifyEmail = async () => {
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/api/users/verify-registration-otp',
+      { 
+        otp: otp.value,
+        first_name: first_name.value,
+        last_name: last_name.value,
+        username: username.value,
+        email: email.value,
+        password: password.value
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${tempToken.value}`
+        }
+      }
+    );
+
+    if (response.data.success) {
+      otpMessage.value = "Email verified successfully! Redirecting to login...";
+      isOtpError.value = false;
+      
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    } else {
+      otpMessage.value = response.data.message || "Verification failed";
+      isOtpError.value = true;
     }
   } catch (error) {
-    console.error("Registration error:", error);
-    if (error.response?.data?.message) {
-      serverMessage.value = error.response.data.message;
-    } else {
-      serverMessage.value = "Registration failed. Please try again.";
-    }
-    isError.value = true
+    console.error("Verification error:", error);
+    otpMessage.value = error.response?.data?.message || "Verification failed. Please try again.";
+    isOtpError.value = true;
   }
 };
+
+const resendOTP = async () => {
+  try {
+    const response = await axios.post('http://localhost:3000/api/users/resend-registration-otp', {
+      email: email.value,
+      first_name: first_name.value, // Add this line
+      tempToken: tempToken.value
+    });
+
+    if (response.data.success) {
+      otpMessage.value = "New OTP sent to your email.";
+      isOtpError.value = false;
+    } else {
+      otpMessage.value = response.data.message || "Failed to resend OTP";
+      isOtpError.value = true;
+    }
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    otpMessage.value = error.response?.data?.message || "Failed to resend OTP. Please try again.";
+    isOtpError.value = true;
+  }
+};
+
     
     return {
+      first_name,
+      last_name,
       username,
       email,
       password,
@@ -373,6 +508,12 @@ export default {
       isError, 
       acceptedPrivacyPolicy,
       showPrivacyModal,
+      showOTPModal,
+      otp,
+      otpMessage,
+      isOtpError,
+      verifyEmail,
+      resendOTP,
       hasMinLength,
       hasUppercase,
       hasLowercase,
@@ -392,6 +533,77 @@ export default {
 </script>
     
 <style scoped>
+.password-hint {
+    font-size: 12px;
+    color: #6b6b6b;
+    margin: 0px 0 5px 0;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  padding: 20px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.otp-input-container {
+  margin: 20px 0;
+}
+
+.otp-input {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.verify-btn, .resend-btn {
+  padding: 10px 15px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.verify-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.resend-btn {
+  background-color: #2196F3;
+  color: white;
+}   /*NEWWWWWWWWWW */
 .password-input-wrapper {
     position: relative;
     width: 100%;
@@ -399,8 +611,8 @@ export default {
 
 .password-toggle {
     position: absolute;
-    right: 10px;
-    top: 40%;
+    right: 20px;
+    top: 45%;
     color: #72aa95;
     transform: translateY(-50%);
     cursor: pointer;
@@ -425,7 +637,7 @@ export default {
     font-weight: 500;
     font-size: 0.9rem;
     padding: 8px 12px;
-    margin-top: 15px;
+    margin-top: 10px;
     margin-bottom: 5px;
     border-radius: 4px;
     transition: color 0.3s ease, text-decoration 0.3s ease;
@@ -467,7 +679,7 @@ export default {
 .password-feedback {
     font-size: 0.85rem;
     margin-bottom: 0px;
-    margin-top: -10px;
+    margin-top: -15px;
 }
 .password-feedback.weak {
     color: #ff4444;
@@ -501,6 +713,15 @@ export default {
     content: "✓";
     color: #00C851;
 }
+
+.data-privacy {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #e4f3f0;
+  border-left: 4px solid #44695c;
+  border-radius: 6px;
+}
+
 .policy-highlights {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -552,7 +773,7 @@ export default {
   font-size: 0.85rem;
 }
 .privacy-policy-container {
-    margin: 10px 0;
+    margin: 7px;
     display: flex;
     align-items: center;
 }
@@ -567,7 +788,7 @@ export default {
 }
 
 .privacy-link {
-    color: #3f6e5d;
+    color: #118b5e;
     text-decoration: none;
     cursor: pointer;
 }
@@ -577,19 +798,22 @@ export default {
 }
 
 .message {
-    margin: 5px 0;
-    padding: 5px;
+    margin: 2px 0;
+    padding: 4px;
     border-radius: 4px;
+    font-size: 14px;
     text-align: center;
     font-weight: bold;
 }
 
 .success-message {
+    font-size: 13px;
     color: #00C851;
     background-color: #e8f5e9;
     border: 1px solid #00C851;
 }
 .error-message {
+    font-size: 13px;
     color: #ff4444;
     background-color: #ffebee;
     border: 1px solid #ff4444;
@@ -738,13 +962,14 @@ h4 {
     max-width: 650px;
     min-width: 300px;
     max-height: 620px;
+    min-height: 600px;
     background: rgba(255, 255, 255, 0.92); /* Crisp white with slight transparency */
     border-radius: 20px;
     display: flex;
     justify-content: space-between;
     flex-direction: row;
     padding: 15px;
-    gap: 20px;
+    gap: 15px;
     box-sizing: border-box;
     
     /* Soft 3D shadow effect (floating panel) */
@@ -775,7 +1000,7 @@ h4 {
         flex-direction: column;
         text-align: center;
         align-items: center;
-        padding: 10px;
+        padding: 2px 10px;
     }
     
     .login-form-items {
@@ -789,9 +1014,9 @@ h4 {
     span.login-label {
     color: #2d2d2d; 
     font-weight: 900;
-    font-size: 36px;
+    font-size: 35px;
     letter-spacing: 2px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     white-space: nowrap;
     font-family: 'Segoe UI', 'Gill Sans', 'Helvetica Neue', sans-serif;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.05); /* very subtle depth */
@@ -799,7 +1024,7 @@ h4 {
 
     
     .text-input-container {
-        width: 100%;
+        width: 95%;
         max-width: 480px;
         display: flex;
         flex-direction: column;
@@ -815,11 +1040,12 @@ h4 {
     
     input.text-style {
     border-radius: 10px;
-    width: 100%;
-    max-width: 350px;
+    width: 95%;
+    max-width: 280px;
     min-width: 150px;
     height: 10px;
-    padding: 10px 12px;
+    padding: 8px 12px 9px;
+    margin-bottom: 0;
     font-size: 14px;
     background: none;
     border: 2px solid #6b6b6b; /* softer dark gray */
@@ -840,11 +1066,12 @@ input.text-style:hover {
     
 input.text-style1 {
     border-radius: 10px;
-    width: 100%;
-    max-width: 350px;
+    width: 95%;
+    max-width: 280px;
     min-width: 150px;
     height: 10px;
-    padding: 10px 12px;
+    padding: 9px 12px 9px;
+    margin-bottom: 3px;
     font-size: 14px;
     background: none;
     border: 2px solid #6b6b6b; /* softer dark gray */
@@ -868,8 +1095,8 @@ input.text-style1:hover {
     .form-label {
         color: black;
         font-weight: 350;
-        font-size: 15px;
-        margin-bottom: 5px;
+        font-size: 14px;
+        margin: 3px 0 3px;
     }
     
     button.login-btn,
@@ -880,13 +1107,13 @@ input.text-style1:hover {
     background: linear-gradient(135deg, #a8d0c2, #62a293, #a8d0c2);
     border-radius: 20px;
     border: none;
-    padding: 10px 0;
+    padding: 7px 0;
     color: #f9faf7;
     font-weight: 700;
     font-size: 14px;
     font-family: sans-serif;
     letter-spacing: 2px;
-    margin-top: 10px;
+    margin-top: 8px;
     cursor: pointer;
     box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.397); 
@@ -1027,6 +1254,10 @@ button.login-btn:hover,
             .text-input-container {
                 width: 100%;
             }
+            .about-link {
+                margin-top: 5px;
+                font-size: 13px;
+            }
         
             .penny {
                 font-size: 32px;
@@ -1034,20 +1265,19 @@ button.login-btn:hover,
         
             span.login-label {
                 font-size: 36px;
-                margin-bottom: 15px;
+                margin-bottom: 10px;
             }
         
-            .login-btn {
+            button.login-btn,
+            .login-btn1 {
                 font-size: 14px;
-                padding: 8px 0;
+                padding: 5px 0;
+            }
+            .password-hint {
+                font-size: 11px;
             }
             .privacy-label {
-                font-size: 13px;
-            }
-
-            .error-message,
-            .success-message {
-                font-size: 14px;
+                font-size: 11px;
             }
         }
         
@@ -1068,25 +1298,25 @@ button.login-btn:hover,
             }
 
              .text-input-container {
-                width: 90%;
+                width: 100%;
             }
         
             .penny {
-                font-size: 28px;
+                font-size: 25px;
             }
         
             span.login-label {
                 font-size: 34px;
                 margin-bottom: 10px;
             }
-        
-            .login-btn {
-                font-size: 13px;
-                padding: 6px 0;
+            .about-link {
+                margin-top: 0;
+                font-size: 12px;
             }
             .error-message,
             .success-message {
-                font-size: 13px;
+                max-width: 150px;
+                font-size: 12px;
             }
         }
     </style>
