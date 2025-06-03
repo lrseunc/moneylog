@@ -441,7 +441,8 @@
   background: #41725f;
   color: #fff;
   border: none;
-  padding: 0.75rem;
+  padding: 1rem;
+  font-size: 1.3rem; 
   border-radius: 50%;
   cursor: pointer;
   z-index: 1001;
