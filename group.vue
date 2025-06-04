@@ -7282,4 +7282,24 @@ button.cancel-button{
     gap: 5px;
   }
 }
+@media (max-width: 480px) {
+  .group-tabs button {
+    margin-right: 40px;
+  }
+  .group-tabs {
+    gap: 20px;
+  }
+  .photos-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+   .expenses-table th {
+  font-size: 12px; 
+  }
+  .expenses-container h3{
+    font-size: 19px;
+  }
+  .member-contributions-table th {
+    font-size: 12px;
+  }
+}
 </style>
