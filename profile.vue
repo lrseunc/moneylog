@@ -11,6 +11,7 @@
         </button>
       </div>
       <div class="info">
+        <p><strong>Name: {{ fullName }}</strong></p>
         <p><strong>Username: {{ userName }}</strong></p>
         <p><strong>Email: {{ userEmail }}</strong></p>
       </div>
@@ -186,6 +187,7 @@ export default {
       filterMonth: '', 
       wasBudgetExceeded: false,
       showLogoutModal: false,
+      fullName: "",
       userEmail: "",
       userName: "",
       selectedYear: new Date().getFullYear().toString(),
@@ -759,7 +761,13 @@ updateExpenseView() {
     if (userData) {
         this.userEmail = userData.email;
         this.userName = userData.username;
+        if (userData.first_name && userData.last_name) {
+      this.fullName = `${userData.first_name} ${userData.last_name}`;
+    } else {
+      // Fallback to username if names aren't available
+      this.fullName = userData.username;
     }
+  }
     await this.loadAllGroupsData();
     
     // Only show welcome message if not already shown this session
@@ -1146,7 +1154,7 @@ updateExpenseView() {
   display: flex;
   flex-direction: column;
   padding: 10px;
-  width: 90%;
+  width: 95%;
   margin: 0 auto;
 }
   
@@ -1202,7 +1210,8 @@ updateExpenseView() {
   .info strong {
   font-style: normal;
   color: #26665e;
-  font-size: 18px;
+  font-size: 16px;
+  word-break: break-word;
 }
 
 .infos {
@@ -1469,7 +1478,7 @@ updateExpenseView() {
     }
 
     .profile-container {
-      margin: 70px 10px 20px 20px;
+      margin: 70px 20px 20px 20px;
     }
   
     .profile-container p {
