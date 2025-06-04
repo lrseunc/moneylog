@@ -3997,7 +3997,7 @@ th, td {
 th {
   background: linear-gradient(135deg, #6fcfa5, #3ea799);
   font-weight: 700;
-  font-size: 1rem; 
+  font-size: 12px; 
   padding: 12px 20px; 
   color: white;
   text-transform: uppercase;
@@ -4266,13 +4266,15 @@ select[disabled] {
 @media (max-width: 760px) {
   .top-row {
     flex-wrap: wrap;
+    width: 95%;
   }
   .month-selector span{
     min-width: 100px;
     padding: 0px;
   }
   .expenses-container {
-    min-width: 300px;
+    min-width: 250px;
+    width: 95%;
   }
   .expense-photo-tabs {
     justify-content: space-between;
@@ -4283,6 +4285,9 @@ select[disabled] {
   }
   .budget-form {
     width: 80%;
+  }
+  .photos-grid {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
 
