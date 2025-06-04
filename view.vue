@@ -1268,13 +1268,20 @@ background-color: #1e3731;
   .chart-summary{
     width: 85%;
     margin-left: 0;
+    margin-bottom: 20px;
   }
   .chart{
     width: 100%;
   }
   .expense-table th, .expense-table td {
     font-size: 11px;
-    padding: 7px;
+    padding: 7px 1px;
+  }
+  .month-buttons[data-v-de7da166] {
+    gap: 2px;
+  }
+  .filter-buttons button {
+    font-size: 14px;
   }
 }
 </style> 
