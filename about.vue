@@ -1140,5 +1140,8 @@ h2 {
   .logo{
     margin-top: 30px;
   }
+  .nav-link {
+  font-size: 12px;
+  }
 }
 </style>
