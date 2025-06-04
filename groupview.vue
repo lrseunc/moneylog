@@ -6,9 +6,7 @@
       <h1><i class="fa fa-coins"></i>  Group Expenses</h1>
     </div>
 
-    
-    <div class="con-container">
-      <button @click="showGroupModal = true" class="show-groups-button">
+    <button @click="showGroupModal = true" class="show-groups-button">
       <i class="fas fa-users"></i> View Your Groups
     </button>
 
@@ -63,6 +61,8 @@
       </div>
     </div>
 
+    
+    <div class="con-container">
       <div v-if="$store.state.group.currentGroup" class="current-group">
   <div class="group-line">
     <i class="fas fa-user-friends"></i>
@@ -414,13 +414,13 @@ offset: function(context) {
         Bill: 0,
         Transportation: 0,
         Entertainment: 0,
-        Healthcare: 0,
+        Accommodation: 0, 
         Shopping: 0,
         Other: 0,
       };
 
       this.filteredExpenses.forEach(expense => {
-        const category = expense.category === 'HealthCare' ? 'Healthcare' : expense.category; 
+        const category = expense.category === 'Accomodation' ? 'Accommodation' : expense.category; 
         if (category in categoryCounts) {
           categoryCounts[category] += expense.amount;
         } else {
@@ -454,7 +454,7 @@ offset: function(context) {
           if (this.filterCategory.toLowerCase() === 'other') {
             const isStandardCategory = [
               'food', 'bill', 'transportation', 
-              'entertainment', 'healthcare', 'shopping'
+              'entertainment', 'accomodation', 'shopping'
             ].includes(expense.category?.toLowerCase());
             return !isStandardCategory;
           } else {
@@ -945,27 +945,12 @@ offset: function(context) {
         4: { cellWidth: 40 }
       },
       headStyles: {
-        fillColor: 	[85, 124, 86],
+        fillColor: 	[159, 82, 85],
         textColor: 255,
         fontStyle: 'bold',
         halign: 'center'
       }
     });
-    
-    try {
-      await this.$nextTick();
-      const chartCanvas = document.querySelector('canvas');
-      if (chartCanvas) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const chartImage = chartCanvas.toDataURL('image/png');
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.text('Expense Breakdown', 105, 20, { align: 'center' });
-        doc.addImage(chartImage, 'PNG', 30, 30, 150, 150);
-      }
-    } catch (chartError) {
-      console.error('Error adding chart:', chartError);
-    }
 
     // Add page numbers
     const pageCount = doc.internal.getNumberOfPages();
@@ -1689,22 +1674,25 @@ button:hover {
 }
 
 .download-button {
-display: flex;
-flex-wrap: wrap;
-padding: 10px 20px;
-font-size: 16px;
-background: linear-gradient(135deg, #67c29a, #359588);
-color: white;
-border: none;
-cursor: pointer;
-align-self: center;
-margin-bottom: 8px;
-margin-left: 3px;
-margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  font-size: 16px;
+  background: linear-gradient(135deg, #67c29a, #359588);
+  color: white;
+  border: none;
+  cursor: pointer;
+  align-self: center;
+  margin: 10px 0 8px 3px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .download-button:hover {
-background-color: #1e3731;
+  background: linear-gradient(135deg, #359588, #2a7267);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
 }
 
 
@@ -1736,6 +1724,9 @@ background-color: #1e3731;
 }
 
 @media (max-width: 480px) {
+  h1 {
+    font-size: 37px;
+  }
   .nav-con{
     text-align: center;
   }
@@ -1751,8 +1742,18 @@ background-color: #1e3731;
     width: 100%;
   }
   .expense-table th, .expense-table td {
-    font-size: 10px;
-    padding: 7px;
+    font-size: 11px;
+    padding: 7px 1px;
+  }
+  .show-groups-button {
+   margin-left: 20px;
+  }
+  button, p {
+    font-size: 15px;
+    margin: 15px;
+  }
+  .filter-buttons button {
+    font-size: 14px;
   }
 }
 </style>
