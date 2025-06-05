@@ -233,7 +233,6 @@ export default {
 };
 </script>
 
-
 <style>
 body {
   font-family: 'Poppins', sans-serif;
@@ -258,6 +257,7 @@ body {
   height: 70px;
   width: auto;
   object-fit: contain;
+  display: block;
 }
 .navbar {
   position: fixed;
