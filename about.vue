@@ -4,6 +4,11 @@
      <!-- Navbar -->
      <nav class="navbar">
       <div class="navbar-container">
+
+        <a href="#" class="navbar-logo">
+      <img src="/LOGO.png" alt="Logo" class="logo-image" />
+    </a>
+
         <ul class="nav-menu">
           <li class="nav-item">
             <a href="#" @click.prevent="scrollTo('container')" class="nav-link">Home</a>
@@ -33,7 +38,7 @@
     <span class="highlight">spend with peace!</span></h2>
       <p class="description">
         Money Log is a budget tracker website focused on helping users manage and track their expenses. 
-        This website allows individuals to record their expenses, categorize transactions, and follow their 
+        This program allows users to record their expenses, categorize transactions, and follow their 
         financial budget over time.
       </p>
       </div>
@@ -242,31 +247,43 @@ body {
 </style>
 
 <style scoped>
+.navbar-logo {
+  margin-left: 0px; /* Reduce left margin */
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+.logo-image {
+  height: 70px;
+  width: auto;
+  object-fit: contain;
+}
 .navbar {
   position: fixed;
   top: 0;
-  z-index: 1000;
-  background-color: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
-  width: 100%;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Center the navbar content */
   left: 0;
   right: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 70px;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.3s ease;
 }
 
 .navbar-container {
   display: flex;
-  justify-content: center; /* Center the nav items */
+  justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  max-width: 1200px;
+  padding: 0 2rem;
   width: 100%;
+  max-width: 1200px;
 }
 
 .nav-menu {
@@ -275,8 +292,7 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
-  justify-content: center; /* Center the menu items */
-  width: 100%;
+  margin-right: 1rem;
 }
 
 .nav-item {
@@ -284,29 +300,30 @@ body {
 }
 
 .nav-link {
+  position: relative;
   color: #2d3748;
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.95rem;
-  letter-spacing: 0.2px;
+  font-size: 1rem;
   padding: 0.5rem 0;
-  transition: all 0.3s ease;
-  position: relative;
+  letter-spacing: 0px;
+  transition: color 0.3s ease, transform 0.2s ease;
 }
 
 .nav-link::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: -4px;
   left: 0;
-  width: 0;
+  width: 0%;
   height: 2px;
   background: linear-gradient(to right, #4CB5AB, #88C9BF);
   transition: width 0.3s ease;
 }
 
 .nav-link:hover {
-  color: 	#4CB5AB;
+  color: #4CB5AB;
+  transform: translateY(-2px);
 }
 
 .nav-link:hover::after {
@@ -314,7 +331,7 @@ body {
 }
 
 .nav-link.active {
-  color: 	#4CB5AB;
+  color: #4CB5AB;
   font-weight: 600;
 }
 
@@ -696,7 +713,7 @@ body {
   max-height: 240px; /* Smaller fixed height */
   display: flex;
   flex-direction: column;
-  margin-top: 20px;
+  margin-top: 13px;
 }
 
 .feature-card:hover {
@@ -1140,8 +1157,16 @@ h2 {
   .logo{
     margin-top: 30px;
   }
+  .navbar-container {
+    padding: 0 1rem;
+  }
   .nav-link {
-  font-size: 12px;
+    font-size: 12px;
+  }
+  .logo-image {
+    width: 70px;
+    height: auto;
+    margin-right: 10px;
   }
 }
 </style>
